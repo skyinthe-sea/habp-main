@@ -1,52 +1,112 @@
-// lib/features/onboarding/presentation/pages/onboarding_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/providers/shared_preference_provider.dart';
-import '../../../test/presentation/pages/test_page.dart';
-import '../../../test/presentation/providers/test_provider.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/underline_button.dart';
+import '../widgets/onboarding_alert.dart';
+import '../widgets/onboarding_navigation.dart';
 
-class OnboardingPage extends ConsumerWidget {
-  OnboardingPage({Key? key}) : super(key: key);
-
-  final _controller = TextEditingController();
+class OnboardingPage extends ConsumerStatefulWidget {
+  const OnboardingPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OnboardingPage> createState() => _OnboardingPageState();
+}
+
+class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _controller,
-                decoration: const InputDecoration(
-                  labelText: '데이터를 입력하세요',
-                  border: OutlineInputBorder(),
+      backgroundColor: AppColors.primary,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 상단 텍스트 영역 (화면의 절반)
+            Expanded(
+              flex: 1,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '고정소득의',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontFamily: 'YourCustomFont', // 실제 폰트 이름으로 변경 필요
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          UnderlineButton(
+                            text: '종류와 금액',
+                            width: 120,
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => const OnboardingAlert(),
+                              );
+                            },
+                          ),
+                          const Text(
+                            '을',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontFamily: 'YourCustomFont',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '입력해주세요',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontFamily: 'YourCustomFont',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  final data = _controller.text;
-                  if (data.isNotEmpty) {
-                    await ref.read(testDataProvider.notifier).saveData(data);
-                    final prefs = ref.read(sharedPreferencesProvider);
-                    await prefs.setBool('isFirstLaunch', false);
-
-                    if (context.mounted) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => TestPage()),
-                      );
-                    }
-                  }
-                },
-                child: const Text('저장'),
+            ),
+            // 하단 네비게이션 영역
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: const Padding(
+                padding: EdgeInsets.only(bottom: 40),
+                child: OnboardingNavigation(),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

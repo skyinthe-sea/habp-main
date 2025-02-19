@@ -29,8 +29,11 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp(
       title: 'Test App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
       home: isFirstLaunch.when(
-        data: (isFirst) => isFirst ? OnboardingPage() : const TestPage(),
+        data: (isFirst) => isFirst ? const OnboardingPage() : const TestPage(),
         loading: () => const CircularProgressIndicator(),
         error: (error, stack) => Text('Error: $error'),
       ),

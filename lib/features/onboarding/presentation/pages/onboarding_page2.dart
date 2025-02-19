@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../test/presentation/pages/test_page.dart';
-import '../providers/onboarding_provider.dart';
+import '../providers/onboarding_provider2.dart';
 
 class OnboardingPage2 extends ConsumerWidget {
   const OnboardingPage2({super.key});

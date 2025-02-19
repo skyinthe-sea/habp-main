@@ -1,63 +1,45 @@
-// lib/features/onboarding/presentation/providers/onboarding_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../core/providers/shared_preference_provider.dart';
+
+final onboardingProvider = StateNotifierProvider<OnboardingNotifier, OnboardingState>((ref) {
+  return OnboardingNotifier();
+});
 
 class OnboardingState {
-  final int currentStep;    // 현재 온보딩 단계
-  final bool isCompleted;   // 온보딩 완료 여부
-  final Map<String, dynamic> userData;  // 사용자 입력 데이터
+  final int currentStep;
+  final bool isLoading;
+  final String? error;
 
   OnboardingState({
     this.currentStep = 0,
-    this.isCompleted = false,
-    Map<String, dynamic>? userData,
-  }) : userData = userData ?? {};
+    this.isLoading = false,
+    this.error,
+  });
+
+  OnboardingState copyWith({
+    int? currentStep,
+    bool? isLoading,
+    String? error,
+  }) {
+    return OnboardingState(
+      currentStep: currentStep ?? this.currentStep,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
 }
 
 class OnboardingNotifier extends StateNotifier<OnboardingState> {
-  final SharedPreferences _prefs;
-
-  OnboardingNotifier(this._prefs) : super(OnboardingState());
+  OnboardingNotifier() : super(OnboardingState());
 
   void nextStep() {
-    if (state.currentStep < 2) {  // 예: 총 3단계
-      state = OnboardingState(
-        currentStep: state.currentStep + 1,
-        userData: state.userData,
-      );
+    if (state.currentStep < 5) {
+      state = state.copyWith(currentStep: state.currentStep + 1);
     }
   }
 
   void previousStep() {
     if (state.currentStep > 0) {
-      state = OnboardingState(
-        currentStep: state.currentStep - 1,
-        userData: state.userData,
-      );
+      state = state.copyWith(currentStep: state.currentStep - 1);
     }
   }
-
-  void updateUserData(String key, dynamic value) {
-    final newUserData = Map<String, dynamic>.from(state.userData);
-    newUserData[key] = value;
-    state = OnboardingState(
-      currentStep: state.currentStep,
-      userData: newUserData,
-    );
-  }
-
-  Future<void> completeOnboarding() async {
-    await _prefs.setBool('isFirstLaunch', false);
-    state = OnboardingState(
-      currentStep: state.currentStep,
-      isCompleted: true,
-      userData: state.userData,
-    );
-  }
 }
-
-final onboardingProvider = StateNotifierProvider<OnboardingNotifier, OnboardingState>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return OnboardingNotifier(prefs);
-});
