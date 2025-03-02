@@ -1,42 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'core/providers/shared_preference_provider.dart';
-import 'features/onboarding/presentation/pages/onboarding_page.dart';
-import 'features/test/presentation/pages/test_page.dart';
+import 'core/routes/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final bool isFirstTimeUser = prefs.getBool('isFirstTimeUser') ?? true;
 
-  final sharedPreferences = await SharedPreferences.getInstance();
-
-  runApp(
-    ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(MyApp(isFirstTimeUser: isFirstTimeUser));
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class MyApp extends StatelessWidget {
+  final bool isFirstTimeUser;
+
+  const MyApp({Key? key, required this.isFirstTimeUser}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isFirstLaunch = ref.watch(isFirstLaunchProvider);
-
-    return MaterialApp(
-      title: 'Test App',
+  Widget build(BuildContext context) {
+    return GetMaterialApp(
+      title: '일본 장인 스타일 앱',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        fontFamily: 'Noto Sans JP', // 일본 스타일을 위한 폰트
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: isFirstLaunch.when(
-        data: (isFirst) => isFirst ? const OnboardingPage() : const TestPage(),
-        loading: () => const CircularProgressIndicator(),
-        error: (error, stack) => Text('Error: $error'),
-      ),
+      initialRoute: isFirstTimeUser ? AppRoutes.onboarding : AppRoutes.home,
+      getPages: AppRoutes.routes,
     );
   }
 }

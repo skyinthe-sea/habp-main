@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
 
-class OnboardingAlert extends StatelessWidget {
-  const OnboardingAlert({Key? key}) : super(key: key);
+class PageContent3Alert extends StatelessWidget {
+  const PageContent3Alert({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
