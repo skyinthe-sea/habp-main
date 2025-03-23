@@ -38,7 +38,7 @@ class SelectUnderlineButton extends StatelessWidget {
                 style: TextStyle(
                   color: textColor,
                   fontSize: fontSize,
-                  fontFamily: 'hakFont',
+                  fontFamily: 'Noto Sans JP',
                 ),
               ),
               if (showDropIcon) ...[

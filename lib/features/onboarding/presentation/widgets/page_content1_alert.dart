@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../models/expense_entry.dart';
+import '../../data/models/expense_category.dart';
+import '../../data/models/expense_entry.dart';
+import '../controllers/onboarding_controller.dart';
 import '../widgets/underline_button.dart';
 import '../widgets/select_underline_button.dart';
-import '../widgets/blinking_line.dart';
 import '../controllers/expense_controller.dart';
+import '../../domain/services/onboarding_service.dart';
 
 class PageContent1Alert extends StatefulWidget {
   const PageContent1Alert({Key? key}) : super(key: key);
@@ -15,16 +18,21 @@ class PageContent1Alert extends StatefulWidget {
   State<PageContent1Alert> createState() => _PageContent1AlertState();
 }
 
-class _PageContent1AlertState extends State<PageContent1Alert> with SingleTickerProviderStateMixin {
+class _PageContent1AlertState extends State<PageContent1Alert>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _animation;
   final ExpenseController _expenseController = ExpenseController();
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final OnboardingService _onboardingService = OnboardingService();
+
+  final controller = Get.find<OnboardingController>();
 
   bool _isEditing = false;
   bool _isUpdating = false;
   ExpenseEntry? _selectedEntry;
+  bool _isSaving = false;
 
   // 선택한 값들 저장
   String _selectedIncomeType = '월급';
@@ -32,10 +40,11 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
   int _selectedDay = 5;
 
   // 드롭다운 옵션들
-  final List<String> _incomeTypes = ['월급', '용돈', '이자'];
+  final List<String> _incomeTypes = ['월급', '용돈', '이자', '기타'];
   final List<String> _frequencies = ['매월', '매주', '매일'];
   final List<int> _days = List.generate(31, (index) => index + 1);
   final List<String> _weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  final List<String> _customIncomeTypes = [];
 
   static const Color primaryColor = Color(0xFFE495C0);
 
@@ -60,10 +69,24 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
       end: 1.0,
     ).animate(curvedAnimation);
 
+    // 저장된 사용자 정의 소득 유형 로드
+    _loadCustomIncomeTypes();
+
     // 위젯이 빌드된 후 애니메이션 시작
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.forward();
     });
+  }
+
+  // 사용자 정의 소득 유형 로드
+  void _loadCustomIncomeTypes() {
+    final customTypes = _expenseController.getCustomIncomeTypes();
+    if (customTypes.isNotEmpty) {
+      setState(() {
+        _customIncomeTypes.clear();
+        _customIncomeTypes.addAll(customTypes);
+      });
+    }
   }
 
   @override
@@ -71,6 +94,12 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
     _controller.dispose();
     _textController.dispose();
     _focusNode.dispose();
+
+    // 사용자 정의 유형 저장
+    if (_customIncomeTypes.isNotEmpty) {
+      _expenseController.saveCustomIncomeTypes(_customIncomeTypes);
+    }
+
     super.dispose();
   }
 
@@ -80,9 +109,9 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
     final number = int.tryParse(value.replaceAll(',', ''));
     if (number == null) return value;
     return number.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]},',
-    );
+        );
   }
 
   // 편집 모드로 전환
@@ -100,9 +129,9 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
 
         // 콤마 제거 후 설정
         _textController.text = entry.amount.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
               (Match m) => '${m[1]},',
-        );
+            );
       } else {
         _textController.clear();
       }
@@ -128,53 +157,118 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
   }
 
   // 금액 추가
-  void _addExpense() {
+  void _addExpense() async {
     if (_textController.text.isEmpty) return;
 
     final amountText = _textController.text.replaceAll(',', '');
     final amount = int.tryParse(amountText);
 
     if (amount != null) {
-      final newEntry = ExpenseEntry(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        amount: amount,
-        incomeType: _selectedIncomeType,
-        frequency: _selectedFrequency,
-        day: _selectedDay,
-        createdAt: DateTime.now(),
-      );
+      setState(() {
+        _isSaving = true;
+      });
 
-      _expenseController.addEntry(newEntry);
-      _stopEditing();
+      try {
+        final newEntry = ExpenseEntry(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          amount: amount,
+          incomeType: _selectedIncomeType,
+          frequency: _selectedFrequency,
+          day: _selectedDay,
+          createdAt: DateTime.now(),
+        );
 
-      // 애니메이션 효과로 새 항목 표시
-      setState(() {});
+        // 메모리에 저장
+        _expenseController.addEntry(newEntry);
+
+        // DB에 저장
+        await _onboardingService.saveIncomeInfo(
+          incomeType: _selectedIncomeType,
+          frequency: _selectedFrequency,
+          day: _selectedDay,
+          amount: amount.toDouble(),
+          // 데이터베이스에는 double로 저장
+          type: ExpenseCategoryType.INCOME,
+        );
+
+        _stopEditing();
+        setState(() {});
+      } catch (e) {
+        debugPrint('소득 정보 저장 중 오류: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '저장에 실패했습니다.',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
   // 금액 수정
-  void _updateExpense() {
+  void _updateExpense() async {
     if (_selectedEntry == null || _textController.text.isEmpty) return;
 
     final amountText = _textController.text.replaceAll(',', '');
     final amount = int.tryParse(amountText);
 
     if (amount != null) {
-      final updatedEntry = ExpenseEntry(
-        id: _selectedEntry!.id,
-        amount: amount,
-        incomeType: _selectedIncomeType,
-        frequency: _selectedFrequency,
-        day: _selectedDay,
-        createdAt: _selectedEntry!.createdAt,
-        updatedAt: DateTime.now(),
-      );
+      setState(() {
+        _isSaving = true;
+      });
 
-      _expenseController.updateEntry(updatedEntry);
-      _stopEditing();
+      try {
+        final updatedEntry = ExpenseEntry(
+          id: _selectedEntry!.id,
+          amount: amount,
+          incomeType: _selectedIncomeType,
+          frequency: _selectedFrequency,
+          day: _selectedDay,
+          createdAt: _selectedEntry!.createdAt,
+          updatedAt: DateTime.now(),
+        );
 
-      // 애니메이션 효과로 업데이트된 항목 표시
-      setState(() {});
+        // 메모리에 업데이트
+        _expenseController.updateEntry(updatedEntry);
+
+        // DB에는 현재 수정 기능을 구현하지 않음 (필요 시 구현)
+        // Transaction 테이블의 항목을 수정하기 위한 서비스 메소드 추가 필요
+
+        _stopEditing();
+        setState(() {});
+      } catch (e) {
+        debugPrint('소득 정보 수정 중 오류: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '수정에 실패했습니다.',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
@@ -193,17 +287,80 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
             child: const Text('취소'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              _expenseController.deleteEntry(_selectedEntry!.id);
-              _stopEditing();
-              setState(() {});
+
+              setState(() {
+                _isSaving = true;
+              });
+
+              try {
+                // 메모리에서 삭제
+                _expenseController.deleteEntry(_selectedEntry!.id);
+
+                // DB에는 현재 삭제 기능을 구현하지 않음 (필요 시 구현)
+                // Transaction 테이블의 항목을 삭제하기 위한 서비스 메소드 추가 필요
+
+                _stopEditing();
+                setState(() {});
+              } catch (e) {
+                debugPrint('소득 정보 삭제 중 오류: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        '삭제에 실패했습니다.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } finally {
+                setState(() {
+                  _isSaving = false;
+                });
+              }
             },
             child: const Text('삭제', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
+  }
+
+  // 온보딩 완료 및 데이터베이스 정보 출력
+  void _showDatabaseInfo() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await _onboardingService.printOnboardingData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '데이터베이스 정보가 콘솔에 출력되었습니다.',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('데이터베이스 정보 출력 중 오류: $e');
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
+    }
   }
 
   // 셀렉트 메뉴 표시
@@ -219,7 +376,8 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
     final Size buttonSize = button.size;
 
     // 버튼 바로 아래에 메뉴 표시 위치 설정
-    final menuPosition = Offset(position.dx, position.dy + buttonSize.height + 5);
+    final menuPosition =
+        Offset(position.dx, position.dy + buttonSize.height + 5);
 
     showCustomSelectMenu<T>(
       context: context,
@@ -232,6 +390,103 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
         onSelected(value);
       }
     });
+  }
+
+  // 사용자 정의 소득 유형 입력 다이얼로그
+  void _showCustomIncomeTypeDialog() {
+    final TextEditingController customTypeController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          '직접 입력',
+          style: TextStyle(
+            color: primaryColor,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: customTypeController,
+          decoration: const InputDecoration(
+            hintText: '소득 유형 입력 (10자 이내)',
+            border: OutlineInputBorder(),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: primaryColor, width: 2.0),
+            ),
+          ),
+          maxLength: 10, // 최대 10자 제한
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(
+              '취소',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final customType = customTypeController.text.trim();
+
+              // 입력값 검증
+              if (customType.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      '값이 입력되어 있지 않습니다.',
+                      style: TextStyle(
+                        fontSize: 20, // 텍스트 크기 조정
+                        fontWeight: FontWeight.bold, // 선택적으로 글꼴 두께 조정
+                      ),
+                    ),
+                    backgroundColor: AppColors.grey,
+                  ),
+                );
+                return;
+              }
+
+              // 이미 있는 옵션인지 확인
+              if (_incomeTypes.contains(customType) ||
+                  _customIncomeTypes.contains(customType)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      '이미 존재하는 소득 유형입니다.',
+                      style: TextStyle(
+                        fontSize: 20, // 텍스트 크기 조정
+                        fontWeight: FontWeight.bold, // 선택적으로 글꼴 두께 조정
+                      ),
+                    ),
+                    backgroundColor: AppColors.grey,
+                  ),
+                );
+                return;
+              }
+
+              // 사용자 정의 유형 추가 및 선택
+              setState(() {
+                _customIncomeTypes.add(customType);
+                _selectedIncomeType = customType;
+              });
+
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            child: const Text('추가'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -278,9 +533,7 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
                     const SizedBox(height: 24),
 
                     // 금액 입력 (편집 모드에 따라 버튼 또는 텍스트 필드 표시)
-                    _isEditing
-                        ? _buildTextField()
-                        : _buildCustomButton(),
+                    _isEditing ? _buildTextField() : _buildCustomButton(),
 
                     const SizedBox(height: 20),
 
@@ -301,10 +554,12 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
             builder: (context, child) {
               // 메인 알럿보다 약간 늦게 나타나도록 애니메이션 조정
               final delayedAnimation = _animation.value > 0.2
-                  ? (_animation.value - 0.2) * 1.25 // 0.2 이후부터 시작하고 1.25배 속도로 따라잡음
+                  ? (_animation.value - 0.2) *
+                      1.25 // 0.2 이후부터 시작하고 1.25배 속도로 따라잡음
                   : 0.0;
               // 애니메이션 값이 1을 초과하지 않게 조정
-              final adjustedValue = delayedAnimation > 1.0 ? 1.0 : delayedAnimation;
+              final adjustedValue =
+                  delayedAnimation > 1.0 ? 1.0 : delayedAnimation;
 
               return Positioned(
                 top: 80, // 메인 알럿 위에 표시
@@ -317,6 +572,17 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
               );
             },
           ),
+
+        // 로딩 인디케이터
+        if (_isSaving)
+          Container(
+            color: Colors.black.withOpacity(0.3),
+            child: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -327,15 +593,23 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
       builder: (buttonContext) {
         return SelectUnderlineButton(
           text: _selectedIncomeType,
-          width: 80,
+          width: 63,
           onTap: () {
+            // 기본 유형 + 사용자 정의 유형을 합친 전체 목록
+            final allTypes = [..._incomeTypes, ..._customIncomeTypes];
+
             _showSelectMenu<String>(
-              items: _incomeTypes,
+              items: allTypes,
               itemText: (item) => item,
               onSelected: (value) {
-                setState(() {
-                  _selectedIncomeType = value;
-                });
+                if (value == '기타') {
+                  // '기타' 선택 시 사용자 정의 입력 다이얼로그 표시
+                  _showCustomIncomeTypeDialog();
+                } else {
+                  setState(() {
+                    _selectedIncomeType = value;
+                  });
+                }
               },
               buttonContext: buttonContext,
             );
@@ -351,7 +625,7 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
       builder: (buttonContext) {
         return SelectUnderlineButton(
           text: _selectedFrequency,
-          width: 80,
+          width: 63,
           onTap: () {
             _showSelectMenu<String>(
               items: _frequencies,
@@ -415,7 +689,7 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
           // 매월이면 일자로 표시
           return SelectUnderlineButton(
             text: '${_selectedDay}일',
-            width: 80,
+            width: 63,
             onTap: () {
               _showSelectMenu<int>(
                 items: _days,
@@ -440,9 +714,9 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
       // 텍스트 색상을 앱 색상에 맞게 오버라이드
       data: Theme.of(context).copyWith(
         textTheme: Theme.of(context).textTheme.apply(
-          bodyColor: primaryColor,
-          displayColor: primaryColor,
-        ),
+              bodyColor: primaryColor,
+              displayColor: primaryColor,
+            ),
       ),
       child: UnderlineButton(
         text: '금액',
@@ -468,7 +742,7 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
         style: TextStyle(
           color: textColor,
           fontSize: 32, // 글자 크기 축소
-          fontFamily: 'hakFont',
+          fontFamily: 'Noto Sans JP',
         ),
         keyboardType: TextInputType.number,
         inputFormatters: [
@@ -477,11 +751,11 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
         decoration: InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.zero,
-          hintText: '금액 입력',
+          hintText: '숫자 입력',
           hintStyle: TextStyle(
             color: textColor.withOpacity(0.5),
-            fontSize: 24, // 힌트 텍스트 크기도 축소
-            fontFamily: 'hakFont',
+            fontSize: 32, // 힌트 텍스트 크기도 축소
+            fontFamily: 'Noto Sans JP',
           ),
         ),
         onChanged: (value) {
@@ -515,42 +789,123 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
           const SizedBox(width: 8),
           ElevatedButton(
             onPressed: _updateExpense,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(AppColors.primary),
+              foregroundColor: MaterialStateProperty.all(Colors.white),
+              elevation: MaterialStateProperty.all(0),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              padding: MaterialStateProperty.all(
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              overlayColor: MaterialStateProperty.resolveWith(
+                (states) {
+                  if (states.contains(MaterialState.pressed)) {
+                    return Colors.white.withOpacity(0.1);
+                  }
+                  return null;
+                },
               ),
             ),
-            child: const Text('수정'),
-          ),
+            child: const Text(
+              '수정',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          )
         ],
       );
     } else if (_isEditing) {
       // 새 항목 추가 모드일 때 버튼
       return Align(
-        alignment: Alignment.bottomRight,
-        child: ElevatedButton(
-          onPressed: _addExpense,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+          alignment: Alignment.bottomRight,
+          child: ElevatedButton(
+            onPressed: _addExpense,
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(AppColors.primary),
+              foregroundColor: MaterialStateProperty.all(Colors.white),
+              elevation: MaterialStateProperty.all(0),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              padding: MaterialStateProperty.all(
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              overlayColor: MaterialStateProperty.resolveWith(
+                (states) {
+                  if (states.contains(MaterialState.pressed)) {
+                    return Colors.white.withOpacity(0.1);
+                  }
+                  return null;
+                },
+              ),
             ),
-          ),
-          child: const Text('추가'),
-        ),
-      );
+            child: const Text(
+              '추가',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ));
     } else {
-      // 기본 상태 버튼
-      return Align(
-        alignment: Alignment.bottomRight,
-        child: TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          style: TextButton.styleFrom(
-            foregroundColor: primaryColor,
+      // 기본 상태 버튼 (+ DB 정보 출력 버튼)
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey,
+            ),
+            child: const Text('닫기'),
           ),
-          child: const Text('닫기'),
-        ),
+          if (_expenseController.getAllEntries().isNotEmpty)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                controller.nextPage();
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(AppColors.primary),
+                foregroundColor: MaterialStateProperty.all(Colors.white),
+                elevation: MaterialStateProperty.all(0),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                padding: MaterialStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                overlayColor: MaterialStateProperty.resolveWith(
+                  (states) {
+                    if (states.contains(MaterialState.pressed)) {
+                      return Colors.white.withOpacity(0.1);
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              child: const Text(
+                '다음',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            )
+        ],
       );
     }
   }
@@ -580,7 +935,6 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
           reverse: true, // 최신 항목이 상단에 표시
           itemBuilder: (context, index) {
             final entry = entries[index];
-            final formattedAmount = _formatNumber(entry.amount.toString());
 
             return ListTile(
               title: Text(
@@ -588,7 +942,7 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
-                  fontFamily: 'hakFont',
+                  fontFamily: 'Noto Sans JP',
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -599,4 +953,100 @@ class _PageContent1AlertState extends State<PageContent1Alert> with SingleTicker
       ),
     );
   }
+}
+
+// 커스텀 셀렉트 메뉴 표시 함수
+Future<T?> showCustomSelectMenu<T>({
+  required BuildContext context,
+  required List<T> items,
+  required String Function(T) itemText,
+  required Offset position,
+  double maxHeight = 200,
+  Color backgroundColor = Colors.pink,
+  Color textColor = Colors.white,
+}) async {
+  final RenderBox overlay =
+      Overlay.of(context).context.findRenderObject() as RenderBox;
+  final size = overlay.size;
+
+  // 메뉴가 화면 밖으로 나가지 않도록 위치 조정
+  final double menuWidth = 150;
+  final double menuX = position.dx;
+  final double menuY = position.dy;
+
+  // 오른쪽에 공간이 부족한 경우 왼쪽으로 이동
+  final adjustedX =
+      menuX + menuWidth > size.width ? size.width - menuWidth - 10 : menuX;
+
+  // 실제 표시될 아이템 수에 따라 높이 계산
+  final itemHeight = 48.0;
+  final double calculatedHeight = items.length * itemHeight;
+  final double menuHeight =
+      calculatedHeight > maxHeight ? maxHeight : calculatedHeight;
+
+  // 아래쪽에 공간이 부족한 경우 위쪽으로 이동
+  final adjustedY =
+      menuY + menuHeight > size.height ? menuY - menuHeight : menuY;
+
+  return await showDialog<T>(
+    context: context,
+    barrierColor: Colors.transparent,
+    builder: (BuildContext context) {
+      return Stack(
+        children: [
+          Positioned(
+            left: adjustedX,
+            top: adjustedY,
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(12),
+              color: backgroundColor,
+              child: Container(
+                width: menuWidth,
+                constraints: BoxConstraints(
+                  maxHeight: maxHeight,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  padding: EdgeInsets.zero,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop(item);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          border: index < items.length - 1
+                              ? Border(
+                                  bottom: BorderSide(
+                                    color: textColor.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        child: Text(
+                          itemText(item),
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
 }

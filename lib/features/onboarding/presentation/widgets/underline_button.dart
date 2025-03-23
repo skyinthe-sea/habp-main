@@ -26,7 +26,7 @@ class UnderlineButton extends StatelessWidget {
             style: const TextStyle(
               color: AppColors.white,
               fontSize: 40,
-              fontFamily: 'hakFont', // 여기에 실제 폰트 이름을 넣어주세요
+              fontFamily: 'Noto Sans JP', // 여기에 실제 폰트 이름을 넣어주세요
             ),
           ),
           Stack(

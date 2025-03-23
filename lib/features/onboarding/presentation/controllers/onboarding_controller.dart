@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/presentation/pages/main_page.dart';
 import '../../../../core/routes/app_router.dart';
 
 class OnboardingController extends GetxController {
@@ -37,7 +38,7 @@ class OnboardingController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isFirstTimeUser', false);
 
-    // 홈 화면으로 이동
-    Get.offAllNamed(AppRoutes.home);
+    // 메인 화면으로 이동 (named 라우트 대신 직접 위젯 인스턴스를 사용)
+    Get.offAll(() => const MainPage());
   }
 }

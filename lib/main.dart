@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'core/routes/app_router.dart';
+import 'core/presentation/pages/main_page.dart';
+import 'features/onboarding/presentation/pages/onboarding_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,15 +21,20 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: '일본 장인 스타일 앱',
+      title: '나의 장부',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Noto Sans JP', // 일본 스타일을 위한 폰트
+        primaryColor: const Color(0xFFE495C0),
+        primarySwatch: Colors.pink,
+        fontFamily: 'Noto Sans JP',
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      initialRoute: isFirstTimeUser ? AppRoutes.onboarding : AppRoutes.home,
-      getPages: AppRoutes.routes,
+      // 단순화된 라우팅 - 온보딩 또는 메인 페이지만 직접 지정
+      home: isFirstTimeUser
+          ? const OnboardingPage() // 온보딩 페이지 클래스로 변경
+          : const MainPage(),
+      // GetX 라우팅은 필요한 경우에만 추가
+      getPages: [],
     );
   }
 }

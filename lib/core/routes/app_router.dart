@@ -1,21 +1,8 @@
+// 현재는 MainPage에서 모든 페이지 전환을 관리하므로 라우트 정의 최소화
 import 'package:get/get.dart';
-import '../../features/onboarding/presentation/bindings/onboarding_binding.dart';
-import '../../features/onboarding/presentation/pages/onboarding_page.dart';
-import '../../home_page.dart';
 
 class AppRoutes {
-  static const String home = '/home';
+  // 정의가 필요한 경우 나중에 추가할 수 있음
   static const String onboarding = '/onboarding';
-
-  static final routes = [
-    GetPage(
-      name: home,
-      page: () => const HomePage(),
-    ),
-    GetPage(
-      name: onboarding,
-      page: () => const OnboardingPage(),
-      binding: OnboardingBinding(),
-    ),
-  ];
+  static const String main = '/main';
 }

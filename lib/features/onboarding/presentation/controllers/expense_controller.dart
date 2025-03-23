@@ -1,7 +1,7 @@
 // lib/features/onboarding/controllers/expense_controller.dart
 
+import '../../data/models/expense_entry.dart';
 import '../../data/repositories/expense_repository.dart';
-import '../../models/expense_entry.dart';
 
 class ExpenseController {
   final ExpenseRepository _repository = ExpenseRepository();
@@ -29,5 +29,15 @@ class ExpenseController {
   // DB에서 로드
   Future<void> loadData() async {
     await _repository.loadFromDatabase();
+  }
+
+  // 사용자 정의 소득 유형 가져오기
+  List<String> getCustomIncomeTypes() {
+    return _repository.getCustomIncomeTypes();
+  }
+
+// 사용자 정의 소득 유형 저장
+  Future<void> saveCustomIncomeTypes(List<String> customTypes) async {
+    await _repository.saveCustomIncomeTypes(customTypes);
   }
 }
