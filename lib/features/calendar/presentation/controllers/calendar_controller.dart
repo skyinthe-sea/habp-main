@@ -27,11 +27,31 @@ class CalendarController extends GetxController {
   // 선택된 날짜의 요약 정보
   final Rx<DaySummary> selectedDaySummary = DaySummary(date: DateTime.now()).obs;
 
+  // EventBusService 인스턴스
+  late final EventBusService _eventBusService;
+
   @override
   void onInit() {
     super.onInit();
+
+    // EventBusService 가져오기
+    _eventBusService = Get.find<EventBusService>();
+
+    // 트랜잭션 변경 이벤트 구독
+    ever(_eventBusService.transactionChanged, (_) {
+      debugPrint('거래 변경 이벤트 감지됨: 캘린더 데이터 새로고침');
+      fetchMonthEvents(focusedDay.value);
+      fetchDaySummary(selectedDay.value);
+    });
+
     fetchMonthEvents(focusedDay.value);
     fetchDaySummary(selectedDay.value);
+  }
+
+  @override
+  void onClose() {
+    // 필요한 정리 작업 수행
+    super.onClose();
   }
 
   // 달력 월 변경 시 호출되는 메서드
@@ -55,11 +75,25 @@ class CalendarController extends GetxController {
 
     try {
       final result = await getMonthTransactions.execute(month);
-      events.value = result;
+
+      // 새로운 Map을 생성하여 할당 (참조 변경 확실히 하기)
+      final newEvents = Map<DateTime, List<CalendarTransaction>>.from(result);
+      events.value = newEvents;
+
+      // 강제로 업데이트 트리거하기
+      events.refresh();
+
       print('이벤트 로드 완료: ${events.length}일에 거래 있음');
 
-      // 이 함수가 완료되기 전에 update() 호출
+      // GetBuilder를 사용하는 위젯들을 위한 업데이트
       update();
+
+      // 약간의 지연 후 한 번 더 새로고침 시도 (UI 업데이트 보장)
+      Future.delayed(const Duration(milliseconds: 100), () {
+        events.refresh();
+        update();
+      });
+
       return; // 명시적으로 완료를 반환
     } catch (e) {
       print('월별 거래 내역 가져오기 오류: $e');

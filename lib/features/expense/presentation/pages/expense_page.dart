@@ -23,16 +23,39 @@ class ExpensePage extends StatefulWidget {
   State<ExpensePage> createState() => _ExpensePageState();
 }
 
-class _ExpensePageState extends State<ExpensePage> {
+class _ExpensePageState extends State<ExpensePage> with AutomaticKeepAliveClientMixin {
   late ExpenseController _controller;
+  late Future<void> _initFuture;
+  bool _isInitialized = false;
+
+  // AutomaticKeepAliveClientMixin 상태 유지
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _initController();
+    _controller = _initController();
+    _initFuture = _loadInitialData();
   }
 
-  void _initController() {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 보일 때마다 데이터 새로고침
+    if (_isInitialized) {
+      _refreshData();
+    }
+  }
+
+  void _refreshData() {
+    if (!_controller.isLoading.value) {
+      debugPrint('ExpensePage: 데이터 새로고침');
+      _controller.fetchBudgetStatus();
+    }
+  }
+
+  ExpenseController _initController() {
     // 의존성 주입
     final dbHelper = DBHelper();
     final dataSource = ExpenseLocalDataSourceImpl(dbHelper: dbHelper);
@@ -41,90 +64,151 @@ class _ExpensePageState extends State<ExpensePage> {
     final variableCategoriesUseCase = GetVariableCategories(repository);
     final addBudgetUseCase = AddBudget(repository);
 
-    _controller = ExpenseController(
-      getBudgetStatusUseCase: budgetStatusUseCase,
-      getVariableCategoriesUseCase: variableCategoriesUseCase,
-      addBudgetUseCase: addBudgetUseCase,
-      addCategoryUseCase: AddCategory(repository),
-      deleteCategoryUseCase: DeleteCategory(repository),
-      addExpenseUseCase: AddExpense(repository),
+    // 컨트롤러를 영구적으로 등록 (앱 재시작할 때도 유지)
+    return Get.put(
+        ExpenseController(
+          getBudgetStatusUseCase: budgetStatusUseCase,
+          getVariableCategoriesUseCase: variableCategoriesUseCase,
+          addBudgetUseCase: addBudgetUseCase,
+          addCategoryUseCase: AddCategory(repository),
+          deleteCategoryUseCase: DeleteCategory(repository),
+          addExpenseUseCase: AddExpense(repository),
+        ),
+        permanent: true
     );
-    Get.put(_controller);
+  }
+
+  // 초기 데이터 로드
+  Future<void> _loadInitialData() async {
+    debugPrint('ExpensePage: 초기 데이터 로드 시작');
+    try {
+      await _controller.fetchBudgetStatus();
+      await _controller.fetchVariableCategories();
+      _isInitialized = true;
+      debugPrint('ExpensePage: 초기 데이터 로드 완료');
+    } catch (e) {
+      debugPrint('ExpensePage: 초기 데이터 로드 오류 - $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        title: const Text(
-          '예산 관리',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: AppColors.primary),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AddBudgetDialog(controller: _controller),
-              );
-            },
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 고정된 달력 내비게이션
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: PeriodSelector(controller: _controller),
-            ),
+    super.build(context); // AutomaticKeepAliveClientMixin 필수
 
-            // 스크롤 가능한 콘텐츠
-            Expanded(
-              child: Obx(() {
-                return _controller.isLoading.value && _controller.budgetStatusList.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '이번 달 예산 현황',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      OverallBudgetCard(controller: _controller),
-                      const SizedBox(height: 24),
-                      const Text(
-                        '카테고리별 예산',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      CategoryBudgetList(controller: _controller),
-                    ],
-                  ),
-                );
-              }),
+    return FutureBuilder(
+      future: _initFuture,
+      builder: (context, snapshot) {
+        // 초기 데이터 로드 중일 때 로딩 표시
+        if (snapshot.connectionState == ConnectionState.waiting && !_isInitialized) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 1,
+              title: const Text(
+                '예산 관리',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
+            body: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 1,
+            title: const Text(
+              '예산 관리',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.add, color: AppColors.primary),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AddBudgetDialog(controller: _controller),
+                  );
+                },
+              ),
+              // 새로고침 버튼 추가
+              IconButton(
+                icon: const Icon(Icons.refresh, color: AppColors.primary),
+                onPressed: _refreshData,
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: GetBuilder<ExpenseController>(
+                init: _controller,
+                builder: (controller) {
+                  return Column(
+                    children: [
+                      // 고정된 달력 내비게이션
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: PeriodSelector(controller: controller),
+                      ),
+
+                      // 스크롤 가능한 콘텐츠
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            await controller.fetchBudgetStatus();
+                          },
+                          child: Obx(() {
+                            return controller.isLoading.value && controller.budgetStatusList.isEmpty
+                                ? const Center(child: CircularProgressIndicator())
+                                : SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '이번 달 예산 현황',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  OverallBudgetCard(controller: controller),
+                                  const SizedBox(height: 24),
+                                  const Text(
+                                    '카테고리별 예산',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  CategoryBudgetList(controller: controller),
+                                ],
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+            ),
+          ),
+        );
+      },
     );
   }
 }

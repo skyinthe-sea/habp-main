@@ -17,9 +17,12 @@ class CalendarPage extends StatefulWidget {
   State<CalendarPage> createState() => _CalendarPageState();
 }
 
-class _CalendarPageState extends State<CalendarPage> {
+class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClientMixin {
   late CalendarController _controller;
   late Future<void> _initFuture;
+
+  @override
+  bool get wantKeepAlive => true; // 페이지가 탭 간에 상태를 유지하도록 설정
 
   @override
   void initState() {
@@ -58,6 +61,8 @@ class _CalendarPageState extends State<CalendarPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin 사용 시 필요
+
     return FutureBuilder(
       future: _initFuture,
       builder: (context, snapshot) {
@@ -123,35 +128,40 @@ class _CalendarPageState extends State<CalendarPage> {
             ],
           ),
           body: SafeArea(
-            child: Column(
-              children: [
-                // 월간 캘린더 (스크롤되지 않는 고정 영역)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: MonthCalendar(controller: _controller),
-                ),
-
-                // 거래 내역 (스크롤 가능한 영역)
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(16),
+            child: GetBuilder<CalendarController>(
+                init: _controller,
+                builder: (controller) {
+                  return Column(
+                    children: [
+                      // 월간 캘린더 (스크롤되지 않는 고정 영역)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: MonthCalendar(controller: controller),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, -2),
+
+                      // 거래 내역 (스크롤 가능한 영역)
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, -2),
+                              ),
+                            ],
+                          ),
+                          child: DayTransactionsList(controller: controller),
                         ),
-                      ],
-                    ),
-                    child: DayTransactionsList(controller: _controller),
-                  ),
-                ),
-              ],
+                      ),
+                    ],
+                  );
+                }
             ),
           ),
         );

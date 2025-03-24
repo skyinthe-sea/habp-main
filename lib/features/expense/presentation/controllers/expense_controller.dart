@@ -38,21 +38,63 @@ class ExpenseController extends GetxController {
   final RxDouble totalRemaining = 0.0.obs;
   final RxDouble overallProgressPercentage = 0.0.obs;
 
+  // 데이터 로드 상태 추적
+  final RxBool dataInitialized = false.obs;
+
   // 사용자 ID (실제 앱에서는 인증에서 가져옴)
   final int userId = 1;
+
+  // EventBusService 인스턴스
+  late final EventBusService _eventBusService;
 
   @override
   void onInit() {
     super.onInit();
-    fetchBudgetStatus();
-    fetchVariableCategories();
+
+    // EventBusService 가져오기
+    _eventBusService = Get.find<EventBusService>();
+
+    // 트랜잭션 변경 이벤트 구독
+    ever(_eventBusService.transactionChanged, (_) {
+      debugPrint('거래 변경 이벤트 감지됨: 예산 데이터 새로고침');
+      _loadData();
+    });
+
+    // 초기 데이터 로드
+    _loadData();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    // UI가 모두 준비된 후에 다시 한번 데이터 로드 시도
+    if (!dataInitialized.value) {
+      debugPrint('ExpenseController: onReady에서 데이터 다시 로드');
+      _loadData();
+    }
+  }
+
+  // 모든 데이터 로드 메서드
+  Future<void> _loadData() async {
+    debugPrint('ExpenseController: 모든 데이터 로드 시작');
+    await fetchBudgetStatus();
+    await fetchVariableCategories();
+    dataInitialized.value = true;
+    debugPrint('ExpenseController: 모든 데이터 로드 완료');
   }
 
   Future<void> fetchBudgetStatus() async {
     isLoading.value = true;
+    debugPrint('ExpenseController: 예산 상태 가져오기 시작 - ${selectedPeriod.value}');
+
     try {
       final result = await getBudgetStatusUseCase(userId, selectedPeriod.value);
-      budgetStatusList.value = result;
+
+      // 데이터 변수에 할당
+      budgetStatusList.assignAll(result);
+
+      // 목록이 비어있는지 확인 (디버깅)
+      debugPrint('ExpenseController: 예산 상태 데이터 로드 - ${result.length}개 항목');
 
       // 총 값 계산
       double budget = 0.0;
@@ -70,6 +112,17 @@ class ExpenseController extends GetxController {
       if (overallProgressPercentage.value > 100) {
         overallProgressPercentage.value = 100;
       }
+
+      // 명시적으로 UI 업데이트 트리거
+      budgetStatusList.refresh();
+      update();
+
+      // 약간의 지연 후 다시 한번 트리거
+      Future.delayed(const Duration(milliseconds: 100), () {
+        budgetStatusList.refresh();
+        update();
+      });
+
     } catch (e) {
       debugPrint('예산 상태 가져오는 중 오류: $e');
     } finally {
@@ -99,7 +152,9 @@ class ExpenseController extends GetxController {
   Future<void> fetchVariableCategories() async {
     try {
       final result = await getVariableCategoriesUseCase();
-      variableCategories.value = result;
+      variableCategories.assignAll(result);
+      variableCategories.refresh();
+      debugPrint('ExpenseController: 변동 카테고리 데이터 로드 - ${result.length}개 항목');
     } catch (e) {
       debugPrint('변동 지출 카테고리 가져오는 중 오류: $e');
     }
@@ -129,6 +184,10 @@ class ExpenseController extends GetxController {
       if (result) {
         // 예산 목록 다시 불러오기
         await fetchBudgetStatus();
+
+        // 이벤트 버스를 통해 변경 알림
+        _eventBusService.emitTransactionChanged();
+
         return true;
       }
       return false;
@@ -220,6 +279,10 @@ class ExpenseController extends GetxController {
       if (result) {
         // 예산 상태 다시 불러오기 (지출이 추가되었으므로 업데이트 필요)
         await fetchBudgetStatus();
+
+        // 이벤트 버스를 통해 변경 알림
+        _eventBusService.emitTransactionChanged();
+
         return true;
       }
       return false;
