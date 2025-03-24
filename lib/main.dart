@@ -3,12 +3,16 @@ import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/presentation/pages/main_page.dart';
+import 'core/services/event_bus_service.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final bool isFirstTimeUser = prefs.getBool('isFirstTimeUser') ?? true;
+
+  // 이벤트 버스 서비스 초기화
+  await Get.putAsync(() => EventBusService().init());
 
   runApp(MyApp(isFirstTimeUser: isFirstTimeUser));
 }

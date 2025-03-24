@@ -1,9 +1,12 @@
+// lib/core/presentation/pages/main_page.dart - Update the floating action button
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:habp/features/expense/presentation/pages/expense_page.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../controllers/main_controller.dart';
 import '../../../features/calendar/presentation/pages/calendar_page.dart';
+import '../../../features/quick_add/presentation/widgets/quick_add_button.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -26,7 +29,7 @@ class MainPage extends StatelessWidget {
           ],
         ),
         bottomNavigationBar: _buildBottomNavigationBar(controller),
-        floatingActionButton: _buildFloatingActionButton(),
+        floatingActionButton: const QuickAddButton(), // 새로운 QuickAddButton 사용
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       );
     });
@@ -85,35 +88,6 @@ class MainPage extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingActionButton() {
-    return Container(
-      height: 48,
-      width: 48,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE495C0), Color(0xFFD279A6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFE495C0).withOpacity(0.4),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.add, color: Colors.white, size: 28),
-        onPressed: () {
-
-        },
       ),
     );
   }
