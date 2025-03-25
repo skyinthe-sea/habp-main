@@ -25,7 +25,7 @@ class BudgetStatusModel extends BudgetStatus {
       remainingAmount = 0;
     }
     final progressPercentage =
-        budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0.0;
+        budgetAmount > 0 ? (spentAmount.abs() / budgetAmount) * 100 : 0.0;
 
     return BudgetStatusModel(
       categoryId: map['category_id'] as int,

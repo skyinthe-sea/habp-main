@@ -85,7 +85,7 @@ class CategoryBudgetList extends StatelessWidget {
                 final remaining = '${budgetStatus.remainingAmount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
 
                 // 진행 상태에 따른 색상 결정
-                final progressPercentage = budgetStatus.progressPercentage;
+                final progressPercentage = budgetStatus.progressPercentage.abs();
                 final Color progressColor = progressPercentage >= 90
                     ? Colors.red
                     : (progressPercentage >= 70 ? Colors.orange : AppColors.primary);

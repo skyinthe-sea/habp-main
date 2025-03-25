@@ -17,7 +17,7 @@ class OverallBudgetCard extends StatelessWidget {
       final totalRemaining = '${controller.totalRemaining.value.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
 
       // 진행 상태에 따른 색상 결정
-      final progressPercentage = controller.overallProgressPercentage.value;
+      final progressPercentage = controller.overallProgressPercentage.value.abs();
       final Color progressColor = progressPercentage >= 90
           ? Colors.red
           : (progressPercentage >= 70 ? Colors.orange : AppColors.primary);

@@ -108,7 +108,7 @@ class ExpenseController extends GetxController {
       totalBudget.value = budget;
       totalSpent.value = spent;
       totalRemaining.value = budget + spent;
-      overallProgressPercentage.value = budget > 0 ? (spent / budget) * 100 : 0.0;
+      overallProgressPercentage.value = budget > 0 ? (spent.abs() / budget) * 100 : 0.0;
       if (overallProgressPercentage.value > 100) {
         overallProgressPercentage.value = 100;
       }
