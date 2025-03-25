@@ -115,7 +115,7 @@ class OverallBudgetCard extends StatelessWidget {
                 Row(
                   children: [
                     const Text(
-                      '남은 금액: ',
+                      '남은 예산: ',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey,

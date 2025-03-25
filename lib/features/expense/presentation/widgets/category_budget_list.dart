@@ -187,7 +187,7 @@ class CategoryBudgetList extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           const Text(
-                            '남은 금액: ',
+                            '남은 예산: ',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey,

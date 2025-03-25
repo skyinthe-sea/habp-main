@@ -9,19 +9,23 @@ class BudgetStatusModel extends BudgetStatus {
     required double remainingAmount,
     required double progressPercentage,
   }) : super(
-    categoryId: categoryId,
-    categoryName: categoryName,
-    budgetAmount: budgetAmount,
-    spentAmount: spentAmount,
-    remainingAmount: remainingAmount,
-    progressPercentage: progressPercentage,
-  );
+          categoryId: categoryId,
+          categoryName: categoryName,
+          budgetAmount: budgetAmount,
+          spentAmount: spentAmount,
+          remainingAmount: remainingAmount,
+          progressPercentage: progressPercentage,
+        );
 
   factory BudgetStatusModel.fromMap(Map<String, dynamic> map) {
     final budgetAmount = (map['budget_amount'] as num?)?.toDouble() ?? 0.0;
     final spentAmount = (map['spent_amount'] as num?)?.toDouble() ?? 0.0;
-    final remainingAmount = budgetAmount - spentAmount;
-    final progressPercentage = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0.0;
+    var remainingAmount = budgetAmount + spentAmount;
+    if (remainingAmount < 0) {
+      remainingAmount = 0;
+    }
+    final progressPercentage =
+        budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0.0;
 
     return BudgetStatusModel(
       categoryId: map['category_id'] as int,
