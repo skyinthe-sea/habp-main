@@ -75,7 +75,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
         // 변동 거래 금액 합산
         for (var transaction in variableTransactions) {
-          totalExpense += transaction['amount'] as double;
+          totalExpense += (transaction['amount'] as double).abs();
         }
 
         // 2. 고정 거래 내역 (매달 반복되는 거래)
@@ -94,18 +94,18 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
           if (description.contains('매월')) {
             // 매월 거래는 그대로 더함
-            totalExpense += amount;
+            totalExpense += amount.abs(); // 절대값 사용
           }
           else if (description.contains('매주')) {
             // 매주 거래는 해당 월의 요일 수에 맞게 계산
             int weekday = int.parse(transactionNum);
             int occurrences = _countWeekdaysInMonth(targetMonth.year, targetMonth.month, weekday);
-            totalExpense += amount * occurrences;
+            totalExpense += amount.abs() * occurrences; // 절대값 사용
           }
           else if (description.contains('매일')) {
             // 매일 거래는 해당 월의 일수만큼 더함
             int daysInMonth = endOfMonth.day;
-            totalExpense += amount * daysInMonth;
+            totalExpense += amount.abs() * daysInMonth; // 절대값 사용
           }
         }
 
