@@ -183,7 +183,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       // 변동 거래 금액 합산
       for (var transaction in variableTransactions) {
         final categoryId = transaction['category_id'] as int;
-        final amount = transaction['total_amount'] as double;
+        final amount = transaction['total_amount'].abs() as double;
 
         if (categoryExpenseMap.containsKey(categoryId)) {
           categoryExpenseMap[categoryId]!['total_amount'] =

@@ -126,6 +126,28 @@ class CategoryExpenseChart extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: color,
+                shadows: const [
+                  Shadow(
+                    offset: Offset(1.0, 1.0),
+                    blurRadius: 2.0,
+                    color: Colors.black,
+                  ),
+                  Shadow(
+                    offset: Offset(-1.0, -1.0),
+                    blurRadius: 2.0,
+                    color: Colors.black,
+                  ),
+                  Shadow(
+                    offset: Offset(1.0, -1.0),
+                    blurRadius: 2.0,
+                    color: Colors.black,
+                  ),
+                  Shadow(
+                    offset: Offset(-1.0, 1.0),
+                    blurRadius: 2.0,
+                    color: Colors.black,
+                  ),
+                ],
               ),
             ),
           ],
