@@ -12,6 +12,7 @@ abstract class TransactionLocalDataSource {
   Future<List<MonthlyExpense>> getMonthlyExpenses(int months);
   Future<List<CategoryExpense>> getCategoryExpenses();
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit);
+  Future<List<TransactionModel>> getTransactionsByDateRange(DateTime start, DateTime end);
 }
 
 class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
@@ -298,6 +299,30 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       )).toList();
     } catch (e) {
       debugPrint('최근 거래 내역 가져오기 오류: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<TransactionModel>> getTransactionsByDateRange(DateTime start, DateTime end) async {
+    try {
+      final db = await dbHelper.database;
+
+      // 날짜 형식 변환
+      final startDateStr = start.toIso8601String();
+      final endDateStr = end.toIso8601String();
+
+      // 주어진 기간 내의 모든 트랜잭션 쿼리
+      final List<Map<String, dynamic>> transactions = await db.rawQuery('''
+      SELECT *
+      FROM transaction_record
+      WHERE date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ORDER BY transaction_date DESC
+    ''', [startDateStr.substring(0, 10), endDateStr.substring(0, 10)]);
+
+      return transactions.map((json) => TransactionModel.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('날짜 범위 기준 거래 내역 가져오기 오류: $e');
       return [];
     }
   }

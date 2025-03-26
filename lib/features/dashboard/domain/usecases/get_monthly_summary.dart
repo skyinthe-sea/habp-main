@@ -6,6 +6,9 @@ class GetMonthlySummary {
 
   GetMonthlySummary(this.repository);
 
+  // lib/features/dashboard/domain/usecases/get_monthly_summary.dart
+// execute 메서드를 전체 수정
+
   Future<Map<String, dynamic>> execute() async {
     try {
       // 현재 날짜 정보
@@ -20,92 +23,73 @@ class GetMonthlySummary {
       final lastMonthYear = lastMonth.year;
       final lastMonthMonth = lastMonth.month;
 
-      // ==== 현재 달 데이터 계산 ====
-      // 1. 현재 달의 고정 거래 계산
-      final currentMonthFixedData = await _calculateFixedTransactions(currentYear, currentMonth);
-      double? currentMonthFixedIncome = currentMonthFixedData['income'];
-      double? currentMonthFixedExpense = currentMonthFixedData['expense'];
-
-      // 2. 현재 달의 변동 거래 가져오기
+      // 이번 달 데이터 계산
       final currentMonthStart = DateTime(currentYear, currentMonth, 1);
-      final currentMonthEnd = DateTime(currentYear, currentMonth + 1, 0);
-      final currentMonthVariableTransactions = await repository.getTransactionsByDateRange(
-          currentMonthStart,
-          currentMonthEnd
-      );
+      final currentMonthEnd =
+          DateTime(currentYear, currentMonth + 1, 0, 23, 59, 59);
 
-      // 3. 변동 거래 합산
+      // 지난 달 데이터 계산
+      final lastMonthStart = DateTime(lastMonthYear, lastMonthMonth, 1);
+      final lastMonthEnd =
+          DateTime(lastMonthYear, lastMonthMonth + 1, 0, 23, 59, 59);
+
+      // 1. 이번 달 거래 내역 가져오기 (모든 거래 - 고정 + 변동)
+      final currentMonthTransactions = await repository
+          .getTransactionsByDateRange(currentMonthStart, currentMonthEnd);
+
+      // 2. 지난 달 거래 내역 가져오기 (모든 거래 - 고정 + 변동)
+      final lastMonthTransactions = await repository.getTransactionsByDateRange(
+          lastMonthStart, lastMonthEnd);
+
+      // 카테고리 정보 가져오기
       final categories = await repository.getCategories();
       final categoryMap = {for (var c in categories) c.id: c};
 
-      double currentMonthVariableIncome = 0;
-      double currentMonthVariableExpense = 0;
+      // 이번 달 수입/지출 계산
+      double currentMonthIncome = 0;
+      double currentMonthExpense = 0;
 
-      for (var transaction in currentMonthVariableTransactions) {
+      for (var transaction in currentMonthTransactions) {
         final category = categoryMap[transaction.categoryId];
         if (category == null) continue;
 
-        // 고정 거래는 이미 계산했으므로 변동 거래만 계산
-        if (!_isFixedTransaction(transaction.description)) {
-          if (category.type == 'INCOME') {
-            currentMonthVariableIncome += transaction.amount;
-          } else if (category.type == 'EXPENSE') {
-            currentMonthVariableExpense += transaction.amount.abs();
-          }
+        if (category.type == 'INCOME') {
+          currentMonthIncome += transaction.amount.abs(); // 수입은 양수로 변환
+        } else if (category.type == 'EXPENSE') {
+          currentMonthExpense += transaction.amount.abs(); // 지출은 양수로 변환
         }
       }
 
-      // 4. 현재 달 총 수입/지출 계산
-      final currentMonthIncome = currentMonthFixedIncome! + currentMonthVariableIncome;
-      final currentMonthExpense = currentMonthFixedExpense! + currentMonthVariableExpense;
+      // 지난 달 수입/지출 계산
+      double lastMonthIncome = 0;
+      double lastMonthExpense = 0;
+
+      for (var transaction in lastMonthTransactions) {
+        final category = categoryMap[transaction.categoryId];
+        if (category == null) continue;
+
+        if (category.type == 'INCOME') {
+          lastMonthIncome += transaction.amount.abs(); // 수입은 양수로 변환
+        } else if (category.type == 'EXPENSE') {
+          lastMonthExpense += transaction.amount.abs(); // 지출은 양수로 변환
+        }
+      }
+
+      // 이번 달 잔액 계산
       final currentMonthBalance = currentMonthIncome - currentMonthExpense;
 
-      // ==== 지난 달 데이터 계산 ====
-      // 1. 지난 달의 고정 거래 계산
-      final lastMonthFixedData = await _calculateFixedTransactions(lastMonthYear, lastMonthMonth);
-      double? lastMonthFixedIncome = lastMonthFixedData['income'];
-      double? lastMonthFixedExpense = lastMonthFixedData['expense'];
-
-      // 2. 지난 달의 변동 거래 가져오기
-      final lastMonthStart = DateTime(lastMonthYear, lastMonthMonth, 1);
-      final lastMonthEnd = DateTime(lastMonthYear, lastMonthMonth + 1, 0);
-      final lastMonthVariableTransactions = await repository.getTransactionsByDateRange(
-          lastMonthStart,
-          lastMonthEnd
-      );
-
-      // 3. 변동 거래 합산
-      double lastMonthVariableIncome = 0;
-      double lastMonthVariableExpense = 0;
-
-      for (var transaction in lastMonthVariableTransactions) {
-        final category = categoryMap[transaction.categoryId];
-        if (category == null) continue;
-
-        // 고정 거래는 이미 계산했으므로 변동 거래만 계산
-        if (!_isFixedTransaction(transaction.description)) {
-          if (category.type == 'INCOME') {
-            lastMonthVariableIncome += transaction.amount;
-          } else if (category.type == 'EXPENSE') {
-            lastMonthVariableExpense += transaction.amount.abs();
-          }
-        }
-      }
-
-      // 4. 지난 달 총 수입/지출 계산
-      final lastMonthIncome = lastMonthFixedIncome! + lastMonthVariableIncome;
-      final lastMonthExpense = lastMonthFixedExpense! + lastMonthVariableExpense;
-
-      // ==== 증감율 계산 ====
+      // 증감율 계산
       double incomeChangePercentage = 0.0;
       double expenseChangePercentage = 0.0;
 
       if (lastMonthIncome > 0) {
-        incomeChangePercentage = ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100;
+        incomeChangePercentage =
+            ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100;
       }
 
       if (lastMonthExpense > 0) {
-        expenseChangePercentage = ((currentMonthExpense - lastMonthExpense) / lastMonthExpense) * 100;
+        expenseChangePercentage =
+            ((currentMonthExpense - lastMonthExpense) / lastMonthExpense) * 100;
       }
 
       return {
@@ -129,7 +113,8 @@ class GetMonthlySummary {
   }
 
   // 고정 거래 (매월, 매주, 매일) 계산
-  Future<Map<String, double>> _calculateFixedTransactions(int year, int month) async {
+  Future<Map<String, double>> _calculateFixedTransactions(
+      int year, int month) async {
     final transactions = await repository.getTransactions();
     final categories = await repository.getCategories();
     final categoryMap = {for (var c in categories) c.id: c};
@@ -153,10 +138,7 @@ class GetMonthlySummary {
         else if (transaction.description.contains('매주')) {
           // 해당 월에 요일이 몇 번 등장하는지 계산
           int weekdayCount = _countWeekdaysInMonth(
-              year,
-              month,
-              int.parse(transaction.transactionNum)
-          );
+              year, month, int.parse(transaction.transactionNum));
           amount = transaction.amount * weekdayCount;
         }
         // 매일 거래
