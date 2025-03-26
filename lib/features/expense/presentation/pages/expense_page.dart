@@ -195,7 +195,12 @@ class _ExpensePageState extends State<ExpensePage> with AutomaticKeepAliveClient
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  CategoryBudgetList(controller: controller),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CategoryBudgetList(controller: controller),
+                                    ]
+                                  )
                                 ],
                               ),
                             );

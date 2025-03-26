@@ -45,21 +45,21 @@ class DayTransactionsList extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('거래 추가'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () {
-                    // TODO: 거래 추가 화면으로 이동
-                    debugPrint('거래 추가 버튼 클릭 - 기능 추가 필요');
-                  },
-                ),
+                // ElevatedButton.icon(
+                //   icon: const Icon(Icons.add, size: 16),
+                //   label: const Text('거래 추가'),
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: AppColors.primary,
+                //     foregroundColor: Colors.white,
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(8),
+                //     ),
+                //   ),
+                //   onPressed: () {
+                //     // TODO: 거래 추가 화면으로 이동
+                //     debugPrint('거래 추가 버튼 클릭 - 기능 추가 필요');
+                //   },
+                // ),
               ],
             ),
           ),

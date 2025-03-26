@@ -241,13 +241,13 @@ class _AnimatedCategoryListState extends State<AnimatedCategoryList> {
                     Get.snackbar(
                       '성공',
                       '카테고리가 삭제되었습니다.',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.TOP,
                     );
                   } else {
                     Get.snackbar(
                       '오류',
                       '카테고리 삭제에 실패했습니다.',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.TOP,
                     );
                   }
                 },

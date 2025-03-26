@@ -60,7 +60,7 @@ class CategoryBudgetList extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '터치하여 다시 불러오기',
+                        '예산을 설정하여 관리해보세요.',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade500,

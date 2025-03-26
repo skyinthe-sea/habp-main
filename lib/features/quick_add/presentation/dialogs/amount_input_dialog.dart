@@ -418,7 +418,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                               Get.snackbar(
                                 '성공',
                                 '거래가 추가되었습니다',
-                                snackPosition: SnackPosition.BOTTOM,
+                                snackPosition: SnackPosition.TOP,
                                 backgroundColor: Colors.green,
                                 colorText: Colors.white,
                                 margin: const EdgeInsets.all(16),
@@ -429,7 +429,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                               Get.snackbar(
                                 '오류',
                                 '거래 추가에 실패했습니다',
-                                snackPosition: SnackPosition.BOTTOM,
+                                snackPosition: SnackPosition.TOP,
                                 backgroundColor: Colors.red,
                                 colorText: Colors.white,
                                 margin: const EdgeInsets.all(16),

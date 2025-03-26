@@ -138,13 +138,13 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                     Get.snackbar(
                       '성공',
                       '카테고리가 삭제되었습니다.',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.TOP,
                     );
                   } else {
                     Get.snackbar(
                       '오류',
                       '카테고리 삭제에 실패했습니다.',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.TOP,
                     );
                   }
                 },
@@ -232,7 +232,7 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '지출 카테고리',
+                            '카테고리(길게눌러 삭제)',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -306,42 +306,42 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                           child: Column(
                             children: [
                               const Text(
-                                '변동 지출 카테고리가 없습니다.',
+                                '지출 카테고리가 없습니다.',
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: 14,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.add, size: 16),
-                                label: const Text('카테고리 추가하기'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AddCategoryDialog(
-                                      controller: widget.controller,
-                                      onCategoryAdded: (categoryId) {
-                                        setState(() {
-                                          selectedCategoryId = categoryId;
-                                          _updateSaveButtonState();
-                                        });
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
+                              // ElevatedButton.icon(
+                              //   icon: const Icon(Icons.add, size: 16),
+                              //   label: const Text('카테고리 추가하기'),
+                              //   style: ElevatedButton.styleFrom(
+                              //     backgroundColor: AppColors.primary,
+                              //     foregroundColor: Colors.white,
+                              //     padding: const EdgeInsets.symmetric(
+                              //         horizontal: 16,
+                              //         vertical: 8
+                              //     ),
+                              //     shape: RoundedRectangleBorder(
+                              //       borderRadius: BorderRadius.circular(8),
+                              //     ),
+                              //   ),
+                              //   onPressed: () {
+                              //     showDialog(
+                              //       context: context,
+                              //       builder: (context) => AddCategoryDialog(
+                              //         controller: widget.controller,
+                              //         onCategoryAdded: (categoryId) {
+                              //           setState(() {
+                              //             selectedCategoryId = categoryId;
+                              //             _updateSaveButtonState();
+                              //           });
+                              //         },
+                              //       ),
+                              //     );
+                              //   },
+                              // ),
                             ],
                           ),
                         )
@@ -554,7 +554,7 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                           Get.snackbar(
                             '오류',
                             '유효한 금액을 입력하세요.',
-                            snackPosition: SnackPosition.BOTTOM,
+                            snackPosition: SnackPosition.TOP,
                           );
                           setState(() {
                             isLoading = false;
@@ -573,7 +573,7 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                           Get.snackbar(
                             '성공',
                             '예산이 추가되었습니다.',
-                            snackPosition: SnackPosition.BOTTOM,
+                            snackPosition: SnackPosition.TOP,
                           );
                         } else {
                           setState(() {
@@ -583,7 +583,7 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                           Get.snackbar(
                             '오류',
                             '예산 추가에 실패했습니다.',
-                            snackPosition: SnackPosition.BOTTOM,
+                            snackPosition: SnackPosition.TOP,
                           );
                         }
                       },

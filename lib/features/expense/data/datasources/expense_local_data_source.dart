@@ -210,23 +210,23 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
         );
 
         // 해당 카테고리와 관련된 거래 내역 삭제
-        await txn.delete(
-          'transaction_record',
-          where: 'category_id = ?',
-          whereArgs: [categoryId],
-        );
+        // await txn.delete(
+        //   'transaction_record',
+        //   where: 'category_id = ?',
+        //   whereArgs: [categoryId],
+        // );
 
         // 카테고리 삭제
-        final count = await txn.delete(
-          'category',
-          where: 'id = ?',
-          whereArgs: [categoryId],
-        );
+        // final count = await txn.delete(
+        //   'category',
+        //   where: 'id = ?',
+        //   whereArgs: [categoryId],
+        // );
 
         // 삭제된 행이 없으면 실패
-        if (count == 0) {
-          throw Exception('카테고리를 찾을 수 없습니다.');
-        }
+        // if (count == 0) {
+        //   throw Exception('카테고리를 찾을 수 없습니다.');
+        // }
       });
 
       return true;

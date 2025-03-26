@@ -99,7 +99,7 @@ class _QuickExpenseEntryState extends State<QuickExpenseEntry> with SingleTicker
       Get.snackbar(
         '알림',
         '카테고리를 선택해주세요',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
       return;
     }
@@ -108,7 +108,7 @@ class _QuickExpenseEntryState extends State<QuickExpenseEntry> with SingleTicker
       Get.snackbar(
         '알림',
         '금액을 입력해주세요',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
       return;
     }
@@ -119,7 +119,7 @@ class _QuickExpenseEntryState extends State<QuickExpenseEntry> with SingleTicker
         Get.snackbar(
           '알림',
           '유효한 금액을 입력해주세요',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
         );
         return;
       }
@@ -142,7 +142,7 @@ class _QuickExpenseEntryState extends State<QuickExpenseEntry> with SingleTicker
       Get.snackbar(
         '오류',
         '지출 추가 중 오류가 발생했습니다',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
       setState(() {
         isLoading = false;

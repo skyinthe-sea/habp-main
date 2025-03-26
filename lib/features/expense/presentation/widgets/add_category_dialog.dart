@@ -159,7 +159,7 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                         Get.snackbar(
                           '성공',
                           '카테고리가 추가되었습니다.',
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition: SnackPosition.TOP,
                         );
                       } else {
                         setState(() {
@@ -168,7 +168,7 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                         Get.snackbar(
                           '오류',
                           '카테고리 추가에 실패했습니다.',
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition: SnackPosition.TOP,
                         );
                       }
                     },
