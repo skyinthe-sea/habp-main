@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:habp/features/dashboard/presentation/presentation/dashboard_controller.dart';
+import '../presentation/dashboard_controller.dart';
 
 class MonthlySummaryCard extends StatelessWidget {
   final DashboardController controller;
@@ -20,11 +20,11 @@ class MonthlySummaryCard extends StatelessWidget {
           _buildSummaryCard(
             title: '이번 달 지출',
             amount: controller.monthlyExpense.value,
-            comparison: '지난달 대비 +8.2%',
-            comparisonColor: Colors.red,
-            iconData: Icons.arrow_upward_rounded,
-            iconBackgroundColor: const Color(0xFFFEE8EC),
-            iconColor: Colors.red,
+            comparison: '지난달 대비 ${controller.getPercentageSign(controller.expenseChangePercentage.value)}${controller.expenseChangePercentage.value.toStringAsFixed(1)}%',
+            comparisonColor: controller.expenseChangePercentage.value > 0 ? Colors.red : Colors.green,
+            iconData: controller.expenseChangePercentage.value > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+            iconBackgroundColor: controller.expenseChangePercentage.value > 0 ? const Color(0xFFFEE8EC) : const Color(0xFFE6F4EA),
+            iconColor: controller.expenseChangePercentage.value > 0 ? Colors.red : Colors.green,
           ),
           const SizedBox(height: 16),
 
@@ -32,19 +32,19 @@ class MonthlySummaryCard extends StatelessWidget {
           _buildSummaryCard(
             title: '이번 달 수입',
             amount: controller.monthlyIncome.value,
-            comparison: '지난달 대비 +3.5%',
-            comparisonColor: Colors.green,
-            iconData: Icons.arrow_downward_rounded,
-            iconBackgroundColor: const Color(0xFFE6F4EA),
-            iconColor: Colors.green,
+            comparison: '지난달 대비 ${controller.getPercentageSign(controller.incomeChangePercentage.value)}${controller.incomeChangePercentage.value.toStringAsFixed(1)}%',
+            comparisonColor: controller.incomeChangePercentage.value > 0 ? Colors.green : Colors.red,
+            iconData: controller.incomeChangePercentage.value > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+            iconBackgroundColor: controller.incomeChangePercentage.value > 0 ? const Color(0xFFE6F4EA) : const Color(0xFFFEE8EC),
+            iconColor: controller.incomeChangePercentage.value > 0 ? Colors.green : Colors.red,
           ),
           const SizedBox(height: 16),
 
-          // 잔액 카드
+          // 잔액 카드 (목표 대비 퍼센트 제거)
           _buildSummaryCard(
             title: '이번 달 잔액',
             amount: controller.monthlyBalance.value,
-            comparison: '목표 대비 +12.0%',
+            comparison: '', // 목표 대비 퍼센트 제거
             comparisonColor: const Color(0xFF4285F4),
             iconData: Icons.account_balance_wallet_outlined,
             iconBackgroundColor: const Color(0xFFE8F0FE),
@@ -93,20 +93,21 @@ class MonthlySummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '₩${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                  '₩${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}}',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  comparison,
-                  style: TextStyle(
-                    color: comparisonColor,
-                    fontSize: 12,
+                if (comparison.isNotEmpty)
+                  Text(
+                    comparison,
+                    style: TextStyle(
+                      color: comparisonColor,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

@@ -22,9 +22,15 @@ class DashboardController extends GetxController {
     required this.getRecentTransactions,
   });
 
+  // 기존 상태 변수
   final RxDouble monthlyIncome = 0.0.obs;
   final RxDouble monthlyExpense = 0.0.obs;
   final RxDouble monthlyBalance = 0.0.obs;
+
+  // 새로운 상태 변수 - 지난달 대비 증감율
+  final RxDouble incomeChangePercentage = 0.0.obs;
+  final RxDouble expenseChangePercentage = 0.0.obs;
+
   final RxBool isLoading = false.obs;
   final RxList<MonthlyExpense> monthlyExpenses = <MonthlyExpense>[].obs;
   final RxBool isExpenseTrendLoading = false.obs;
@@ -33,9 +39,28 @@ class DashboardController extends GetxController {
   final RxList<TransactionWithCategory> recentTransactions = <TransactionWithCategory>[].obs;
   final RxBool isRecentTransactionsLoading = false.obs;
 
+  // EventBusService 인스턴스
+  late final EventBusService _eventBusService;
+
   @override
   void onInit() {
     super.onInit();
+
+    // EventBusService 가져오기
+    _eventBusService = Get.find<EventBusService>();
+
+    // 트랜잭션 변경 이벤트 구독
+    ever(_eventBusService.transactionChanged, (_) {
+      debugPrint('거래 변경 이벤트 감지됨: 대시보드 데이터 새로고침');
+      _refreshAllData();
+    });
+
+    // 초기 데이터 로드
+    _refreshAllData();
+  }
+
+  // 모든 데이터를 새로고침하는 메서드
+  void _refreshAllData() {
     fetchMonthlySummary();
     fetchMonthlyExpensesTrend();
     fetchCategoryExpenses();
@@ -71,9 +96,17 @@ class DashboardController extends GetxController {
     isLoading.value = true;
     try {
       final result = await getMonthlySummary.execute();
+
+      // 월간 요약 정보
       monthlyIncome.value = result['income'] ?? 0.0;
       monthlyExpense.value = result['expense'] ?? 0.0;
       monthlyBalance.value = result['balance'] ?? 0.0;
+
+      // 지난달 대비 증감율
+      incomeChangePercentage.value = result['incomeChangePercentage'] ?? 0.0;
+      expenseChangePercentage.value = result['expenseChangePercentage'] ?? 0.0;
+
+      debugPrint('월간 요약 정보 로드 완료: 수입 ${monthlyIncome.value}, 지출 ${monthlyExpense.value}, 증감율(수입): ${incomeChangePercentage.value.toStringAsFixed(1)}%');
     } catch (e) {
       debugPrint('월간 요약 정보 가져오기 오류: $e');
     } finally {
@@ -91,5 +124,10 @@ class DashboardController extends GetxController {
     } finally {
       isExpenseTrendLoading.value = false;
     }
+  }
+
+  // 퍼센트 변화 부호 가져오기
+  String getPercentageSign(double value) {
+    return value >= 0 ? '+' : '';
   }
 }

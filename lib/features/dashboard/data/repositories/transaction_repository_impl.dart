@@ -36,4 +36,10 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit) async {
     return await localDataSource.getRecentTransactions(limit);
   }
+
+  @override
+  Future<List<Transaction>> getTransactionsByDateRange(DateTime start, DateTime end) {
+    // TODO: implement getTransactionsByDateRange
+    throw UnimplementedError();
+  }
 }

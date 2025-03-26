@@ -10,4 +10,5 @@ abstract class TransactionRepository {
   Future<List<MonthlyExpense>> getMonthlyExpenses(int months);
   Future<List<CategoryExpense>> getCategoryExpenses();
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit);
+  Future<List<Transaction>> getTransactionsByDateRange(DateTime start, DateTime end);
 }
