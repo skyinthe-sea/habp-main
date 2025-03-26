@@ -23,7 +23,8 @@ class ExpensePage extends StatefulWidget {
   State<ExpensePage> createState() => _ExpensePageState();
 }
 
-class _ExpensePageState extends State<ExpensePage> with AutomaticKeepAliveClientMixin {
+class _ExpensePageState extends State<ExpensePage>
+    with AutomaticKeepAliveClientMixin {
   late ExpenseController _controller;
   late Future<void> _initFuture;
   bool _isInitialized = false;
@@ -56,6 +57,17 @@ class _ExpensePageState extends State<ExpensePage> with AutomaticKeepAliveClient
   }
 
   ExpenseController _initController() {
+    // Check if controller already exists to avoid duplication on hot restart
+    if (Get.isRegistered<ExpenseController>()) {
+      final controller = Get.find<ExpenseController>();
+      // Reset any necessary state
+      controller.dataInitialized.value = false;
+      // Trigger data reload
+      controller.fetchBudgetStatus();
+      controller.fetchVariableCategories();
+      return controller;
+    }
+
     // 의존성 주입
     final dbHelper = DBHelper();
     final dataSource = ExpenseLocalDataSourceImpl(dbHelper: dbHelper);
@@ -74,8 +86,7 @@ class _ExpensePageState extends State<ExpensePage> with AutomaticKeepAliveClient
           deleteCategoryUseCase: DeleteCategory(repository),
           addExpenseUseCase: AddExpense(repository),
         ),
-        permanent: true
-    );
+        permanent: true);
   }
 
   // 초기 데이터 로드
@@ -99,7 +110,8 @@ class _ExpensePageState extends State<ExpensePage> with AutomaticKeepAliveClient
       future: _initFuture,
       builder: (context, snapshot) {
         // 초기 데이터 로드 중일 때 로딩 표시
-        if (snapshot.connectionState == ConnectionState.waiting && !_isInitialized) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !_isInitialized) {
           return Scaffold(
             backgroundColor: AppColors.background,
             appBar: AppBar(
@@ -139,7 +151,8 @@ class _ExpensePageState extends State<ExpensePage> with AutomaticKeepAliveClient
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (context) => AddBudgetDialog(controller: _controller),
+                    builder: (context) =>
+                        AddBudgetDialog(controller: _controller),
                   );
                 },
               ),
@@ -169,48 +182,60 @@ class _ExpensePageState extends State<ExpensePage> with AutomaticKeepAliveClient
                             await controller.fetchBudgetStatus();
                           },
                           child: Obx(() {
-                            return controller.isLoading.value && controller.budgetStatusList.isEmpty
-                                ? const Center(child: CircularProgressIndicator())
+                            return controller.isLoading.value &&
+                                    controller.budgetStatusList.isEmpty
+                                ? const Center(
+                                    child: CircularProgressIndicator())
                                 : SingleChildScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    '이번 달 예산 현황',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    padding: const EdgeInsets.all(16),
+                                    // Add this to ensure the ScrollView has a minimum height
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minHeight:
+                                            MediaQuery.of(context).size.height -
+                                                200, // Adjust as needed
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            '이번 달 예산 현황',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          OverallBudgetCard(
+                                              controller: controller),
+                                          const SizedBox(height: 24),
+                                          const Text(
+                                            '카테고리별 예산',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          // Wrap with SizedBox to ensure content has size even when empty
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: CategoryBudgetList(
+                                                controller: controller),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  OverallBudgetCard(controller: controller),
-                                  const SizedBox(height: 24),
-                                  const Text(
-                                    '카테고리별 예산',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      CategoryBudgetList(controller: controller),
-                                    ]
-                                  )
-                                ],
-                              ),
-                            );
+                                  );
                           }),
                         ),
                       ),
                     ],
                   );
-                }
-            ),
+                }),
           ),
         );
       },

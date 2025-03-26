@@ -212,8 +212,14 @@ class ExpenseController extends GetxController {
       );
 
       if (category != null) {
-        // 카테고리 목록 다시 불러오기
+        // First fetch the categories
         await fetchVariableCategories();
+
+        // Then also fetch budget status to ensure the UI shows the new category with its budget
+        await fetchBudgetStatus();
+
+        // Emit event to notify other screens
+        _eventBusService.emitTransactionChanged();
       }
 
       return category;

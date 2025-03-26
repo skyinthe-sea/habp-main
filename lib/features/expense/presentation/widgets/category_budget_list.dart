@@ -6,7 +6,8 @@ import '../controllers/expense_controller.dart';
 class CategoryBudgetList extends StatelessWidget {
   final ExpenseController controller;
 
-  const CategoryBudgetList({Key? key, required this.controller}) : super(key: key);
+  const CategoryBudgetList({Key? key, required this.controller})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,11 +15,22 @@ class CategoryBudgetList extends StatelessWidget {
         init: controller,
         builder: (controller) {
           return Obx(() {
-            debugPrint('CategoryBudgetList 빌드됨 - 로딩: ${controller.isLoading.value}, 항목: ${controller.budgetStatusList.length}개');
+            debugPrint(
+                'CategoryBudgetList 빌드됨 - 로딩: ${controller.isLoading.value}, 항목: ${controller.budgetStatusList.length}개');
 
-            // 예산 데이터가 비어있으면 보기 좋은 UI 표시
+            // Add this safety check for the controller state
+            if (!controller.dataInitialized.value) {
+              controller.fetchBudgetStatus();
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            // Empty state handling
             if (controller.budgetStatusList.isEmpty) {
-              // 로딩 중인 경우 로딩 인디케이터 표시
               if (controller.isLoading.value) {
                 return const Center(
                   child: Padding(
@@ -28,46 +40,43 @@ class CategoryBudgetList extends StatelessWidget {
                 );
               }
 
-              // 데이터가 없는 경우
-              return InkWell(
-                onTap: () {
-                  // 탭 시 데이터 다시 로드
-                  controller.fetchBudgetStatus();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.account_balance_wallet_outlined,
-                        size: 48,
-                        color: Colors.grey.shade400,
+              // Return a widget with a defined size for empty state
+              return Container(
+                height: 200,
+                // Explicit height prevents layout issues
+                padding: const EdgeInsets.all(24),
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet_outlined,
+                      size: 48,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '등록된 예산 정보가 없습니다.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey,
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        '등록된 예산 정보가 없습니다.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey,
-                        ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '예산을 설정하여 관리해보세요.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade500,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '예산을 설정하여 관리해보세요.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               );
             }
@@ -80,15 +89,21 @@ class CategoryBudgetList extends StatelessWidget {
                 final budgetStatus = controller.budgetStatusList[index];
 
                 // 통화 포맷팅
-                final budget = '${budgetStatus.budgetAmount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
-                final spent = '${budgetStatus.spentAmount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
-                final remaining = '${budgetStatus.remainingAmount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
+                final budget =
+                    '${budgetStatus.budgetAmount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
+                final spent =
+                    '${budgetStatus.spentAmount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
+                final remaining =
+                    '${budgetStatus.remainingAmount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
 
                 // 진행 상태에 따른 색상 결정
-                final progressPercentage = budgetStatus.progressPercentage.abs();
+                final progressPercentage =
+                    budgetStatus.progressPercentage.abs();
                 final Color progressColor = progressPercentage >= 90
                     ? Colors.red
-                    : (progressPercentage >= 70 ? Colors.orange : AppColors.primary);
+                    : (progressPercentage >= 70
+                        ? Colors.orange
+                        : AppColors.primary);
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -133,7 +148,8 @@ class CategoryBudgetList extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: progressPercentage / 100,
                           backgroundColor: Colors.grey.withOpacity(0.2),
-                          valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(progressColor),
                           minHeight: 8,
                         ),
                       ),
@@ -208,7 +224,6 @@ class CategoryBudgetList extends StatelessWidget {
               },
             );
           });
-        }
-    );
+        });
   }
 }
