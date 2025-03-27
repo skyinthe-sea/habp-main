@@ -70,7 +70,7 @@ class CalendarController extends GetxController {
   // 해당 월의 거래 내역 가져오기
   // 월별 거래 내역 가져오기
   Future<void> fetchMonthEvents(DateTime month) async {
-    print('fetchMonthEvents 호출됨: ${month.year}년 ${month.month}월');
+    // print('fetchMonthEvents 호출됨: ${month.year}년 ${month.month}월');
     isLoading.value = true;
 
     try {

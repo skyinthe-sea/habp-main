@@ -104,9 +104,9 @@ class MonthCalendar extends StatelessWidget {
                       final expense = controller.getDayExpense(date);
 
                       // 디버깅용 - 실제 데이터 확인
-                      if (income > 0 || expense > 0) {
-                        debugPrint('마커 갱신: $date, 수입: $income, 지출: $expense');
-                      }
+                      // if (income > 0 || expense > 0) {
+                      //   debugPrint('마커 갱신: $date, 수입: $income, 지출: $expense');
+                      // }
 
                       return Column(
                         mainAxisSize: MainAxisSize.min,

@@ -147,7 +147,7 @@ class RecentTransactionsList extends StatelessWidget {
 
     // 금액
     final formattedAmount = NumberFormat('#,###').format(transaction.amount.abs()).toString();
-    final isIncome = transaction.amount > 0;
+    final isIncome = transaction.categoryType == 'INCOME';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),

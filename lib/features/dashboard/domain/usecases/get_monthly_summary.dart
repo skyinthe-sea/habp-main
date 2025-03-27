@@ -23,6 +23,10 @@ class GetMonthlySummary {
       final lastMonthYear = lastMonth.year;
       final lastMonthMonth = lastMonth.month;
 
+      debugPrint('현재 날짜: $now');
+      debugPrint('이번 달: $currentYear년 $currentMonth월');
+      debugPrint('지난 달: $lastMonthYear년 $lastMonthMonth월');
+
       // 이번 달 데이터 계산
       final currentMonthStart = DateTime(currentYear, currentMonth, 1);
       final currentMonthEnd =
@@ -33,13 +37,16 @@ class GetMonthlySummary {
       final lastMonthEnd =
           DateTime(lastMonthYear, lastMonthMonth + 1, 0, 23, 59, 59);
 
-      // 1. 이번 달 거래 내역 가져오기 (모든 거래 - 고정 + 변동)
+      // 1. 이번 달 거래 내역 가져오기 (모든 거래)
       final currentMonthTransactions = await repository
           .getTransactionsByDateRange(currentMonthStart, currentMonthEnd);
 
-      // 2. 지난 달 거래 내역 가져오기 (모든 거래 - 고정 + 변동)
+      // 2. 지난 달 거래 내역 가져오기 (모든 거래)
       final lastMonthTransactions = await repository.getTransactionsByDateRange(
           lastMonthStart, lastMonthEnd);
+
+      debugPrint('이번 달 거래 수: ${currentMonthTransactions.length}');
+      debugPrint('지난 달 거래 수: ${lastMonthTransactions.length}');
 
       // 카테고리 정보 가져오기
       final categories = await repository.getCategories();
@@ -75,22 +82,49 @@ class GetMonthlySummary {
         }
       }
 
+      debugPrint('이번 달 수입: $currentMonthIncome, 지출: $currentMonthExpense');
+      debugPrint('지난 달 수입: $lastMonthIncome, 지출: $lastMonthExpense');
+
       // 이번 달 잔액 계산
       final currentMonthBalance = currentMonthIncome - currentMonthExpense;
 
-      // 증감율 계산
+      // 증감율 계산 및 소수점 한 자리로 반올림
       double incomeChangePercentage = 0.0;
       double expenseChangePercentage = 0.0;
 
+      // 예시: 지난달 10만원 → 이번달 11만원 = +10% (증가)
       if (lastMonthIncome > 0) {
+        // 정확한 증감율 계산: (이번달 - 지난달) / 지난달 * 100
         incomeChangePercentage =
             ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100;
+        // 소수점 한 자리까지 반올림
+        incomeChangePercentage =
+            double.parse(incomeChangePercentage.toStringAsFixed(1));
+        debugPrint(
+            '수입 증감율 계산: ($currentMonthIncome - $lastMonthIncome) / $lastMonthIncome * 100 = $incomeChangePercentage%');
+      } else if (currentMonthIncome > 0) {
+        // 지난 달 수입이 0이고 이번 달 수입이 있는 경우 (100% 신규 증가)
+        incomeChangePercentage = 100.0;
+        debugPrint('지난달 수입 없음(0), 이번달 처음 발생: 100% 설정');
       }
 
+      // 지출 증감율 계산 (동일한 로직)
       if (lastMonthExpense > 0) {
         expenseChangePercentage =
             ((currentMonthExpense - lastMonthExpense) / lastMonthExpense) * 100;
+        // 소수점 한 자리까지 반올림
+        expenseChangePercentage =
+            double.parse(expenseChangePercentage.toStringAsFixed(1));
+        debugPrint(
+            '지출 증감율 계산: ($currentMonthExpense - $lastMonthExpense) / $lastMonthExpense * 100 = $expenseChangePercentage%');
+      } else if (currentMonthExpense > 0) {
+        // 지난 달 지출이 0이고 이번 달 지출이 있는 경우 (100% 신규 증가)
+        expenseChangePercentage = 100.0;
+        debugPrint('지난달 지출 없음(0), 이번달 처음 발생: 100% 설정');
       }
+
+      debugPrint('수입 증감율: $incomeChangePercentage%');
+      debugPrint('지출 증감율: $expenseChangePercentage%');
 
       return {
         'income': currentMonthIncome,

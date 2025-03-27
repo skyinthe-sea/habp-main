@@ -41,6 +41,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final expensesTrendUseCase = GetMonthlyExpensesTrend(repository);
     final categoryExpensesUseCase = GetCategoryExpenses(repository);
     final recentTransactionsUseCase = GetRecentTransactions(repository);
+    dbHelper.printDatabaseInfo();
 
     _controller = DashboardController(
       getMonthlySummary: summaryUseCase,
