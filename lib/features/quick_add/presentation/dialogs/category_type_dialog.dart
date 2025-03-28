@@ -126,20 +126,23 @@ class CategoryTypeDialog extends StatelessWidget {
           context: context,
           pageBuilder: (_, __, ___) => const CategorySelectionDialog(),
           transitionBuilder: (context, animation, secondaryAnimation, child) {
-            const begin = Offset(1.0, 0.0);
-            const end = Offset.zero;
-            final tween = Tween(begin: begin, end: end);
-            final offsetAnimation = animation.drive(tween);
+            // 풍선 터지는 효과를 위한 커브 설정
+            final curve = CurvedAnimation(
+              parent: animation,
+              curve: Curves.elasticOut, // 가장 중요한 설정! 풍선 튕김 효과
+            );
 
-            return SlideTransition(
-              position: offsetAnimation,
+            // 크기 애니메이션을 적용
+            return ScaleTransition(
+              scale: curve, // elasticOut 커브를 적용
               child: FadeTransition(
                 opacity: animation,
                 child: child,
               ),
             );
           },
-          transitionDuration: const Duration(milliseconds: 250),
+          // 매우 빠른 애니메이션을 위해 시간 단축
+          transitionDuration: const Duration(milliseconds: 150),
           barrierDismissible: true,
           barrierLabel: '',
           barrierColor: Colors.black.withOpacity(0.5),
