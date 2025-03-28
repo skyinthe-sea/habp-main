@@ -1,4 +1,4 @@
-// lib/features/quick_add/presentation/dialogs/category_type_dialog.dart
+// lib/features/quick_add/presentation/dialogs/category_type_dialog.dart 파일 수정
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,7 +7,7 @@ import '../controllers/quick_add_controller.dart';
 import 'category_selection_dialog.dart';
 
 /// First dialog in the quick add flow
-/// Allows selecting between Income, Expense, or Finance
+/// Allows selecting between Income and Expense
 class CategoryTypeDialog extends StatelessWidget {
   const CategoryTypeDialog({Key? key}) : super(key: key);
 
@@ -23,7 +23,8 @@ class CategoryTypeDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        // 패딩 값을 줄여서 오버플로우 문제 해결
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -40,7 +41,7 @@ class CategoryTypeDialog extends StatelessWidget {
           children: [
             // Dialog title
             const Padding(
-              padding: EdgeInsets.only(bottom: 20),
+              padding: EdgeInsets.only(bottom: 10),
               child: Text(
                 '추가하기',
                 style: TextStyle(
@@ -63,41 +64,40 @@ class CategoryTypeDialog extends StatelessWidget {
               ),
             ),
 
-            // Three buttons for transaction types
-            const SizedBox(height: 10),
+            // 소득/지출 버튼을 가로로 배치
+            Row(
+              children: [
+                // 소득 버튼 - 좌측 배치, 확장
+                Expanded(
+                  child: _buildTypeButton(
+                    context: context,
+                    icon: Icons.arrow_downward_rounded,
+                    label: '소득',
+                    color: AppColors.primary, // 메인 색상으로 통일
+                    type: 'INCOME',
+                    controller: controller,
+                    backgroundColor: const Color(0xFFEDF7ED), // 연한 배경색
+                  ),
+                ),
 
-            _buildTypeButton(
-              context: context,
-              icon: Icons.arrow_downward_rounded,
-              label: '소득',
-              color: Colors.green.shade600,
-              type: 'INCOME',
-              controller: controller,
+                const SizedBox(width: 10), // 간격 줄임
+
+                // 지출 버튼 - 우측 배치, 확장
+                Expanded(
+                  child: _buildTypeButton(
+                    context: context,
+                    icon: Icons.arrow_upward_rounded,
+                    label: '지출',
+                    color: AppColors.primary, // 메인 색상으로 통일
+                    type: 'EXPENSE',
+                    controller: controller,
+                    backgroundColor: const Color(0xFFFCEEF0), // 연한 배경색
+                  ),
+                ),
+              ],
             ),
 
-            const SizedBox(height: 12),
-
-            _buildTypeButton(
-              context: context,
-              icon: Icons.arrow_upward_rounded,
-              label: '지출',
-              color: Colors.red.shade600,
-              type: 'EXPENSE',
-              controller: controller,
-            ),
-
-            const SizedBox(height: 12),
-
-            _buildTypeButton(
-              context: context,
-              icon: Icons.account_balance_wallet_outlined,
-              label: '금융',
-              color: Colors.blue.shade600,
-              type: 'FINANCE',
-              controller: controller,
-            ),
-
-            const SizedBox(height: 20),
+            const SizedBox(height: 10), // 하단 여백 감소
           ],
         ),
       ),
@@ -112,6 +112,7 @@ class CategoryTypeDialog extends StatelessWidget {
     required Color color,
     required String type,
     required QuickAddController controller,
+    required Color backgroundColor,
   }) {
     return InkWell(
       onTap: () {
@@ -129,19 +130,18 @@ class CategoryTypeDialog extends StatelessWidget {
             // 풍선 터지는 효과를 위한 커브 설정
             final curve = CurvedAnimation(
               parent: animation,
-              curve: Curves.elasticOut, // 가장 중요한 설정! 풍선 튕김 효과
+              curve: Curves.elasticOut, // 풍선 튕김 효과
             );
 
             // 크기 애니메이션을 적용
             return ScaleTransition(
-              scale: curve, // elasticOut 커브를 적용
+              scale: curve,
               child: FadeTransition(
                 opacity: animation,
                 child: child,
               ),
             );
           },
-          // 매우 빠른 애니메이션을 위해 시간 단축
           transitionDuration: const Duration(milliseconds: 150),
           barrierDismissible: true,
           barrierLabel: '',
@@ -150,22 +150,24 @@ class CategoryTypeDialog extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        // 높이 감소 - 오버플로우 방지
+        height: 80,
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color),
-            const SizedBox(width: 10),
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
