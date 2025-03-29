@@ -8,7 +8,8 @@ import '../presentation/dashboard_controller.dart';
 class RecentTransactionsList extends StatelessWidget {
   final DashboardController controller;
 
-  const RecentTransactionsList({Key? key, required this.controller}) : super(key: key);
+  const RecentTransactionsList({Key? key, required this.controller})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +39,7 @@ class RecentTransactionsList extends StatelessWidget {
                 ),
                 GestureDetector(
                   onTap: () {
-                    // TODO: 모든 거래 내역을 보여주는 페이지로 이동
-                    debugPrint('모두 보기 버튼 클릭 - 기능 추가 필요');
+                    _showAllTransactionsDialog(context);
                   },
                   child: const Text(
                     '모두 보기 →',
@@ -137,6 +137,155 @@ class RecentTransactionsList extends StatelessWidget {
     });
   }
 
+  // Add this method to the RecentTransactionsList class in
+// lib/features/dashboard/presentation/widgets/recent_transactions_list.dart
+
+  Future<void> _showAllTransactionsDialog(BuildContext context) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: 100,
+          height: 100,
+          padding: const EdgeInsets.all(16),
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+      ),
+    );
+
+    // Fetch transactions for current month
+    final transactions = await controller.getAllCurrentMonthTransactions();
+
+    // Close loading dialog
+    if (context.mounted) Navigator.of(context).pop();
+
+    if (!context.mounted) return;
+
+    // Show transactions dialog
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: double.maxFinite,
+          height:
+              MediaQuery.of(context).size.height * 0.7, // 70% of screen height
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Dialog header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '이번 달 전체 거래 내역',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Column headers
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '날짜',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        '내용',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '카테고리',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '금액',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+
+              // Transaction list
+              Expanded(
+                child: transactions.isEmpty
+                    ? const Center(
+                        child: Text(
+                          '거래 내역이 없습니다',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        itemCount: transactions.length,
+                        separatorBuilder: (context, index) =>
+                            const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          return _buildTransactionItem(transactions[index]);
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTransactionItem(TransactionWithCategory transaction) {
     // 날짜 포맷팅
     final dateFormat = DateFormat('M월 d일');
@@ -146,7 +295,8 @@ class RecentTransactionsList extends StatelessWidget {
     final categoryColor = _getCategoryColor(transaction.categoryType);
 
     // 금액
-    final formattedAmount = NumberFormat('#,###').format(transaction.amount.abs()).toString();
+    final formattedAmount =
+        NumberFormat('#,###').format(transaction.amount.abs()).toString();
     final isIncome = transaction.categoryType == 'INCOME';
 
     return Padding(

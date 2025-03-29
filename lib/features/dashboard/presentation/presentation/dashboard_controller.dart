@@ -67,6 +67,33 @@ class DashboardController extends GetxController {
     fetchRecentTransactions();
   }
 
+  Future<List<TransactionWithCategory>> getAllCurrentMonthTransactions() async {
+    try {
+      // Set loading state
+      isRecentTransactionsLoading.value = true;
+
+      // Get current month date range
+      final now = DateTime.now();
+      final firstDayOfMonth = DateTime(now.year, now.month, 1);
+
+      // Get all transactions with a large limit
+      final allTransactions = await getRecentTransactions.execute(1000); // Using a large limit
+
+      // Filter for current month only
+      final currentMonthTransactions = allTransactions
+          .where((tx) => tx.transactionDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))))
+          .toList();
+
+      debugPrint('이번 달 전체 거래 내역 개수: ${currentMonthTransactions.length}');
+      return currentMonthTransactions;
+    } catch (e) {
+      debugPrint('이번 달 전체 거래 내역 가져오기 오류: $e');
+      return [];
+    } finally {
+      isRecentTransactionsLoading.value = false;
+    }
+  }
+
   Future<void> fetchRecentTransactions() async {
     isRecentTransactionsLoading.value = true;
     try {
