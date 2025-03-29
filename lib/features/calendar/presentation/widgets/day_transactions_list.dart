@@ -23,6 +23,13 @@ class DayTransactionsList extends StatelessWidget {
       // 선택된 날짜의 포맷팅
       final formattedDate = DateFormat('yyyy년 M월 d일').format(selectedDay);
 
+      // 순 잔액 계산 (소득 - 지출)
+      final netBalance = summary.income - summary.expense;
+      final isPositive = netBalance >= 0;
+      final netBalanceStr = isPositive
+          ? '+${NumberFormat('#,###').format(netBalance.abs().toInt())}원'
+          : '-${NumberFormat('#,###').format(netBalance.abs().toInt())}원';
+
       // 로딩 상태 확인
       if (controller.isLoading.value) {
         return const Center(
@@ -32,7 +39,7 @@ class DayTransactionsList extends StatelessWidget {
 
       return Column(
         children: [
-          // 헤더: 날짜 및 버튼
+          // 헤더: 날짜 및 순 잔액
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Row(
@@ -45,21 +52,16 @@ class DayTransactionsList extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                // ElevatedButton.icon(
-                //   icon: const Icon(Icons.add, size: 16),
-                //   label: const Text('거래 추가'),
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: AppColors.primary,
-                //     foregroundColor: Colors.white,
-                //     shape: RoundedRectangleBorder(
-                //       borderRadius: BorderRadius.circular(8),
-                //     ),
-                //   ),
-                //   onPressed: () {
-                //     // TODO: 거래 추가 화면으로 이동
-                //     debugPrint('거래 추가 버튼 클릭 - 기능 추가 필요');
-                //   },
-                // ),
+                // 순 잔액 표시 (소득과 지출이 모두 있는 경우에만)
+                if (summary.income > 0 && summary.expense > 0)
+                  Text(
+                    netBalanceStr,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isPositive ? Colors.green[600] : Colors.red[600],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -67,31 +69,77 @@ class DayTransactionsList extends StatelessWidget {
 
           // 요약 카드 (총 지출/수입)
           if (summary.expense > 0 || summary.income > 0)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  const Text(
-                    '지출',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.w500,
+                  // 소득 섹션 (소득이 있는 경우 표시)
+                  if (summary.income > 0)
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        margin: summary.expense > 0 ? const EdgeInsets.only(right: 4) : EdgeInsets.zero,
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              '소득 ',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '+${NumberFormat('#,###').format(summary.income.toInt())}원',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '-${NumberFormat('#,###').format(summary.expense.toInt())}원',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
+
+                  // 지출 섹션 (지출이 있는 경우 표시)
+                  if (summary.expense > 0)
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        margin: summary.income > 0 ? const EdgeInsets.only(left: 4) : EdgeInsets.zero,
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              '지출 ',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '-${NumberFormat('#,###').format(summary.expense.toInt())}원',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

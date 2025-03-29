@@ -186,7 +186,7 @@ class _PageContent1AlertState extends State<PageContent2Alert>
           incomeType: _selectedIncomeType,
           frequency: _selectedFrequency,
           day: _selectedDay,
-          amount: amount.toDouble(), // 데이터베이스에는 double로 저장
+          amount: amount.toDouble() * -1, // 데이터베이스에는 double로 저장
           type: ExpenseCategoryType.EXPENSE,
         );
 
