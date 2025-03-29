@@ -232,13 +232,13 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       // 전체 지출 합계 계산
       double totalExpense = 0;
       categoryExpenseMap.forEach((_, data) {
-        totalExpense += data['total_amount'] as double;
+        totalExpense += data['total_amount'].abs() as double;
       });
 
       // 카테고리별 지출 비율 계산 및 금액이 있는 것만 반환
       List<CategoryExpense> categoryExpenses = [];
       categoryExpenseMap.forEach((_, data) {
-        final amount = data['total_amount'] as double;
+        final amount = data['total_amount'].abs() as double;
 
         // 금액이 있는 카테고리만 추가
         if (amount > 0) {
