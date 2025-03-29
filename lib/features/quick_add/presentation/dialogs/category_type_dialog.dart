@@ -1,4 +1,4 @@
-// lib/features/quick_add/presentation/dialogs/category_type_dialog.dart 파일 수정
+// lib/features/quick_add/presentation/dialogs/category_type_dialog.dart
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -43,7 +43,7 @@ class CategoryTypeDialog extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.only(bottom: 10),
               child: Text(
-                '추가하기',
+                '어떤 거래 입니까?',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -73,7 +73,7 @@ class CategoryTypeDialog extends StatelessWidget {
                     context: context,
                     icon: Icons.arrow_downward_rounded,
                     label: '소득',
-                    color: AppColors.primary, // 메인 색상으로 통일
+                    color: Colors.green[600]!,
                     type: 'INCOME',
                     controller: controller,
                     backgroundColor: const Color(0xFFEDF7ED), // 연한 배경색
@@ -88,7 +88,7 @@ class CategoryTypeDialog extends StatelessWidget {
                     context: context,
                     icon: Icons.arrow_upward_rounded,
                     label: '지출',
-                    color: AppColors.primary, // 메인 색상으로 통일
+                    color: AppColors.primary,
                     type: 'EXPENSE',
                     controller: controller,
                     backgroundColor: const Color(0xFFFCEEF0), // 연한 배경색
@@ -150,8 +150,8 @@ class CategoryTypeDialog extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        // 높이 감소 - 오버플로우 방지
-        height: 80,
+        // 높이 조정 - 오버플로우 방지하면서 버튼 크기 키움
+        height: 100, // 80에서 100으로 증가
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: backgroundColor,
@@ -161,13 +161,13 @@ class CategoryTypeDialog extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 28),
+            Icon(icon, color: color, size: 36), // 아이콘 크기 증가
             const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 18,
+                fontSize: 20, // 글자 크기 증가
                 fontWeight: FontWeight.bold,
               ),
             ),

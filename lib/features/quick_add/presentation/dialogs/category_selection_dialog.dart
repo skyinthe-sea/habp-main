@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../controllers/quick_add_controller.dart';
+import 'add_category_dialog.dart';
 import 'category_type_dialog.dart';
 import 'date_selection_dialog.dart';
 
-/// Second dialog in the quick add flow
-/// Shows scrollable list of categories to select from
 class CategorySelectionDialog extends StatelessWidget {
   const CategorySelectionDialog({Key? key}) : super(key: key);
 
@@ -60,22 +59,19 @@ class CategorySelectionDialog extends StatelessWidget {
                       context: context,
                       pageBuilder: (_, __, ___) => const CategoryTypeDialog(),
                       transitionBuilder: (context, animation, secondaryAnimation, child) {
-                        // 풍선 터지는 효과를 위한 커브 설정
                         final curve = CurvedAnimation(
                           parent: animation,
-                          curve: Curves.elasticOut, // 가장 중요한 설정! 풍선 튕김 효과
+                          curve: Curves.elasticOut,
                         );
 
-                        // 크기 애니메이션을 적용
                         return ScaleTransition(
-                          scale: curve, // elasticOut 커브를 적용
+                          scale: curve,
                           child: FadeTransition(
                             opacity: animation,
                             child: child,
                           ),
                         );
                       },
-                      // 매우 빠른 애니메이션을 위해 시간 단축
                       transitionDuration: const Duration(milliseconds: 150),
                       barrierDismissible: true,
                       barrierLabel: '',
@@ -89,7 +85,51 @@ class CategorySelectionDialog extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 20),
+            // Add category button
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: GestureDetector(
+                onTap: () {
+                  // 카테고리 추가 다이얼로그 표시
+                  showDialog(
+                    context: context,
+                    builder: (context) => AddCategoryDialog(
+                      controller: controller,
+                      // 콜백 제거 또는 null로 설정하여 자동 진행하지 않도록 함
+                      // onCategoryAdded: (categoryId, categoryName) { ... },
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${_getTypeLabel(controller.transaction.value.categoryType)} 카테고리 추가',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 15),
 
             // Categories list
             Obx(() {
@@ -116,7 +156,6 @@ class CategorySelectionDialog extends StatelessWidget {
 
               return Container(
                 constraints: BoxConstraints(
-                  // Limit height to ensure dialog doesn't overflow
                   maxHeight: MediaQuery.of(context).size.height * 0.4,
                 ),
                 child: GridView.builder(
@@ -146,7 +185,6 @@ class CategorySelectionDialog extends StatelessWidget {
     );
   }
 
-  /// Builds an individual category selection item
   Widget _buildCategoryItem({
     required BuildContext context,
     required int categoryId,
@@ -164,24 +202,21 @@ class CategorySelectionDialog extends StatelessWidget {
         // Show date selection dialog with animation
         showGeneralDialog(
           context: context,
-          pageBuilder: (_, __, ___) => const DateSelectionDialog(), // 다음 다이얼로그 컴포넌트
+          pageBuilder: (_, __, ___) => const DateSelectionDialog(),
           transitionBuilder: (context, animation, secondaryAnimation, child) {
-            // 풍선 터지는 효과를 위한 커브 설정
             final curve = CurvedAnimation(
               parent: animation,
-              curve: Curves.elasticOut, // 가장 중요한 설정! 풍선 튕김 효과
+              curve: Curves.elasticOut,
             );
 
-            // 크기 애니메이션을 적용
             return ScaleTransition(
-              scale: curve, // elasticOut 커브를 적용
+              scale: curve,
               child: FadeTransition(
                 opacity: animation,
                 child: child,
               ),
             );
           },
-          // 매우 빠른 애니메이션을 위해 시간 단축
           transitionDuration: const Duration(milliseconds: 150),
           barrierDismissible: true,
           barrierLabel: '',
@@ -212,7 +247,6 @@ class CategorySelectionDialog extends StatelessWidget {
     );
   }
 
-  /// Returns a human-readable label for the transaction type
   String _getTypeLabel(String type) {
     switch (type) {
       case 'INCOME':

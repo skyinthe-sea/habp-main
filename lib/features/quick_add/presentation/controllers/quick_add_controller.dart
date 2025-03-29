@@ -141,4 +141,76 @@ class QuickAddController extends GetxController {
     return transaction.value.categoryId != null &&
         transaction.value.amount > 0;
   }
+
+  // 카테고리 추가 메서드
+  Future<CategoryModel?> addCategory({
+    required String name,
+    required String type,
+    required int isFixed,
+  }) async {
+    isLoading.value = true;
+
+    try {
+      final db = await _dbHelper.database;
+      final now = DateTime.now().toIso8601String();
+
+      // 이미 동일한 이름의 카테고리가 있는지 확인
+      final existingCategory = await db.query(
+        'category',
+        where: 'name = ? AND type = ?',
+        whereArgs: [name, type],
+        limit: 1,
+      );
+
+      if (existingCategory.isNotEmpty) {
+        // 이미 존재하는 카테고리가 있으면 그것을 반환
+        final category = existingCategory.first;
+        return CategoryModel(
+          id: category['id'] as int,
+          name: category['name'] as String,
+          type: category['type'] as String,
+          isFixed: category['is_fixed'] as int,
+        );
+      }
+
+      // 새 카테고리 추가
+      final id = await db.insert('category', {
+        'name': name,
+        'type': type,
+        'is_fixed': isFixed,
+        'created_at': now,
+        'updated_at': now,
+      });
+
+      // 카테고리 목록 갱신
+      await loadCategoriesForType(type);
+
+      return CategoryModel(
+        id: id,
+        name: name,
+        type: type,
+        isFixed: isFixed,
+      );
+    } catch (e) {
+      debugPrint('카테고리 추가 중 오류: $e');
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}
+
+// 카테고리 모델 클래스 (필요한 경우)
+class CategoryModel {
+  final int id;
+  final String name;
+  final String type;
+  final int isFixed;
+
+  CategoryModel({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.isFixed,
+  });
 }
