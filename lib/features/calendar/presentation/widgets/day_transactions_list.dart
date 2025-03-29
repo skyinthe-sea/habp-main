@@ -3,14 +3,17 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../controllers/calendar_controller.dart';
+import '../controllers/calendar_filter_controller.dart';
 import '../../domain/entities/calendar_transaction.dart';
 
 class DayTransactionsList extends StatelessWidget {
   final CalendarController controller;
+  final CalendarFilterController filterController;
 
   const DayTransactionsList({
     Key? key,
     required this.controller,
+    required this.filterController,
   }) : super(key: key);
 
   @override
@@ -18,13 +21,31 @@ class DayTransactionsList extends StatelessWidget {
     return Obx(() {
       final selectedDay = controller.selectedDay.value;
       final summary = controller.selectedDaySummary.value;
-      final transactions = summary.transactions;
+
+      // 필터에 맞는 거래만 가져오기
+      final transactions = summary.transactions.where((transaction) =>
+          filterController.matchesFilter(
+              transaction.categoryType,
+              transaction.categoryId
+          )
+      ).toList();
+
+      // 필터링된 수입/지출 계산
+      double filteredIncome = 0;
+      double filteredExpense = 0;
+      for (var transaction in transactions) {
+        if (transaction.categoryType == 'INCOME') {
+          filteredIncome += transaction.amount;
+        } else if (transaction.categoryType == 'EXPENSE') {
+          filteredExpense += transaction.amount.abs();
+        }
+      }
 
       // 선택된 날짜의 포맷팅
       final formattedDate = DateFormat('yyyy년 M월 d일').format(selectedDay);
 
       // 순 잔액 계산 (소득 - 지출)
-      final netBalance = summary.income - summary.expense;
+      final netBalance = filteredIncome - filteredExpense;
       final isPositive = netBalance >= 0;
       final netBalanceStr = isPositive
           ? '+${NumberFormat('#,###').format(netBalance.abs().toInt())}원'
@@ -37,6 +58,26 @@ class DayTransactionsList extends StatelessWidget {
         );
       }
 
+      // 필터 상태 표시를 위한 문자열
+      String filterStatusText = '';
+      final currentFilter = filterController.currentFilter.value;
+      if (currentFilter.categoryType != null || currentFilter.selectedCategoryIds.isNotEmpty) {
+        if (currentFilter.categoryType != null) {
+          final filterName = currentFilter.categoryType == 'INCOME'
+              ? '소득'
+              : (currentFilter.categoryType == 'EXPENSE' ? '지출' : '금융');
+          filterStatusText = filterName;
+
+          if (currentFilter.selectedCategoryIds.isNotEmpty) {
+            filterStatusText += ' (${currentFilter.selectedCategoryIds.length}개 카테고리)';
+          }
+        } else if (currentFilter.selectedCategoryIds.isNotEmpty) {
+          filterStatusText = '${currentFilter.selectedCategoryIds.length}개 카테고리';
+        }
+      } else {
+        filterStatusText = '전체';
+      }
+
       return Column(
         children: [
           // 헤더: 날짜 및 순 잔액
@@ -45,15 +86,39 @@ class DayTransactionsList extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '$formattedDate 거래 내역',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$formattedDate 거래 내역',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // 필터 상태 표시
+                    Row(
+                      children: [
+                        Icon(
+                            Icons.filter_list,
+                            size: 14,
+                            color: Colors.grey[600]
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          filterStatusText,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 // 순 잔액 표시 (소득과 지출이 모두 있는 경우에만)
-                if (summary.income > 0 && summary.expense > 0)
+                if (filteredIncome > 0 && filteredExpense > 0)
                   Text(
                     netBalanceStr,
                     style: TextStyle(
@@ -68,18 +133,18 @@ class DayTransactionsList extends StatelessWidget {
           const SizedBox(height: 16),
 
           // 요약 카드 (총 지출/수입)
-          if (summary.expense > 0 || summary.income > 0)
+          if (filteredExpense > 0 || filteredIncome > 0)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   // 소득 섹션 (소득이 있는 경우 표시)
-                  if (summary.income > 0)
+                  if (filteredIncome > 0)
                     Expanded(
                       flex: 1,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        margin: summary.expense > 0 ? const EdgeInsets.only(right: 4) : EdgeInsets.zero,
+                        margin: filteredExpense > 0 ? const EdgeInsets.only(right: 4) : EdgeInsets.zero,
                         decoration: BoxDecoration(
                           color: Colors.green.shade50,
                           borderRadius: BorderRadius.circular(12),
@@ -95,7 +160,7 @@ class DayTransactionsList extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '+${NumberFormat('#,###').format(summary.income.toInt())}원',
+                              '+${NumberFormat('#,###').format(filteredIncome.toInt())}원',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -108,12 +173,12 @@ class DayTransactionsList extends StatelessWidget {
                     ),
 
                   // 지출 섹션 (지출이 있는 경우 표시)
-                  if (summary.expense > 0)
+                  if (filteredExpense > 0)
                     Expanded(
                       flex: 1,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        margin: summary.income > 0 ? const EdgeInsets.only(left: 4) : EdgeInsets.zero,
+                        margin: filteredIncome > 0 ? const EdgeInsets.only(left: 4) : EdgeInsets.zero,
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
                           borderRadius: BorderRadius.circular(12),
@@ -129,7 +194,7 @@ class DayTransactionsList extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '-${NumberFormat('#,###').format(summary.expense.toInt())}원',
+                              '-${NumberFormat('#,###').format(filteredExpense.toInt())}원',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -149,12 +214,30 @@ class DayTransactionsList extends StatelessWidget {
           Expanded(
             child: transactions.isEmpty
                 ? Center(
-              child: Text(
-                '날짜를 선택하면 해당 날짜의 거래 내역이 표시됩니다.',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '표시할 거래 내역이 없습니다.',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (filterController.currentFilter.value.categoryType != null ||
+                      filterController.currentFilter.value.selectedCategoryIds.isNotEmpty)
+                    TextButton(
+                      onPressed: filterController.resetFilter,
+                      child: const Text('필터 초기화하기'),
+                    ),
+                ],
               ),
             )
                 : ListView.separated(

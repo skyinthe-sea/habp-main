@@ -7,8 +7,11 @@ import '../../data/repositories/calendar_repository_impl.dart';
 import '../../domain/usecases/get_month_transactions.dart';
 import '../../domain/usecases/get_day_summary.dart';
 import '../controllers/calendar_controller.dart';
+import '../controllers/calendar_filter_controller.dart';
 import '../widgets/month_calendar.dart';
 import '../widgets/day_transactions_list.dart';
+import '../widgets/filter_chips.dart';
+import '../widgets/filter_modal.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({Key? key}) : super(key: key);
@@ -19,6 +22,7 @@ class CalendarPage extends StatefulWidget {
 
 class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClientMixin {
   late CalendarController _controller;
+  late CalendarFilterController _filterController;
   late Future<void> _initFuture;
 
   @override
@@ -27,9 +31,21 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
   @override
   void initState() {
     super.initState();
+    _filterController = _initFilterController();
     _controller = _initController();
     // 데이터 로드가 완료된 후에만 화면을 그리도록 Future 생성
     _initFuture = _loadInitialData();
+  }
+
+  CalendarFilterController _initFilterController() {
+    // 필터 컨트롤러 초기화
+    final dbHelper = DBHelper();
+    return Get.put(
+        CalendarFilterController(
+          dbHelper: dbHelper,
+        ),
+        permanent: true
+    );
   }
 
   CalendarController _initController() {
@@ -45,6 +61,7 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
         CalendarController(
           getMonthTransactions: getMonthTransactionsUseCase,
           getDaySummary: getDaySummaryUseCase,
+          filterController: _filterController, // 필터 컨트롤러 연결
         ),
         permanent: true
     );
@@ -128,40 +145,62 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
             ],
           ),
           body: SafeArea(
-            child: GetBuilder<CalendarController>(
-                init: _controller,
-                builder: (controller) {
-                  return Column(
-                    children: [
-                      // 월간 캘린더 (스크롤되지 않는 고정 영역)
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: MonthCalendar(controller: controller),
-                      ),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    // 필터 칩 영역 추가
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      child: FilterChips(controller: _filterController),
+                    ),
 
-                      // 거래 내역 (스크롤 가능한 영역)
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(16),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, -2),
-                              ),
-                            ],
+                    // 월간 캘린더 (스크롤되지 않는 고정 영역)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: MonthCalendar(controller: _controller),
+                    ),
+
+                    // 거래 내역 (스크롤 가능한 영역)
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16),
                           ),
-                          child: DayTransactionsList(controller: controller),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, -2),
+                            ),
+                          ],
+                        ),
+                        child: DayTransactionsList(
+                          controller: _controller,
+                          filterController: _filterController,
                         ),
                       ),
-                    ],
-                  );
-                }
+                    ),
+                  ],
+                ),
+
+                // 필터 버튼 (FAB)
+                // Positioned(
+                //   right: 16,
+                //   bottom: 16,
+                //   child: FloatingActionButton(
+                //     onPressed: _filterController.openFilterModal,
+                //     backgroundColor: AppColors.primary,
+                //     child: const Icon(Icons.filter_alt),
+                //   ),
+                // ),
+
+                // 필터 모달
+                FilterModal(controller: _filterController),
+              ],
             ),
           ),
         );

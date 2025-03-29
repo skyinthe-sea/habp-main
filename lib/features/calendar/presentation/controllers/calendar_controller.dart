@@ -6,14 +6,18 @@ import '../../domain/entities/calendar_transaction.dart';
 import '../../domain/entities/day_summary.dart';
 import '../../domain/usecases/get_month_transactions.dart';
 import '../../domain/usecases/get_day_summary.dart';
+import 'calendar_filter_controller.dart';
 
 class CalendarController extends GetxController {
+
   final GetMonthTransactions getMonthTransactions;
   final GetDaySummary getDaySummary;
+  final CalendarFilterController filterController;
 
   CalendarController({
     required this.getMonthTransactions,
     required this.getDaySummary,
+    required this.filterController, // 필터 컨트롤러 추가
   });
 
   // 캘린더 관련 상태
@@ -40,6 +44,13 @@ class CalendarController extends GetxController {
     // 트랜잭션 변경 이벤트 구독
     ever(_eventBusService.transactionChanged, (_) {
       debugPrint('거래 변경 이벤트 감지됨: 캘린더 데이터 새로고침');
+      fetchMonthEvents(focusedDay.value);
+      fetchDaySummary(selectedDay.value);
+    });
+
+    // 필터 변경 이벤트 구독
+    ever(filterController.filterChanged, (_) {
+      debugPrint('필터 변경 이벤트 감지됨: 캘린더 데이터 필터링');
       fetchMonthEvents(focusedDay.value);
       fetchDaySummary(selectedDay.value);
     });
@@ -114,14 +125,22 @@ class CalendarController extends GetxController {
     }
   }
 
-  // 해당 날짜에 이벤트가 있는지 확인
+  // 해당 날짜에 이벤트가 있는지 확인 (필터링 적용)
   List<CalendarTransaction> getEventsForDay(DateTime day) {
     // 날짜만 비교하기 위해 시간 정보 제거
     final normalizedDay = DateTime(day.year, day.month, day.day);
-    return events[normalizedDay] ?? [];
+    final dayEvents = events[normalizedDay] ?? [];
+
+    // 필터링 적용
+    return dayEvents.where((transaction) =>
+        filterController.matchesFilter(
+            transaction.categoryType,
+            transaction.categoryId
+        )
+    ).toList();
   }
 
-  // 해당 날짜의 수입 합계
+  // 해당 날짜의 수입 합계 (필터링 적용)
   double getDayIncome(DateTime day) {
     final transactions = getEventsForDay(day);
     double income = 0;
@@ -133,7 +152,7 @@ class CalendarController extends GetxController {
     return income;
   }
 
-  // 해당 날짜의 지출 합계
+  // 해당 날짜의 지출 합계 (필터링 적용)
   double getDayExpense(DateTime day) {
     final transactions = getEventsForDay(day);
     double expense = 0;
