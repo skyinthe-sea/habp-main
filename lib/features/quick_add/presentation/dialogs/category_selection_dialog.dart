@@ -58,7 +58,8 @@ class CategorySelectionDialog extends StatelessWidget {
                     showGeneralDialog(
                       context: context,
                       pageBuilder: (_, __, ___) => const CategoryTypeDialog(),
-                      transitionBuilder: (context, animation, secondaryAnimation, child) {
+                      transitionBuilder:
+                          (context, animation, secondaryAnimation, child) {
                         final curve = CurvedAnimation(
                           parent: animation,
                           curve: Curves.elasticOut,
@@ -101,7 +102,8 @@ class CategorySelectionDialog extends StatelessWidget {
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -126,6 +128,31 @@ class CategorySelectionDialog extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+            ),
+
+            // 카테고리 삭제 안내 문구
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '카테고리를 길게 누르면 삭제할 수 있습니다.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -192,6 +219,64 @@ class CategorySelectionDialog extends StatelessWidget {
     required QuickAddController controller,
   }) {
     return InkWell(
+      onLongPress: () {
+        // 카테고리 삭제 확인 다이얼로그 표시
+        showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            return AlertDialog(
+              title: const Text('카테고리 삭제'),
+              content: Text('\'$categoryName\' 카테고리를 삭제하시겠습니까? \n 설정한 예산정보도 삭제됩니다.'),
+              actions: [
+                TextButton(
+                  child: const Text('취소'),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                ),
+                TextButton(
+                  child: const Text('확인'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                  onPressed: () async {
+                    // 다이얼로그 닫기
+                    Navigator.of(dialogContext).pop();
+
+                    // 카테고리 삭제 시도
+                    final success = await controller.deleteCategory(categoryId);
+
+                    if (success) {
+                      // 성공 메시지
+                      Get.snackbar(
+                        '삭제 완료',
+                        '\'$categoryName\' 카테고리가 삭제되었습니다.',
+                        snackPosition: SnackPosition.TOP,
+                        backgroundColor: Colors.green,
+                        colorText: Colors.white,
+                        duration: const Duration(seconds: 2),
+                      );
+                    } else {
+                      // 실패 메시지
+                      Get.snackbar(
+                        '삭제 실패',
+                        '해당 카테고리는 삭제할 수 없습니다.',
+                        snackPosition: SnackPosition.TOP,
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white,
+                        duration: const Duration(seconds: 2),
+                      );
+                    }
+                  },
+                ),
+              ],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            );
+          },
+        );
+      },
       onTap: () {
         // Set the selected category
         controller.setCategory(categoryId, categoryName);

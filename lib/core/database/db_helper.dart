@@ -53,6 +53,7 @@ class DBHelper {
         name TEXT NOT NULL,
         type TEXT NOT NULL,
         is_fixed INTEGER NOT NULL,
+        is_deleted INTEGER DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )

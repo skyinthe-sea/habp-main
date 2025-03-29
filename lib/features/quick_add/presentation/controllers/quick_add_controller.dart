@@ -78,12 +78,10 @@ class QuickAddController extends GetxController {
       final db = await _dbHelper.database;
 
       // Get categories where is_fixed is 0 (variable categories)
-      final result = await db.query(
-          'category',
+      final result = await db.query('category',
           where: 'type = ? AND is_fixed = ?',
           whereArgs: [type, 0],
-          orderBy: 'name ASC'
-      );
+          orderBy: 'name ASC');
 
       categories.value = result;
     } catch (e) {
@@ -116,8 +114,9 @@ class QuickAddController extends GetxController {
         'user_id': userId,
         'category_id': transaction.value.categoryId,
         'amount': amount,
-        'description': transaction.value.description.isEmpty ?
-        transaction.value.categoryName : transaction.value.description,
+        'description': transaction.value.description.isEmpty
+            ? transaction.value.categoryName
+            : transaction.value.description,
         'transaction_date': transaction.value.transactionDate.toIso8601String(),
         'transaction_num': transactionNum,
         'created_at': now,
@@ -138,8 +137,7 @@ class QuickAddController extends GetxController {
 
   /// Check if the current transaction is valid and can be saved
   bool isTransactionValid() {
-    return transaction.value.categoryId != null &&
-        transaction.value.amount > 0;
+    return transaction.value.categoryId != null && transaction.value.amount > 0;
   }
 
   // 카테고리 추가 메서드
@@ -194,6 +192,60 @@ class QuickAddController extends GetxController {
     } catch (e) {
       debugPrint('카테고리 추가 중 오류: $e');
       return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// 카테고리 소프트 삭제 메서드 (카테고리는 플래그 변경, 예산은 실제 삭제)
+  Future<bool> deleteCategory(int categoryId) async {
+    isLoading.value = true;
+
+    try {
+      final db = await _dbHelper.database;
+
+      // 고정 카테고리인지 확인 (고정 카테고리는 삭제 불가)
+      final category = await db.query(
+        'category',
+        where: 'id = ?',
+        whereArgs: [categoryId],
+        limit: 1,
+      );
+
+      if (category.isEmpty) {
+        return false;
+      }
+
+      // is_fixed가 1이면 고정 카테고리로 삭제 불가
+      if (category.first['is_fixed'] == 1) {
+        debugPrint('고정 카테고리는 삭제할 수 없습니다.');
+        return false;
+      }
+
+      // 트랜잭션으로 처리하여 원자성 보장
+      await db.transaction((txn) async {
+        // 1. 해당 카테고리의 예산 정보 실제 삭제
+        await txn.delete(
+          'budget',
+          where: 'category_id = ?',
+          whereArgs: [categoryId],
+        );
+
+        // 2. 카테고리 소프트 삭제 (is_deleted = 1로 업데이트)
+        await txn.update(
+          'category',
+          {'is_deleted': 1, 'updated_at': DateTime.now().toIso8601String()},
+          where: 'id = ?',
+          whereArgs: [categoryId],
+        );
+      });
+
+      // 카테고리 목록 갱신
+      await loadCategoriesForType(transaction.value.categoryType);
+      return true;
+    } catch (e) {
+      debugPrint('카테고리 삭제 중 오류: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
