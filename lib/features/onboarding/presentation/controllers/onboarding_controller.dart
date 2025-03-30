@@ -9,8 +9,8 @@ class OnboardingController extends GetxController {
   // 현재 온보딩 페이지 인덱스
   final RxInt currentPageIndex = 0.obs;
 
-  // 총 페이지 수
-  final int totalPages = 3;
+  // 총 페이지 수 (0, 1, 2, 3)
+  final int totalPages = 4; // 기존 3에서 4로 변경
 
   // 다음 페이지로 이동
   void nextPage() {
