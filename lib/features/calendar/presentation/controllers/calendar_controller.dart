@@ -163,4 +163,16 @@ class CalendarController extends GetxController {
     }
     return expense;
   }
+
+  // Get finance amount for a specific day
+  double getDayFinance(DateTime day) {
+    final transactions = getEventsForDay(day);
+    double finance = 0;
+    for (var transaction in transactions) {
+      if (transaction.categoryType == 'FINANCE') {
+        finance += transaction.amount;
+      }
+    }
+    return finance;
+  }
 }

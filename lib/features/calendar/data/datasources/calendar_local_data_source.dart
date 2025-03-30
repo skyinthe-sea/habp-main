@@ -200,6 +200,13 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
             income += amount;
           } else if (type == 'EXPENSE') {
             expense += amount.abs();
+          } else if (type == 'FINANCE') {
+            // Handle FINANCE type properly for calculations
+            if (amount >= 0) {
+              income += amount; // Positive finance amounts add to income for total calculations
+            } else {
+              expense += amount.abs(); // Negative finance amounts add to expenses for total calculations
+            }
           }
 
           dayTransactions.add(CalendarTransaction(

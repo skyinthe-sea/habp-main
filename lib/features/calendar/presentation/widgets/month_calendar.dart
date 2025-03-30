@@ -98,23 +98,31 @@ class MonthCalendar extends StatelessWidget {
                   calendarBuilders: CalendarBuilders(
                     // 마커 빌더 (거래 금액 표시)
                     markerBuilder: (context, date, events) {
-                      // 여기서 controller.events에 직접 접근하지 않고
-                      // getEventsForDay 메서드를 통해 접근합니다
-                      final income = controller.getDayIncome(date);
-                      final expense = controller.getDayExpense(date);
+                      // Get filtered transactions for this day
+                      final transactions = controller.getEventsForDay(date);
 
-                      // 디버깅용 - 실제 데이터 확인
-                      // if (income > 0 || expense > 0) {
-                      //   debugPrint('마커 갱신: $date, 수입: $income, 지출: $expense');
-                      // }
+                      // Calculate totals for each type
+                      double income = 0;
+                      double expense = 0;
+                      double finance = 0;
+
+                      for (var transaction in transactions) {
+                        if (transaction.categoryType == 'INCOME') {
+                          income += transaction.amount;
+                        } else if (transaction.categoryType == 'EXPENSE') {
+                          expense += transaction.amount.abs();
+                        } else if (transaction.categoryType == 'FINANCE') {
+                          finance += transaction.amount;
+                        }
+                      }
 
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // 수입 표시
+                          // Income display (green)
                           if (income > 0)
                             Container(
-                              key: ValueKey('income-$date-$income'),  // 키 추가
+                              key: ValueKey('income-$date-$income'),
                               margin: const EdgeInsets.only(top: 2),
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                               decoration: BoxDecoration(
@@ -133,10 +141,10 @@ class MonthCalendar extends StatelessWidget {
                               ),
                             ),
 
-                          // 지출 표시
+                          // Expense display (red)
                           if (expense > 0)
                             Container(
-                              key: ValueKey('expense-$date-$expense'),  // 키 추가
+                              key: ValueKey('expense-$date-$expense'),
                               margin: const EdgeInsets.only(top: 2),
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                               decoration: BoxDecoration(
@@ -147,6 +155,26 @@ class MonthCalendar extends StatelessWidget {
                                 '-${NumberFormat.compact().format(expense)}원',
                                 style: TextStyle(
                                   color: Colors.red[700],
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+
+                          // Finance display (blue) - NEW!
+                          if (finance != 0)
+                            Container(
+                              key: ValueKey('finance-$date-$finance'),
+                              margin: const EdgeInsets.only(top: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                (finance >= 0 ? '+' : '') + '${NumberFormat.compact().format(finance)}원',
+                                style: TextStyle(
+                                  color: Colors.blue[700],
                                   fontSize: 9,
                                   fontWeight: FontWeight.w500,
                                 ),
