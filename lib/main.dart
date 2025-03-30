@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/date_symbol_data_file.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/presentation/pages/main_page.dart';
 import 'core/services/event_bus_service.dart';
@@ -13,6 +13,7 @@ void main() async {
 
   // 이벤트 버스 서비스 초기화
   await Get.putAsync(() => EventBusService().init());
+  await initializeDateFormatting('ko_KR');
 
   runApp(MyApp(isFirstTimeUser: isFirstTimeUser));
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../domain/entities/calendar_filter.dart';
 import '../controllers/calendar_filter_controller.dart';
 import '../../domain/entities/category_item.dart';
 
@@ -115,7 +116,18 @@ class FilterModal extends StatelessWidget {
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => controller.setCategoryType(type),
+        onTap: () {
+          // 각 타입에 맞는 적절한 필터 객체 설정
+          if (type == null) {
+            controller.setFilter(CalendarFilter.all);
+          } else if (type == 'INCOME') {
+            controller.setFilter(CalendarFilter.income);
+          } else if (type == 'EXPENSE') {
+            controller.setFilter(CalendarFilter.expense);
+          } else if (type == 'FINANCE') {
+            controller.setFilter(CalendarFilter.finance);
+          }
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
@@ -162,9 +174,9 @@ class FilterModal extends StatelessWidget {
             return Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: categories.map((category) =>
-                  _buildCategoryChip(category)
-              ).toList(),
+              children: categories
+                  .map((category) => _buildCategoryChip(category))
+                  .toList(),
             );
           }),
         ),
@@ -173,7 +185,8 @@ class FilterModal extends StatelessWidget {
   }
 
   Widget _buildCategoryChip(CategoryItem category) {
-    final isSelected = controller.currentFilter.value.selectedCategoryIds.contains(category.id);
+    final isSelected = controller.currentFilter.value.selectedCategoryIds
+        .contains(category.id);
 
     return GestureDetector(
       onTap: () => controller.toggleCategory(category.id),
