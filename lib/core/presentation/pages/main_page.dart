@@ -25,7 +25,7 @@ class MainPage extends StatelessWidget {
             CalendarPage(), // 캘린더 페이지
             SizedBox(), // 추가 버튼은 페이지가 없음
             ExpensePage(), // 지출 페이지
-            SizedBox(), // 설정 페이지
+            SizedBox(), // 금융 페이지
           ],
         ),
         bottomNavigationBar: _buildBottomNavigationBar(controller),
