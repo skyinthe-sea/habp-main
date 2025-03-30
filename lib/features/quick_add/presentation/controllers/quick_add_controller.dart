@@ -99,12 +99,12 @@ class QuickAddController extends GetxController {
       final db = await _dbHelper.database;
       final now = DateTime.now().toIso8601String();
 
-      // Determine sign based on type (negative for expenses)
+      // Determine sign based on type (negative for expenses and finance)
       double amount = transaction.value.amount;
-      if (transaction.value.categoryType == 'EXPENSE') {
-        amount = -amount.abs(); // Ensure negative for expenses
+      if (transaction.value.categoryType == 'EXPENSE' || transaction.value.categoryType == 'FINANCE') {
+        amount = -amount.abs(); // Ensure negative for expenses and finance
       } else {
-        amount = amount.abs(); // Ensure positive for income & finance
+        amount = amount.abs(); // Ensure positive for income
       }
 
       // Transaction number - can be used for reference, currently just timestamp

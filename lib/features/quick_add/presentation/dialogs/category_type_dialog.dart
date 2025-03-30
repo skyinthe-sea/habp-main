@@ -7,7 +7,7 @@ import '../controllers/quick_add_controller.dart';
 import 'category_selection_dialog.dart';
 
 /// First dialog in the quick add flow
-/// Allows selecting between Income and Expense
+/// Allows selecting between Income, Expense and Finance
 class CategoryTypeDialog extends StatelessWidget {
   const CategoryTypeDialog({Key? key}) : super(key: key);
 
@@ -64,6 +64,21 @@ class CategoryTypeDialog extends StatelessWidget {
               ),
             ),
 
+
+            // 금융 버튼 - 별도 행에 배치
+            _buildTypeButton(
+              context: context,
+              icon: Icons.account_balance_rounded, // 금융 관련 아이콘
+              label: '금융',
+              color: const Color(0xFF4990E2), // 푸른계통 색상
+              type: 'FINANCE',
+              controller: controller,
+              backgroundColor: const Color(0xFFECF4FC), // 연한 푸른색 배경
+              fullWidth: true, // 전체 너비 사용
+            ),
+
+            const SizedBox(height: 10), // 하단 여백 감소
+
             // 소득/지출 버튼을 가로로 배치
             Row(
               children: [
@@ -97,7 +112,7 @@ class CategoryTypeDialog extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 10), // 하단 여백 감소
+            const SizedBox(height: 10), // 버튼 사이 간격
           ],
         ),
       ),
@@ -113,6 +128,7 @@ class CategoryTypeDialog extends StatelessWidget {
     required String type,
     required QuickAddController controller,
     required Color backgroundColor,
+    bool fullWidth = false, // 전체 너비 사용 여부
   }) {
     return InkWell(
       onTap: () {
@@ -149,7 +165,7 @@ class CategoryTypeDialog extends StatelessWidget {
         );
       },
       child: Container(
-        width: double.infinity,
+        width: fullWidth ? double.infinity : null,
         // 높이 조정 - 오버플로우 방지하면서 버튼 크기 키움
         height: 100, // 80에서 100으로 증가
         padding: const EdgeInsets.symmetric(vertical: 10),

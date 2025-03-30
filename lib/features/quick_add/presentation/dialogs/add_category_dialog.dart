@@ -48,8 +48,22 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
   Widget build(BuildContext context) {
     final categoryType = widget.controller.transaction.value.categoryType;
     final isIncome = categoryType == 'INCOME';
-    final titleText = isIncome ? '소득 카테고리 추가' : '지출 카테고리 추가';
-    final hintText = isIncome ? '월급, 용돈, 부수입 등' : '식비, 교통비, 문화생활 등';
+    final isFinance = categoryType == 'FINANCE';
+
+    // 카테고리 타입에 따라 제목과 힌트 텍스트 변경
+    String titleText;
+    String hintText;
+
+    if (isIncome) {
+      titleText = '소득 카테고리 추가';
+      hintText = '월급, 용돈, 부수입 등';
+    } else if (isFinance) {
+      titleText = '금융 카테고리 추가';
+      hintText = '주식, 저축, 대출 등';
+    } else {
+      titleText = '지출 카테고리 추가';
+      hintText = '식비, 교통비, 문화생활 등';
+    }
 
     return Dialog(
       shape: RoundedRectangleBorder(
