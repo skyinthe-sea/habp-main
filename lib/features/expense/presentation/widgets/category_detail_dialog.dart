@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/database/db_helper.dart';
 import '../../domain/entities/budget_status.dart';
 import '../controllers/expense_controller.dart';
 import '../widgets/category_transaction_list.dart';
@@ -29,10 +30,31 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
   final RxList<Map<String, dynamic>> _transactions = <Map<String, dynamic>>[].obs;
   final RxMap<String, dynamic> _analytics = <String, dynamic>{}.obs;
 
+  // DB Helper 추가
+  final DBHelper _dbHelper = DBHelper();
+
+  // 현재 선택된 탭을 저장
+  final RxInt _currentTabIndex = 0.obs;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    // 탭 변경 리스너 추가
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        _currentTabIndex.value = _tabController.index;
+        debugPrint('탭 변경됨: ${_tabController.index}');
+
+        // 탭이 변경될 때 필요에 따라 데이터 다시 로드
+        if (_tabController.index == 1 && _transactions.isEmpty) { // 지출 내역 탭
+          debugPrint('지출 내역 탭 선택 - 데이터 없음, 다시 로드');
+          _loadCategoryData();
+        }
+      }
+    });
+
     _loadCategoryData();
   }
 
@@ -52,7 +74,16 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
         widget.budgetStatus.categoryId,
         widget.controller.selectedPeriod.value,
       );
-      _transactions.assignAll(transactions);
+
+      debugPrint('카테고리 상세 (_loadCategoryData) - 조회된 거래 내역 수: ${transactions.length}');
+
+      // 중요: RxList를 초기화하고 새 데이터로 채우기
+      _transactions.clear();
+      if (transactions.isNotEmpty) {
+        _transactions.addAll(transactions);
+      }
+
+      debugPrint('_transactions 업데이트 후 크기: ${_transactions.length}');
 
       // 해당 카테고리에 대한 분석 데이터 계산
       _analytics.value = await _analyzeCategoryData(
@@ -67,105 +98,264 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
     }
   }
 
-  // 카테고리 거래 내역 가져오기 (실제 앱에서는 repository를 통해 데이터 가져옴)
+  // 카테고리 거래 내역 가져오기 (실제 DB에서 데이터 조회)
   Future<List<Map<String, dynamic>>> _fetchCategoryTransactions(
       int userId, int categoryId, String period) async {
-    // 실제 앱에서는 API 또는 로컬 DB에서 데이터 가져오기
-    // 임시 데이터 (실제 구현 시 삭제)
-    await Future.delayed(const Duration(milliseconds: 800)); // 로딩 시뮬레이션
+    try {
+      final db = await _dbHelper.database;
 
-    final year = int.parse(period.split('-')[0]);
-    final month = int.parse(period.split('-')[1]);
-    final startDate = DateTime(year, month, 1);
-    final endDate = DateTime(year, month + 1, 0);
+      // 기간에서 연도와 월 추출 (형식: YYYY-MM)
+      final year = int.parse(period.split('-')[0]);
+      final month = int.parse(period.split('-')[1]);
 
-    // 랜덤 데이터 생성 (실제 구현 시 삭제)
-    final random = DateTime.now().microsecond % 10 + 3; // 3~12개 항목
-    List<Map<String, dynamic>> mockTransactions = [];
+      // 해당 월의 시작일과 종료일 계산
+      final startDate = DateTime(year, month, 1).toIso8601String();
+      final endDate = DateTime(year, month + 1, 0).toIso8601String();
 
-    for (int i = 0; i < random; i++) {
-      final day = (DateTime.now().day + i) % endDate.day + 1;
-      final date = DateTime(year, month, day);
-      final amount = (10000 + (i * 5000) + (DateTime.now().microsecond % 20000));
+      debugPrint('카테고리 ID: $categoryId, 시작일: $startDate, 종료일: $endDate');
 
-      mockTransactions.add({
-        'id': i + 1,
-        'category_id': categoryId,
-        'amount': (amount * -1).toDouble(),
-        'description': '${widget.budgetStatus.categoryName} 지출 ${i + 1}',
-        'transaction_date': date.toIso8601String(),
-        'day_of_week': date.weekday,
-      });
+      // 거래 내역 전체 로깅 (디버깅용)
+      final allTransactions = await db.query('transaction_record');
+      debugPrint('전체 거래 내역 수: ${allTransactions.length}');
+
+      // 해당 카테고리의 거래 내역만 조회 (단순 쿼리로 테스트)
+      final categoryTransactions = await db.query(
+        'transaction_record',
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
+      debugPrint('카테고리 ID $categoryId의 단순 조회 거래 내역 수: ${categoryTransactions.length}');
+      for (var tx in categoryTransactions) {
+        debugPrint('카테고리 거래: $tx');
+      }
+
+      // 날짜 범위를 포함한 쿼리
+      final List<Map<String, dynamic>> dbResults = await db.rawQuery('''
+        SELECT 
+          *
+        FROM 
+          transaction_record
+        WHERE 
+          category_id = ? 
+          AND date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+        ORDER BY 
+          transaction_date DESC
+      ''', [categoryId, startDate, endDate]);
+
+      debugPrint('조회된 거래 내역 수: ${dbResults.length}');
+
+      // 중요: 읽기 전용 Map을 수정 가능한 Map으로 복사
+      final List<Map<String, dynamic>> transactionsData = [];
+
+      for (var result in dbResults) {
+        // 새로운 Map 객체에 복사
+        final Map<String, dynamic> transaction = Map<String, dynamic>.from(result);
+
+        try {
+          // 요일 정보 추가
+          final dateStr = transaction['transaction_date'] as String;
+          final date = DateTime.parse(dateStr);
+          // 1(월요일) ~ 7(일요일)로 변환
+          int weekday = date.weekday;
+          transaction['day_of_week'] = weekday;
+          debugPrint('거래 날짜: $dateStr => 요일: $weekday');
+        } catch (e) {
+          debugPrint('날짜 변환 오류: ${transaction['transaction_date']} - $e');
+          transaction['day_of_week'] = 1; // 기본값
+        }
+
+        transactionsData.add(transaction);
+        debugPrint('가공된 거래: $transaction');
+      }
+
+      debugPrint('최종 처리된 거래 내역 수: ${transactionsData.length}');
+      return transactionsData;
+
+    } catch (e) {
+      debugPrint('카테고리 거래 내역 조회 중 오류: $e');
+      return [];
     }
-
-    // 날짜순 정렬
-    mockTransactions.sort((a, b) =>
-        DateTime.parse(b['transaction_date']).compareTo(DateTime.parse(a['transaction_date'])));
-
-    return mockTransactions;
   }
 
-  // 카테고리 분석 데이터 계산
+  // 카테고리 분석 데이터 계산 (실제 거래 내역 기반)
   Future<Map<String, dynamic>> _analyzeCategoryData(
       int userId, int categoryId, String period) async {
+    try {
+      final db = await _dbHelper.database;
 
-    // 임시 데이터 (실제 구현 시 더 정확한 데이터로 대체)
-    final totalExpenses = _transactions.fold<double>(
-        0, (sum, item) => sum + item['amount'].abs());
+      // 기간에서 연도와 월 추출 (형식: YYYY-MM)
+      final year = int.parse(period.split('-')[0]);
+      final month = int.parse(period.split('-')[1]);
 
-    // 전체 카테고리 지출 중 비율 (실제로는 DB에서 계산)
-    final totalMonthExpenses = totalExpenses * (2.5 + (DateTime.now().microsecond % 5) / 10);
-    final categoryPercentage = (totalExpenses / totalMonthExpenses * 100);
+      // 해당 월과 이전 월의 시작일과 종료일 계산
+      final currentStartDate = DateTime(year, month, 1).toIso8601String();
+      final currentEndDate = DateTime(year, month + 1, 0).toIso8601String();
 
-    // 요일별 지출 분석
-    final Map<int, double> dayOfWeekExpenses = {};
-    for (int i = 1; i <= 7; i++) {
-      dayOfWeekExpenses[i] = 0;
-    }
+      final lastMonth = month == 1 ? 12 : month - 1;
+      final lastYear = month == 1 ? year - 1 : year;
+      final lastStartDate = DateTime(lastYear, lastMonth, 1).toIso8601String();
+      final lastEndDate = DateTime(lastYear, lastMonth + 1, 0).toIso8601String();
 
-    for (var transaction in _transactions) {
-      final dayOfWeek = transaction['day_of_week'] as int;
-      dayOfWeekExpenses[dayOfWeek] = (dayOfWeekExpenses[dayOfWeek] ?? 0) + transaction['amount'].abs();
-    }
+      debugPrint('분석 - 카테고리 ID: $categoryId');
+      debugPrint('분석 - 현재 기간: $currentStartDate ~ $currentEndDate');
 
-    // 일별 지출 추이 계산
-    final Map<int, double> dailyExpenses = {};
-    for (var transaction in _transactions) {
-      final day = DateTime.parse(transaction['transaction_date']).day;
-      dailyExpenses[day] = (dailyExpenses[day] ?? 0) + transaction['amount'].abs();
-    }
+      // 1. 현재 월 총 지출액 조회 (음수 금액만 집계하도록 수정)
+      final currentMonthTotalResult = await db.rawQuery('''
+        SELECT SUM(ABS(amount)) as total_expense
+        FROM transaction_record
+        WHERE category_id = ? 
+          AND amount < 0
+          AND date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ''', [categoryId, currentStartDate, currentEndDate]);
 
-    // 이전 달 같은 카테고리 지출과 비교 (임시 데이터)
-    final lastMonthExpense = totalExpenses * (0.8 + (DateTime.now().microsecond % 40) / 100);
-    final changePercentage = ((totalExpenses - lastMonthExpense) / lastMonthExpense * 100);
+      final totalExpense = currentMonthTotalResult.isNotEmpty &&
+          currentMonthTotalResult[0]['total_expense'] != null
+          ? (currentMonthTotalResult[0]['total_expense'] as num).toDouble()
+          : 0.0;
 
-    // 평균 지출 금액
-    final avgExpense = _transactions.isNotEmpty
-        ? totalExpenses / _transactions.length
-        : 0;
+      debugPrint('현재 월 총 지출액: $totalExpense');
 
-    // 가장 지출이 많은 요일
-    int maxExpenseDay = 1;
-    double maxExpense = 0;
-    dayOfWeekExpenses.forEach((day, amount) {
-      if (amount > maxExpense) {
-        maxExpense = amount;
-        maxExpenseDay = day;
+      // 2. 이전 월 총 지출액 조회 (음수 금액만 집계)
+      final lastMonthTotalResult = await db.rawQuery('''
+        SELECT SUM(ABS(amount)) as total_expense
+        FROM transaction_record
+        WHERE category_id = ? 
+          AND amount < 0
+          AND date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ''', [categoryId, lastStartDate, lastEndDate]);
+
+      final lastMonthExpense = lastMonthTotalResult.isNotEmpty &&
+          lastMonthTotalResult[0]['total_expense'] != null
+          ? (lastMonthTotalResult[0]['total_expense'] as num).toDouble()
+          : 0.0;
+
+      debugPrint('이전 월 총 지출액: $lastMonthExpense');
+
+      // 3. 전체 지출 중 해당 카테고리 비율 계산을 위한 전체 지출액 조회
+      final totalMonthExpenseResult = await db.rawQuery('''
+        SELECT SUM(ABS(amount)) as total_expense
+        FROM transaction_record tr
+        JOIN category c ON tr.category_id = c.id
+        WHERE c.type = 'EXPENSE'
+          AND tr.amount < 0
+          AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ''', [currentStartDate, currentEndDate]);
+
+      final totalMonthExpenses = totalMonthExpenseResult.isNotEmpty &&
+          totalMonthExpenseResult[0]['total_expense'] != null
+          ? (totalMonthExpenseResult[0]['total_expense'] as num).toDouble()
+          : 0.0;
+
+      debugPrint('전체 지출액: $totalMonthExpenses');
+
+      // 4. 요일별 지출 분석
+      final Map<int, double> dayOfWeekExpenses = {};
+      for (int i = 1; i <= 7; i++) {
+        dayOfWeekExpenses[i] = 0.0;
       }
-    });
 
-    // 결과 반환
-    return {
-      'total_expense': totalExpenses,
-      'category_percentage': categoryPercentage,
-      'day_of_week_expenses': dayOfWeekExpenses,
-      'daily_expenses': dailyExpenses,
-      'last_month_expense': lastMonthExpense,
-      'change_percentage': changePercentage,
-      'avg_expense': avgExpense,
-      'max_expense_day': maxExpenseDay,
-      'max_expense_amount': maxExpense,
-    };
+      // 요일별 지출 조회
+      final dayOfWeekResult = await db.rawQuery('''
+        SELECT 
+          CASE 
+            WHEN strftime('%w', substr(transaction_date, 1, 10)) = '0' THEN 7
+            ELSE CAST(strftime('%w', substr(transaction_date, 1, 10)) AS INTEGER)
+          END as weekday,
+          SUM(ABS(amount)) as day_expense
+        FROM transaction_record
+        WHERE category_id = ? 
+          AND amount < 0
+          AND date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+        GROUP BY weekday
+      ''', [categoryId, currentStartDate, currentEndDate]);
+
+      for (var row in dayOfWeekResult) {
+        final weekday = row['weekday'] as int;
+        final expense = (row['day_expense'] as num).toDouble();
+        dayOfWeekExpenses[weekday] = expense;
+      }
+
+      debugPrint('요일별 지출: $dayOfWeekExpenses');
+
+      // 5. 일별 지출 추이 계산
+      final Map<int, double> dailyExpenses = {};
+
+      final dailyResult = await db.rawQuery('''
+        SELECT 
+          CAST(strftime('%d', substr(transaction_date, 1, 10)) AS INTEGER) as day,
+          SUM(ABS(amount)) as day_expense
+        FROM transaction_record
+        WHERE category_id = ? 
+          AND amount < 0
+          AND date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+        GROUP BY day
+        ORDER BY day
+      ''', [categoryId, currentStartDate, currentEndDate]);
+
+      for (var row in dailyResult) {
+        final day = row['day'] as int;
+        final expense = (row['day_expense'] as num).toDouble();
+        dailyExpenses[day] = expense;
+      }
+
+      debugPrint('일별 지출: $dailyExpenses');
+
+      // 변경 퍼센트 계산 (이전 달 데이터가 없으면 100% 증가로 처리)
+      double changePercentage = 0.0;
+      if (lastMonthExpense > 0) {
+        changePercentage = ((totalExpense - lastMonthExpense) / lastMonthExpense) * 100;
+      } else if (totalExpense > 0) {
+        changePercentage = 100.0; // 이전 달에 지출이 없고 현재 달에 지출이 있는 경우
+      }
+
+      // 카테고리 퍼센트 계산
+      double categoryPercentage = 0.0;
+      if (totalMonthExpenses > 0) {
+        categoryPercentage = (totalExpense / totalMonthExpenses) * 100;
+      }
+
+      // 평균 지출 금액 계산
+      final avgExpense = _transactions.isNotEmpty
+          ? totalExpense / _transactions.length
+          : 0.0;
+
+      // 가장 지출이 많은 요일 찾기
+      int maxExpenseDay = 1;
+      double maxExpense = 0.0;
+      dayOfWeekExpenses.forEach((day, amount) {
+        if (amount > maxExpense) {
+          maxExpense = amount;
+          maxExpenseDay = day;
+        }
+      });
+
+      // 결과 반환
+      return {
+        'total_expense': totalExpense,
+        'category_percentage': categoryPercentage,
+        'day_of_week_expenses': dayOfWeekExpenses,
+        'daily_expenses': dailyExpenses,
+        'last_month_expense': lastMonthExpense,
+        'change_percentage': changePercentage,
+        'avg_expense': avgExpense,
+        'max_expense_day': maxExpenseDay,
+        'max_expense_amount': maxExpense,
+      };
+    } catch (e) {
+      debugPrint('카테고리 분석 데이터 계산 중 오류: $e');
+      // 오류 발생 시 기본 빈 데이터 반환
+      return {
+        'total_expense': 0.0,
+        'category_percentage': 0.0,
+        'day_of_week_expenses': {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 0.0},
+        'daily_expenses': {},
+        'last_month_expense': 0.0,
+        'change_percentage': 0.0,
+        'avg_expense': 0.0,
+        'max_expense_day': 1,
+        'max_expense_amount': 0.0,
+      };
+    }
   }
 
   @override
@@ -356,14 +546,17 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                   );
                 }
 
+                // 거래 내역 디버깅 로그
+                debugPrint('탭 콘텐츠 빌드 - 거래 내역 개수: ${_transactions.length}');
+
                 return TabBarView(
                   controller: _tabController,
                   children: [
                     // 분석 탭
                     _buildAnalyticsTab(),
 
-                    // 지출 내역 탭
-                    CategoryTransactionList(transactions: _transactions),
+                    // 지출 내역 탭 - 변경: Obx로 감싸기
+                    Obx(() => CategoryTransactionList(transactions: _transactions.toList())),
 
                     // 인사이트 탭
                     _buildInsightsTab(),
@@ -486,25 +679,50 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
             ),
           ),
 
-          // 요일별 지출 차트
-          CategoryAnalyticsCharts(
-            title: '요일별 지출',
-            chartType: 'dayOfWeek',
-            dayOfWeekExpenses: dayOfWeekExpenses,
-            dailyExpenses: dailyExpenses,
-            selectedPeriod: widget.controller.selectedPeriod.value,
-          ),
+          // 데이터가 없는 경우 표시할 메시지
+          if (totalExpense == 0)
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.bar_chart,
+                    size: 48,
+                    color: Colors.grey.shade300,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '아직 ${widget.budgetStatus.categoryName} 카테고리의 지출 데이터가 없습니다.',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            // 요일별 지출 차트
+            CategoryAnalyticsCharts(
+              title: '요일별 지출',
+              chartType: 'dayOfWeek',
+              dayOfWeekExpenses: dayOfWeekExpenses,
+              dailyExpenses: dailyExpenses,
+              selectedPeriod: widget.controller.selectedPeriod.value,
+            ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // 일별 지출 추이 차트
-          CategoryAnalyticsCharts(
-            title: '일별 지출 추이',
-            chartType: 'daily',
-            dayOfWeekExpenses: dayOfWeekExpenses,
-            dailyExpenses: dailyExpenses,
-            selectedPeriod: widget.controller.selectedPeriod.value,
-          ),
+            // 일별 지출 추이 차트
+            CategoryAnalyticsCharts(
+              title: '일별 지출 추이',
+              chartType: 'daily',
+              dayOfWeekExpenses: dayOfWeekExpenses,
+              dailyExpenses: dailyExpenses,
+              selectedPeriod: widget.controller.selectedPeriod.value,
+            ),
+          ],
 
           const SizedBox(height: 24),
         ],
@@ -561,13 +779,70 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
 
   // 인사이트 탭 구성
   Widget _buildInsightsTab() {
-    if (_transactions.isEmpty) {
-      return const Center(child: Text('지출 내역이 없어 인사이트를 생성할 수 없습니다.'));
+    // 거래 내역 여부 체크
+    debugPrint('인사이트 탭 빌드 - 거래 내역 수: ${_transactions.length}');
+
+    // 지출 거래만 필터링
+    final expenseTransactions = _transactions.where((tx) {
+      final amount = tx['amount'];
+      return amount is num && amount < 0;
+    }).toList();
+
+    debugPrint('인사이트 탭 - 지출 거래 수: ${expenseTransactions.length}');
+
+    if (expenseTransactions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.lightbulb_outline,
+              size: 64,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '${widget.budgetStatus.categoryName} 카테고리의 지출 내역이 없어\n인사이트를 생성할 수 없습니다.',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
     }
 
     final maxExpenseDay = _analytics['max_expense_day'] as int;
     final dayNames = ['월', '화', '수', '목', '금', '토', '일'];
     final changePercentage = _analytics['change_percentage'] as double;
+    final totalExpense = _analytics['total_expense'] as double;
+
+    // 충분한 데이터가 없는 경우 기본 메시지 표시
+    if (totalExpense == 0) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.lightbulb_outline,
+              size: 64,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '아직 충분한 지출 데이터가 없어 인사이트를 제공할 수 없습니다.\n지출을 기록하면 다양한 인사이트를 얻을 수 있습니다.',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
 
     // 인사이트 목록 생성
     List<Map<String, dynamic>> insights = [
@@ -583,7 +858,9 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
       {
         'title': '전월 대비',
         'icon': Icons.trending_up,
-        'content': '이번 달 ${widget.budgetStatus.categoryName} 지출은 지난 달보다 ${changePercentage.abs().toStringAsFixed(1)}% ${changePercentage >= 0 ? '증가' : '감소'}했습니다.',
+        'content': _analytics['last_month_expense'] > 0
+            ? '이번 달 ${widget.budgetStatus.categoryName} 지출은 지난 달보다 ${changePercentage.abs().toStringAsFixed(1)}% ${changePercentage >= 0 ? '증가' : '감소'}했습니다.'
+            : '이번 달에 처음으로 ${widget.budgetStatus.categoryName} 카테고리에 지출이 발생했습니다.',
         'actionText': changePercentage >= 0 ? '지출 줄이는 팁 보기' : '잘 하고 있어요!',
         'action': () {
           // 지출 줄이는 팁 가이드 또는 축하 메시지

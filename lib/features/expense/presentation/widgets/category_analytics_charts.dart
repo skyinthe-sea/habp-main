@@ -59,8 +59,21 @@ class CategoryAnalyticsCharts extends StatelessWidget {
   // 요일별 지출 차트
   Widget _buildDayOfWeekChart() {
     final dayLabels = ['월', '화', '수', '목', '금', '토', '일'];
-    final maxExpense = dayOfWeekExpenses.values.fold<double>(0,
-            (max, value) => value > max ? value : max);
+
+    // 데이터가 비어있는지 확인
+    bool hasData = dayOfWeekExpenses.values.any((value) => value > 0);
+
+    if (!hasData) {
+      return _buildNoDataMessage();
+    }
+
+    final maxExpense = dayOfWeekExpenses.values.fold<double>(
+        0, (max, value) => value > max ? value : max);
+
+    // 최댓값이 0이면 데이터가 없는 것
+    if (maxExpense <= 0) {
+      return _buildNoDataMessage();
+    }
 
     return BarChart(
       BarChartData(
@@ -175,6 +188,13 @@ class CategoryAnalyticsCharts extends StatelessWidget {
     final month = int.parse(selectedPeriod.split('-')[1]);
     final daysInMonth = DateTime(year, month + 1, 0).day;
 
+    // 데이터가 비어있는지 확인
+    bool hasData = dailyExpenses.values.any((value) => value > 0);
+
+    if (!hasData) {
+      return _buildNoDataMessage();
+    }
+
     // 일별 데이터 포인트 생성
     List<FlSpot> spots = [];
     for (int day = 1; day <= daysInMonth; day++) {
@@ -186,26 +206,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
 
     // 빈 데이터 처리
     if (spots.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.bar_chart,
-              size: 48,
-              color: Colors.grey.withOpacity(0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '데이터가 충분하지 않습니다',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      );
+      return _buildNoDataMessage();
     }
 
     // 최대값 계산
@@ -339,6 +340,30 @@ class CategoryAnalyticsCharts extends StatelessWidget {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  // 데이터가 없을 때 표시할 위젯
+  Widget _buildNoDataMessage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.bar_chart,
+            size: 48,
+            color: Colors.grey.withOpacity(0.4),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '데이터가 충분하지 않습니다',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }

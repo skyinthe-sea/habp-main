@@ -14,6 +14,12 @@ class CategoryTransactionList extends StatelessWidget {
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat('#,###', 'ko_KR');
 
+    // 디버깅: 받은 트랜잭션 데이터 출력
+    debugPrint('CategoryTransactionList - 받은 거래 내역 수: ${transactions.length}');
+    for (var tx in transactions) {
+      debugPrint('거래 내역 항목: $tx');
+    }
+
     if (transactions.isEmpty) {
       return Center(
         child: Column(
@@ -38,11 +44,50 @@ class CategoryTransactionList extends StatelessWidget {
       );
     }
 
+    // 필터링: 금액이 음수인 항목만 표시 (지출만 보여주기)
+    final expenseTransactions = transactions.where((tx) {
+      final amount = tx['amount'];
+      return amount is num && amount < 0;
+    }).toList();
+
+    // 필터링 후 거래가 없는 경우
+    if (expenseTransactions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 64,
+              color: Colors.grey.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '이 카테고리의 지출 내역이 없습니다',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     // 거래 내역을 날짜별로 그룹화
     Map<String, List<Map<String, dynamic>>> groupedTransactions = {};
 
-    for (var transaction in transactions) {
-      final date = DateTime.parse(transaction['transaction_date']);
+    for (var transaction in expenseTransactions) {
+      DateTime date;
+      try {
+        date = DateTime.parse(transaction['transaction_date']);
+      } catch (e) {
+        debugPrint('날짜 형식 오류: ${transaction['transaction_date']}');
+        // 날짜 파싱 오류 시 현재 날짜 사용
+        date = DateTime.now();
+      }
+
       final dateKey = DateFormat('yyyy-MM-dd').format(date);
 
       if (!groupedTransactions.containsKey(dateKey)) {
@@ -69,7 +114,7 @@ class CategoryTransactionList extends StatelessWidget {
 
         // 해당 날짜의 총 지출액
         final dailyTotal = dateTransactions.fold<double>(
-            0, (sum, item) => sum + item['amount'].abs());
+            0, (sum, item) => sum + (item['amount'] as num).abs());
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +137,7 @@ class CategoryTransactionList extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: Colors.red,
                     ),
                   ),
                 ],
@@ -106,9 +151,17 @@ class CategoryTransactionList extends StatelessWidget {
               itemCount: dateTransactions.length,
               itemBuilder: (context, index) {
                 final transaction = dateTransactions[index];
-                final amount = transaction['amount'].abs();
-                final time = DateFormat('a h:mm', 'ko_KR').format(
-                    DateTime.parse(transaction['transaction_date']));
+                final amount = (transaction['amount'] as num).abs();
+
+                // 시간 형식 변환 (transaction_date가 ISO 형식이라고 가정)
+                String time;
+                try {
+                  final transactionDate = DateTime.parse(transaction['transaction_date']);
+                  time = DateFormat('a h:mm', 'ko_KR').format(transactionDate);
+                } catch (e) {
+                  // 날짜 파싱 실패 시 빈 시간 표시
+                  time = '';
+                }
 
                 return Card(
                   elevation: 0,
@@ -120,7 +173,9 @@ class CategoryTransactionList extends StatelessWidget {
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     title: Text(
-                      transaction['description'] as String,
+                      transaction['description'] != null && transaction['description'].toString().isNotEmpty
+                          ? transaction['description']
+                          : '설명 없음',
                       style: const TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 15,
