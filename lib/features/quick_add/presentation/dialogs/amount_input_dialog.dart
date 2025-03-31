@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/events/transaction_events.dart';
 import '../../../calendar/presentation/controllers/calendar_controller.dart';
 import '../controllers/quick_add_controller.dart';
 import 'date_selection_dialog.dart';

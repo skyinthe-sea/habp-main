@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/events/transaction_events.dart';
 import '../../../../core/services/event_bus_service.dart';
 import '../../domain/entities/calendar_transaction.dart';
 import '../../domain/entities/day_summary.dart';
