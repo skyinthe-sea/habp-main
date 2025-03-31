@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:habp/features/expense/presentation/pages/expense_page.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../constants/app_colors.dart';
 import '../controllers/main_controller.dart';
 import '../../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../../features/quick_add/presentation/widgets/quick_add_button.dart';
@@ -18,6 +19,43 @@ class MainPage extends StatelessWidget {
 
     return Obx(() {
       return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 1,
+          title: const Text(
+            '이쁜정이 가계부',
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search_outlined, color: Colors.grey),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: Colors.grey),
+              onPressed: () {},
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                child: const Text(
+                  '정이',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         body: IndexedStack(
           index: controller.selectedIndex.value,
           children: const [

@@ -134,35 +134,6 @@ class _ExpensePageState extends State<ExpensePage>
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 1,
-            title: const Text(
-              '우리 정이 가계부',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.add, color: AppColors.primary),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) =>
-                        AddBudgetDialog(controller: _controller),
-                  );
-                },
-              ),
-              // 새로고침 버튼 추가
-              IconButton(
-                icon: const Icon(Icons.refresh, color: AppColors.primary),
-                onPressed: _refreshData,
-              ),
-            ],
-          ),
           body: SafeArea(
             child: GetBuilder<ExpenseController>(
                 init: _controller,
@@ -183,59 +154,70 @@ class _ExpensePageState extends State<ExpensePage>
                           },
                           child: Obx(() {
                             return controller.isLoading.value &&
-                                    controller.budgetStatusList.isEmpty
+                                controller.budgetStatusList.isEmpty
                                 ? const Center(
-                                    child: CircularProgressIndicator())
+                                child: CircularProgressIndicator())
                                 : SingleChildScrollView(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
-                                    padding: const EdgeInsets.all(16),
-                                    // Add this to ensure the ScrollView has a minimum height
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minHeight:
-                                            MediaQuery.of(context).size.height -
-                                                200, // Adjust as needed
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            '이번 달 예산 현황',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          OverallBudgetCard(
-                                              controller: controller),
-                                          const SizedBox(height: 24),
-                                          const Text(
-                                            '카테고리별 예산',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          // Wrap with SizedBox to ensure content has size even when empty
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: CategoryBudgetList(
-                                                controller: controller),
-                                          ),
-                                        ],
+                              physics:
+                              const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(16),
+                              // Add this to ensure the ScrollView has a minimum height
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight:
+                                  MediaQuery.of(context).size.height -
+                                      200, // Adjust as needed
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '이번 달 예산 현황',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  );
+                                    const SizedBox(height: 12),
+                                    OverallBudgetCard(
+                                        controller: controller),
+                                    const SizedBox(height: 24),
+                                    const Text(
+                                      '카테고리별 예산',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    // Wrap with SizedBox to ensure content has size even when empty
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: CategoryBudgetList(
+                                          controller: controller),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
                           }),
                         ),
                       ),
                     ],
                   );
                 }),
+          ),
+          // 새로운 플로팅 액션 버튼 추가 - 설정 아이콘으로 변경
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: AppColors.primary,
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AddBudgetDialog(controller: _controller),
+              );
+            },
+            child: const Icon(Icons.settings, color: Colors.white),
           ),
         );
       },

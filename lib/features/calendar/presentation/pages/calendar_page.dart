@@ -107,43 +107,6 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
         // 데이터 로드 완료 후 실제 캘린더 화면 표시
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 1,
-            title: const Text(
-              '우리 정이 가계부',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.search_outlined, color: Colors.grey),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: Colors.grey),
-                onPressed: () {},
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
-                  child: const Text(
-                    'KM',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
           body: SafeArea(
             child: Stack(
               children: [
