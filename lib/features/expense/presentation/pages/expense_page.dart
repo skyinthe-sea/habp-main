@@ -118,7 +118,7 @@ class _ExpensePageState extends State<ExpensePage>
               backgroundColor: Colors.white,
               elevation: 1,
               title: const Text(
-                '예산 관리',
+                '우리 정이 가계부',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -138,7 +138,7 @@ class _ExpensePageState extends State<ExpensePage>
             backgroundColor: Colors.white,
             elevation: 1,
             title: const Text(
-              '예산 관리',
+              '우리 정이 가계부',
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,

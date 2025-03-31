@@ -13,6 +13,7 @@ abstract class TransactionLocalDataSource {
   Future<List<CategoryExpense>> getCategoryExpenses();
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit);
   Future<List<TransactionModel>> getTransactionsByDateRange(DateTime start, DateTime end);
+  Future<double> getAssets(); // New method for fetching assets
 }
 
 class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
@@ -324,6 +325,47 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     } catch (e) {
       debugPrint('날짜 범위 기준 거래 내역 가져오기 오류: $e');
       return [];
+    }
+  }
+
+  @override
+  Future<double> getAssets() async {
+    try {
+      final db = await dbHelper.database;
+      final now = DateTime.now();
+      final currentMonth = now.month;
+      final currentYear = now.year;
+
+      // Current month date range
+      final startOfMonth = DateTime(currentYear, currentMonth, 1);
+      final endOfMonth = DateTime(currentYear, currentMonth + 1, 0, 23, 59, 59);
+
+      // Format dates for query
+      final startDateStr = "${startOfMonth.year}-${startOfMonth.month.toString().padLeft(2, '0')}-01";
+      final endDateStr = "${endOfMonth.year}-${endOfMonth.month.toString().padLeft(2, '0')}-${endOfMonth.day.toString().padLeft(2, '0')}";
+
+      debugPrint('자산 조회 기간: $startDateStr ~ $endDateStr');
+
+      // Query transactions with FINANCE category type for current month
+      final List<Map<String, dynamic>> results = await db.rawQuery('''
+        SELECT SUM(ABS(tr.amount)) as total_assets
+        FROM transaction_record tr
+        JOIN category c ON tr.category_id = c.id
+        WHERE c.type = 'FINANCE'
+        AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ''', [startDateStr, endDateStr]);
+
+      double totalAssets = 0.0;
+
+      if (results.isNotEmpty && results[0]['total_assets'] != null) {
+        totalAssets = results[0]['total_assets'] as double;
+      }
+
+      debugPrint('조회된 자산 총액: $totalAssets');
+      return totalAssets;
+    } catch (e) {
+      debugPrint('자산 가져오기 오류: $e');
+      return 0.0;
     }
   }
 }

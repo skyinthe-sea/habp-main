@@ -59,7 +59,7 @@ class MainPage extends StatelessWidget {
               // 가운데 공간
               const SizedBox(width: 48),
               _buildNavItem(3, Icons.account_balance_wallet, '지출', controller),
-              _buildNavItem(4, Icons.money, '금융', controller),
+              _buildNavItem(4, Icons.account_balance_outlined, '자산', controller),
             ],
           ),
         ),

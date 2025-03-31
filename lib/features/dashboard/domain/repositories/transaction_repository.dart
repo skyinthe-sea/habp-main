@@ -11,4 +11,5 @@ abstract class TransactionRepository {
   Future<List<CategoryExpense>> getCategoryExpenses();
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit);
   Future<List<Transaction>> getTransactionsByDateRange(DateTime start, DateTime end);
+  Future<double> getAssets();
 }

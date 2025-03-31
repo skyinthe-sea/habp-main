@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../data/datasources/transaction_local_data_source.dart';
 import '../../data/repositories/transaction_repository_impl.dart';
+import '../../domain/usecases/get_assets.dart';
 import '../../domain/usecases/get_monthly_summary.dart';
 import '../../domain/usecases/get_monthly_expenses_trend.dart';
 import '../../domain/usecases/get_category_expenses.dart';
@@ -41,6 +42,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final expensesTrendUseCase = GetMonthlyExpensesTrend(repository);
     final categoryExpensesUseCase = GetCategoryExpenses(repository);
     final recentTransactionsUseCase = GetRecentTransactions(repository);
+    final assetsUseCase = GetAssets(repository);
     dbHelper.printDatabaseInfo();
 
     _controller = DashboardController(
@@ -48,6 +50,7 @@ class _DashboardPageState extends State<DashboardPage> {
       getMonthlyExpensesTrend: expensesTrendUseCase,
       getCategoryExpenses: categoryExpensesUseCase,
       getRecentTransactions: recentTransactionsUseCase,
+      getAssets: assetsUseCase,
     );
     Get.put(_controller);
   }
@@ -60,7 +63,7 @@ class _DashboardPageState extends State<DashboardPage> {
         backgroundColor: Colors.white,
         elevation: 1,
         title: const Text(
-          '똑똑한 가계부',
+          '우리 정이 가계부',
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,

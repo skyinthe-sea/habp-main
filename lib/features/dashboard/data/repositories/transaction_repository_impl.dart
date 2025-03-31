@@ -41,4 +41,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<List<Transaction>> getTransactionsByDateRange(DateTime start, DateTime end) async {
     return await localDataSource.getTransactionsByDateRange(start, end);
   }
+
+  @override
+  Future<double> getAssets() async {
+    return await localDataSource.getAssets();
+  }
 }

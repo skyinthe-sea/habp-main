@@ -90,7 +90,7 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
               backgroundColor: Colors.white,
               elevation: 1,
               title: const Text(
-                '캘린더',
+                '우리 정이 가계부',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -111,7 +111,7 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
             backgroundColor: Colors.white,
             elevation: 1,
             title: const Text(
-              '캘린더',
+              '우리 정이 가계부',
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,

@@ -4,6 +4,7 @@ import '../../../../core/services/event_bus_service.dart';
 import '../../data/entities/category_expense.dart';
 import '../../data/entities/monthly_expense.dart';
 import '../../data/entities/transaction_with_category.dart';
+import '../../domain/usecases/get_assets.dart';
 import '../../domain/usecases/get_category_expenses.dart';
 import '../../domain/usecases/get_monthly_summary.dart';
 import '../../domain/usecases/get_monthly_expenses_trend.dart';
@@ -14,24 +15,28 @@ class DashboardController extends GetxController {
   final GetMonthlyExpensesTrend getMonthlyExpensesTrend;
   final GetCategoryExpenses getCategoryExpenses;
   final GetRecentTransactions getRecentTransactions;
+  final GetAssets getAssets;
 
   DashboardController({
     required this.getMonthlySummary,
     required this.getMonthlyExpensesTrend,
     required this.getCategoryExpenses,
     required this.getRecentTransactions,
+    required this.getAssets,
   });
 
   // 기존 상태 변수
   final RxDouble monthlyIncome = 0.0.obs;
   final RxDouble monthlyExpense = 0.0.obs;
   final RxDouble monthlyBalance = 0.0.obs;
+  final RxDouble monthlyAssets = 0.0.obs;
 
   // 새로운 상태 변수 - 지난달 대비 증감율
   final RxDouble incomeChangePercentage = 0.0.obs;
   final RxDouble expenseChangePercentage = 0.0.obs;
 
   final RxBool isLoading = false.obs;
+  final RxBool isAssetsLoading = false.obs;
   final RxList<MonthlyExpense> monthlyExpenses = <MonthlyExpense>[].obs;
   final RxBool isExpenseTrendLoading = false.obs;
   final RxList<CategoryExpense> categoryExpenses = <CategoryExpense>[].obs;
@@ -65,6 +70,20 @@ class DashboardController extends GetxController {
     fetchMonthlyExpensesTrend();
     fetchCategoryExpenses();
     fetchRecentTransactions();
+    fetchAssets();
+  }
+
+  Future<void> fetchAssets() async {
+    isAssetsLoading.value = true;
+    try {
+      final result = await getAssets.execute();
+      monthlyAssets.value = result;
+      debugPrint('월간 자산 정보 로드 완료: ${monthlyAssets.value}');
+    } catch (e) {
+      debugPrint('월간 자산 정보 가져오기 오류: $e');
+    } finally {
+      isAssetsLoading.value = false;
+    }
   }
 
   Future<List<TransactionWithCategory>> getAllCurrentMonthTransactions() async {
