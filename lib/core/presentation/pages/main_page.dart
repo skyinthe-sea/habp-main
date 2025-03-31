@@ -1,5 +1,4 @@
-// lib/core/presentation/pages/main_page.dart - Update the floating action button
-
+// lib/core/presentation/pages/main_page.dart - Updated to include AssetPage
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:habp/features/expense/presentation/pages/expense_page.dart';
@@ -8,6 +7,7 @@ import '../../constants/app_colors.dart';
 import '../controllers/main_controller.dart';
 import '../../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../../features/quick_add/presentation/widgets/quick_add_button.dart';
+import '../../../features/asset/presentation/pages/asset_page.dart'; // 자산 페이지 추가
 
 class MainPage extends StatelessWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -63,7 +63,7 @@ class MainPage extends StatelessWidget {
             CalendarPage(), // 캘린더 페이지
             SizedBox(), // 추가 버튼은 페이지가 없음
             ExpensePage(), // 지출 페이지
-            SizedBox(), // 자산 페이지
+            AssetPage(), // 자산 페이지 - 연결
           ],
         ),
         bottomNavigationBar: _buildBottomNavigationBar(controller),
