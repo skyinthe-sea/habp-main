@@ -69,7 +69,7 @@ class CategoryRepository {
     return getCategoriesByType(ExpenseCategoryType.EXPENSE);
   }
 
-  // 금융 카테고리 조회
+  // 재테크 카테고리 조회
   Future<List<ExpenseCategory>> getFinanceCategories() async {
     return getCategoriesByType(ExpenseCategoryType.FINANCE);
   }

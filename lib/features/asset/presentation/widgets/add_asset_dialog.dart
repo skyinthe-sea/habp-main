@@ -1,3 +1,5 @@
+// lib/features/asset/presentation/widgets/add_asset_dialog.dart 수정
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -34,11 +36,15 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
   @override
   void initState() {
     super.initState();
-    _updateSaveButtonState();
+    // 값 변경 시마다 버튼 상태 업데이트를 위한 리스너 추가
+    nameController.addListener(_updateSaveButtonState);
+    currentValueController.addListener(_updateSaveButtonState);
   }
 
   @override
   void dispose() {
+    nameController.removeListener(_updateSaveButtonState);
+    currentValueController.removeListener(_updateSaveButtonState);
     nameController.dispose();
     currentValueController.dispose();
     purchaseValueController.dispose();
@@ -55,6 +61,8 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
           nameController.text.isNotEmpty &&
           currentValueController.text.isNotEmpty &&
           !isLoading;
+      debugPrint('버튼 활성화 상태: $_isSaveButtonEnabled');
+      debugPrint('카테고리: $selectedCategoryId, 이름: ${nameController.text}, 값: ${currentValueController.text}');
     });
   }
 
@@ -157,9 +165,10 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
         );
       }
     } catch (e) {
+      debugPrint('자산 추가 중 오류: $e');
       Get.snackbar(
         '오류',
-        '입력한 값을 확인해주세요.',
+        '입력한 값을 확인해주세요: $e',
         snackPosition: SnackPosition.TOP,
       );
     } finally {
@@ -237,6 +246,16 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     Obx(() {
                       final categories = widget.controller.assetCategories;
 
+                      if (categories.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            '카테고리를 불러오는 중입니다...',
+                            style: TextStyle(color: Colors.grey.shade500),
+                          ),
+                        );
+                      }
+
                       return Padding(
                         padding: const EdgeInsets.all(12),
                         child: Wrap(
@@ -244,21 +263,27 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                           runSpacing: 8,
                           children: categories.map((category) {
                             final isSelected = selectedCategoryId == category.id;
-                            return ChoiceChip(
-                              label: Text(category.name),
-                              selected: isSelected,
-                              selectedColor: AppColors.primary,
-                              labelStyle: TextStyle(
-                                color: isSelected ? Colors.white : Colors.black87,
-                              ),
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() {
-                                    selectedCategoryId = category.id;
-                                    _updateSaveButtonState();
-                                  });
-                                }
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedCategoryId = category.id;
+                                  _updateSaveButtonState();
+                                });
                               },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.primary : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  category.name,
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : Colors.black87,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
                             );
                           }).toList(),
                         ),
@@ -279,9 +304,6 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onChanged: (value) {
-                  _updateSaveButtonState();
-                },
               ),
               const SizedBox(height: 16),
 
@@ -311,7 +333,6 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                       );
                     }
                   }
-                  _updateSaveButtonState();
                 },
               ),
               const SizedBox(height: 16),
@@ -483,7 +504,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: !_isSaveButtonEnabled ? null : _saveAsset,
+                      onPressed: _isSaveButtonEnabled ? _saveAsset : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         disabledBackgroundColor: AppColors.primary.withOpacity(0.5),

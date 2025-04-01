@@ -103,7 +103,7 @@ class FilterModal extends StatelessWidget {
               _buildTypeToggle(null, '전체'),
               _buildTypeToggle('INCOME', '소득'),
               _buildTypeToggle('EXPENSE', '지출'),
-              _buildTypeToggle('FINANCE', '금융'),
+              _buildTypeToggle('FINANCE', '재테크'),
             ],
           ),
         ),

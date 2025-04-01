@@ -78,9 +78,9 @@ class DashboardController extends GetxController {
     try {
       final result = await getAssets.execute();
       monthlyAssets.value = result;
-      debugPrint('월간 자산 정보 로드 완료: ${monthlyAssets.value}');
+      debugPrint('월간 재테크 정보 로드 완료: ${monthlyAssets.value}');
     } catch (e) {
-      debugPrint('월간 자산 정보 가져오기 오류: $e');
+      debugPrint('월간 재테크 정보 가져오기 오류: $e');
     } finally {
       isAssetsLoading.value = false;
     }

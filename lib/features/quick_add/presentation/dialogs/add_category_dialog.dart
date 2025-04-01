@@ -58,8 +58,8 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
       titleText = '소득 카테고리 추가';
       hintText = '월급, 용돈, 부수입 등';
     } else if (isFinance) {
-      titleText = '금융 카테고리 추가';
-      hintText = '주식, 저축, 대출 등';
+      titleText = '재테크 카테고리 추가';
+      hintText = '주식, 저축, 가상화폐 등';
     } else {
       titleText = '지출 카테고리 추가';
       hintText = '식비, 교통비, 문화생활 등';

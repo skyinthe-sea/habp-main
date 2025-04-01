@@ -43,7 +43,7 @@ class MonthlySummaryCard extends StatelessWidget {
               // Assets card
               Expanded(
                 child: _buildSummaryCard(
-                  title: '자산',
+                  title: '재테크',
                   amount: assets,
                   comparison: '', // No comparison for assets yet
                   comparisonColor: Colors.blue,

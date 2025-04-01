@@ -339,7 +339,7 @@ class CategorySelectionDialog extends StatelessWidget {
       case 'EXPENSE':
         return '지출';
       case 'FINANCE':
-        return '금융';
+        return '재테크';
       default:
         return '';
     }

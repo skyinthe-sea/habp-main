@@ -65,11 +65,11 @@ class CategoryTypeDialog extends StatelessWidget {
             ),
 
 
-            // 금융 버튼 - 별도 행에 배치
+            // 재테크 버튼 - 별도 행에 배치
             _buildTypeButton(
               context: context,
-              icon: Icons.account_balance_rounded, // 금융 관련 아이콘
-              label: '금융',
+              icon: Icons.account_balance_rounded, // 재테크 관련 아이콘
+              label: '재테크',
               color: const Color(0xFF4990E2), // 푸른계통 색상
               type: 'FINANCE',
               controller: controller,

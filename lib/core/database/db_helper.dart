@@ -31,40 +31,83 @@ class DBHelper {
   }
 
   // 데이터베이스 테이블 생성
-  // Modifications to lib/core/database/db_helper.dart
-
-// Add to _createDB method
   Future<void> _createDB(Database db, int version) async {
-    // ... existing tables ...
-
     // 사용자 테이블
     await db.execute('''
-    CREATE TABLE user (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT,
-      password_hash TEXT,
-      name TEXT,
-      membership_type TEXT DEFAULT 'FREE',
-      premium_expiry_date TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  ''');
+      CREATE TABLE user (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT,
+        password_hash TEXT,
+        name TEXT,
+        membership_type TEXT DEFAULT 'FREE',
+        premium_expiry_date TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
 
     // 카테고리 테이블
     await db.execute('''
-    CREATE TABLE category (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      type TEXT NOT NULL,
-      is_fixed INTEGER NOT NULL,
-      is_deleted INTEGER DEFAULT 0,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  ''');
+      CREATE TABLE category (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        is_fixed INTEGER NOT NULL,
+        is_deleted INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
 
-    // ... other existing tables ...
+    // 거래 내역 테이블
+    await db.execute('''
+      CREATE TABLE transaction_record (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        category_id INTEGER,
+        amount REAL NOT NULL,
+        description TEXT,
+        transaction_date TEXT NOT NULL,
+        transaction_num TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES user (id),
+        FOREIGN KEY (category_id) REFERENCES category (id)
+      )
+    ''');
+
+    // 예산 테이블
+    await db.execute('''
+      CREATE TABLE budget (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        category_id INTEGER,
+        amount REAL NOT NULL,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES user (id),
+        FOREIGN KEY (category_id) REFERENCES category (id)
+      )
+    ''');
+
+    // 금융 계좌 테이블
+    await db.execute('''
+      CREATE TABLE financial_account (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        balance REAL NOT NULL,
+        interest_rate REAL,
+        maturity_date TEXT,
+        is_fixed INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES user (id)
+      )
+    ''');
 
     // 자산 테이블
     await db.execute('''
@@ -106,7 +149,7 @@ class DBHelper {
     await _insertDefaultCategories(db);
   }
 
-// Modify _insertDefaultCategories method
+  // 기본 카테고리 데이터 삽입
   Future<void> _insertDefaultCategories(Database db) async {
     final now = DateTime.now().toIso8601String();
 

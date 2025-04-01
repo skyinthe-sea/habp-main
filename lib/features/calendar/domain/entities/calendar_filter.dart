@@ -31,10 +31,10 @@ class CalendarFilter {
     name: '지출',
   );
 
-  // 금융 필터
+  // 재테크 필터
   static const CalendarFilter finance = CalendarFilter(
     categoryType: 'FINANCE',
-    name: '금융',
+    name: '재테크',
   );
 
   // 복사본 생성 (필터 수정 시 사용)

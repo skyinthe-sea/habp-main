@@ -344,7 +344,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       final startDateStr = "${startOfMonth.year}-${startOfMonth.month.toString().padLeft(2, '0')}-01";
       final endDateStr = "${endOfMonth.year}-${endOfMonth.month.toString().padLeft(2, '0')}-${endOfMonth.day.toString().padLeft(2, '0')}";
 
-      debugPrint('자산 조회 기간: $startDateStr ~ $endDateStr');
+      debugPrint('재테크 조회 기간: $startDateStr ~ $endDateStr');
 
       // Query transactions with FINANCE category type for current month
       final List<Map<String, dynamic>> results = await db.rawQuery('''
@@ -361,10 +361,10 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
         totalAssets = results[0]['total_assets'] as double;
       }
 
-      debugPrint('조회된 자산 총액: $totalAssets');
+      debugPrint('조회된 재테크 총액: $totalAssets');
       return totalAssets;
     } catch (e) {
-      debugPrint('자산 가져오기 오류: $e');
+      debugPrint('재테크 가져오기 오류: $e');
       return 0.0;
     }
   }

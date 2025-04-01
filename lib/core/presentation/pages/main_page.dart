@@ -96,7 +96,7 @@ class MainPage extends StatelessWidget {
               _buildNavItem(1, Icons.calendar_today, '캘린더', controller),
               // 가운데 공간
               const SizedBox(width: 48),
-              _buildNavItem(3, Icons.account_balance_wallet, '지출', controller),
+              _buildNavItem(3, Icons.account_balance_wallet, '예산', controller),
               _buildNavItem(4, Icons.account_balance_outlined, '자산', controller),
             ],
           ),

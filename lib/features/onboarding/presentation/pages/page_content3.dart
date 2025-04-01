@@ -122,7 +122,7 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    '금융관련',
+                                    '재테크관련',
                                     style: TextStyle(
                                       color: AppColors.white,
                                       fontSize: size.width * 0.12,

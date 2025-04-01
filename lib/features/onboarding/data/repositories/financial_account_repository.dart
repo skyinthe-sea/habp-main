@@ -6,13 +6,13 @@ import '../models/financial_account.dart';
 class FinancialAccountRepository {
   final DBHelper _dbHelper = DBHelper();
 
-  // 금융 계좌 추가
+  // 재테크 계좌 추가
   Future<int> createFinancialAccount(FinancialAccount account) async {
     final db = await _dbHelper.database;
     return await db.insert('financial_account', account.toMap());
   }
 
-  // 금융 계좌 조회
+  // 재테크 계좌 조회
   Future<FinancialAccount?> getFinancialAccount(int id) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
@@ -25,14 +25,14 @@ class FinancialAccountRepository {
     return FinancialAccount.fromMap(maps.first);
   }
 
-  // 모든 금융 계좌 조회
+  // 모든 재테크 계좌 조회
   Future<List<FinancialAccount>> getAllFinancialAccounts() async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query('financial_account');
     return List.generate(maps.length, (i) => FinancialAccount.fromMap(maps[i]));
   }
 
-  // 사용자별 금융 계좌 조회
+  // 사용자별 재테크 계좌 조회
   Future<List<FinancialAccount>> getFinancialAccountsByUser(int userId) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
@@ -77,7 +77,7 @@ class FinancialAccountRepository {
     return getFinancialAccountsByType(AccountType.LOAN);
   }
 
-  // 금융 계좌 업데이트
+  // 재테크 계좌 업데이트
   Future<int> updateFinancialAccount(FinancialAccount account) async {
     final db = await _dbHelper.database;
     return await db.update(
@@ -88,7 +88,7 @@ class FinancialAccountRepository {
     );
   }
 
-  // 금융 계좌 잔액 업데이트
+  // 재테크 계좌 잔액 업데이트
   Future<int> updateAccountBalance(int id, double newBalance) async {
     final account = await getFinancialAccount(id);
     if (account == null) return 0;
@@ -101,7 +101,7 @@ class FinancialAccountRepository {
     return updateFinancialAccount(updatedAccount);
   }
 
-  // 금융 계좌 삭제
+  // 재테크 계좌 삭제
   Future<int> deleteFinancialAccount(int id) async {
     final db = await _dbHelper.database;
     return await db.delete(

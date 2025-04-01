@@ -44,10 +44,10 @@ class FilterChips extends StatelessWidget {
               onTap: () => controller.setFilter(CalendarFilter.expense),
             ),
 
-            // 금융 필터 칩
+            // 재테크 필터 칩
             _buildFilterChip(
               isSelected: currentFilter.categoryType == 'FINANCE' && currentFilter.selectedCategoryIds.isEmpty,
-              label: '금융',
+              label: '재테크',
               onTap: () => controller.setFilter(CalendarFilter.finance),
             ),
 

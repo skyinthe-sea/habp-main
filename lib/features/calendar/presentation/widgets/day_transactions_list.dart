@@ -141,7 +141,7 @@ class DayTransactionsList extends StatelessWidget {
       if (currentFilter.categoryType != null) {
         final filterName = currentFilter.categoryType == 'INCOME'
             ? '소득'
-            : (currentFilter.categoryType == 'EXPENSE' ? '지출' : '금융');
+            : (currentFilter.categoryType == 'EXPENSE' ? '지출' : '재테크');
         if (currentFilter.selectedCategoryIds.isNotEmpty) {
           return '$filterName (${currentFilter.selectedCategoryIds.length}개 카테고리)';
         }
@@ -243,7 +243,7 @@ class DayTransactionsList extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      '금융 ',
+                      '재테크 ',
                       style: TextStyle(
                         color: Colors.blue,
                         fontWeight: FontWeight.w500,
