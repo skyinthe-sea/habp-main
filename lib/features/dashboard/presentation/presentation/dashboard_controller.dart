@@ -1,3 +1,4 @@
+// lib/features/dashboard/presentation/presentation/dashboard_controller.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/services/event_bus_service.dart';
@@ -6,6 +7,8 @@ import '../../data/entities/monthly_expense.dart';
 import '../../data/entities/transaction_with_category.dart';
 import '../../domain/usecases/get_assets.dart';
 import '../../domain/usecases/get_category_expenses.dart';
+import '../../domain/usecases/get_category_income.dart';
+import '../../domain/usecases/get_category_finance.dart';
 import '../../domain/usecases/get_monthly_summary.dart';
 import '../../domain/usecases/get_monthly_expenses_trend.dart';
 import '../../domain/usecases/get_recent_transactions.dart';
@@ -14,6 +17,8 @@ class DashboardController extends GetxController {
   final GetMonthlySummary getMonthlySummary;
   final GetMonthlyExpensesTrend getMonthlyExpensesTrend;
   final GetCategoryExpenses getCategoryExpenses;
+  final GetCategoryIncome getCategoryIncome;
+  final GetCategoryFinance getCategoryFinance;
   final GetRecentTransactions getRecentTransactions;
   final GetAssets getAssets;
 
@@ -21,6 +26,8 @@ class DashboardController extends GetxController {
     required this.getMonthlySummary,
     required this.getMonthlyExpensesTrend,
     required this.getCategoryExpenses,
+    required this.getCategoryIncome,
+    required this.getCategoryFinance,
     required this.getRecentTransactions,
     required this.getAssets,
   });
@@ -39,8 +46,19 @@ class DashboardController extends GetxController {
   final RxBool isAssetsLoading = false.obs;
   final RxList<MonthlyExpense> monthlyExpenses = <MonthlyExpense>[].obs;
   final RxBool isExpenseTrendLoading = false.obs;
+
+  // 카테고리별 지출 데이터
   final RxList<CategoryExpense> categoryExpenses = <CategoryExpense>[].obs;
   final RxBool isCategoryExpenseLoading = false.obs;
+
+  // 카테고리별 수입 데이터 (신규)
+  final RxList<CategoryExpense> categoryIncome = <CategoryExpense>[].obs;
+  final RxBool isCategoryIncomeLoading = false.obs;
+
+  // 카테고리별 재테크 데이터 (신규)
+  final RxList<CategoryExpense> categoryFinance = <CategoryExpense>[].obs;
+  final RxBool isCategoryFinanceLoading = false.obs;
+
   final RxList<TransactionWithCategory> recentTransactions = <TransactionWithCategory>[].obs;
   final RxBool isRecentTransactionsLoading = false.obs;
 
@@ -69,6 +87,8 @@ class DashboardController extends GetxController {
     fetchMonthlySummary();
     fetchMonthlyExpensesTrend();
     fetchCategoryExpenses();
+    fetchCategoryIncome();
+    fetchCategoryFinance();
     fetchRecentTransactions();
     fetchAssets();
   }
@@ -135,6 +155,34 @@ class DashboardController extends GetxController {
       debugPrint('카테고리별 지출 가져오기 오류: $e');
     } finally {
       isCategoryExpenseLoading.value = false;
+    }
+  }
+
+  // 새로 추가: 카테고리별 수입 데이터 가져오기
+  Future<void> fetchCategoryIncome() async {
+    isCategoryIncomeLoading.value = true;
+    try {
+      final result = await getCategoryIncome.execute();
+      categoryIncome.value = result;
+      debugPrint('카테고리별 수입 개수: ${result.length}');
+    } catch (e) {
+      debugPrint('카테고리별 수입 가져오기 오류: $e');
+    } finally {
+      isCategoryIncomeLoading.value = false;
+    }
+  }
+
+  // 새로 추가: 카테고리별 재테크 데이터 가져오기
+  Future<void> fetchCategoryFinance() async {
+    isCategoryFinanceLoading.value = true;
+    try {
+      final result = await getCategoryFinance.execute();
+      categoryFinance.value = result;
+      debugPrint('카테고리별 재테크 개수: ${result.length}');
+    } catch (e) {
+      debugPrint('카테고리별 재테크 가져오기 오류: $e');
+    } finally {
+      isCategoryFinanceLoading.value = false;
     }
   }
 

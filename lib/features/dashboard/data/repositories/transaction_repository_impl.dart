@@ -1,3 +1,4 @@
+// lib/features/dashboard/data/repositories/transaction_repository_impl.dart
 import 'package:habp/features/dashboard/data/entities/category_expense.dart';
 
 import '../../domain/repositories/transaction_repository.dart';
@@ -30,6 +31,16 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<List<CategoryExpense>> getCategoryExpenses() async {
     return await localDataSource.getCategoryExpenses();
+  }
+
+  @override
+  Future<List<CategoryExpense>> getCategoryIncome() async {
+    return await localDataSource.getCategoryIncome();
+  }
+
+  @override
+  Future<List<CategoryExpense>> getCategoryFinance() async {
+    return await localDataSource.getCategoryFinance();
   }
 
   @override
