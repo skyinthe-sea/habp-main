@@ -125,20 +125,6 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     }
   }
 
-// 한 달에 특정 요일이 몇 번 있는지 계산하는 함수
-  int _countWeekdaysInMonth(int year, int month, int weekday) {
-    int count = 0;
-    int daysInMonth = DateTime(year, month + 1, 0).day;
-
-    for (int day = 1; day <= daysInMonth; day++) {
-      if (DateTime(year, month, day).weekday == weekday) {
-        count++;
-      }
-    }
-
-    return count;
-  }
-
   @override
   Future<List<CategoryExpense>> getCategoryExpenses() async {
     try {
@@ -328,6 +314,9 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     }
   }
 
+  // lib/features/dashboard/data/datasources/transaction_local_data_source.dart
+// getAssets() 메서드를 수정하여 고정 거래도 포함하도록 함
+
   @override
   Future<double> getAssets() async {
     try {
@@ -346,26 +335,78 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
       debugPrint('재테크 조회 기간: $startDateStr ~ $endDateStr');
 
-      // Query transactions with FINANCE category type for current month
-      final List<Map<String, dynamic>> results = await db.rawQuery('''
-        SELECT SUM(ABS(tr.amount)) as total_assets
-        FROM transaction_record tr
-        JOIN category c ON tr.category_id = c.id
-        WHERE c.type = 'FINANCE'
-        AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
-      ''', [startDateStr, endDateStr]);
+      // 1. 변동 거래 내역 (해당 월에 직접 기록된 거래)
+      final List<Map<String, dynamic>> variableResults = await db.rawQuery('''
+      SELECT SUM(ABS(tr.amount)) as total_assets
+      FROM transaction_record tr
+      JOIN category c ON tr.category_id = c.id
+      WHERE c.type = 'FINANCE'
+      AND c.is_fixed = 0
+      AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+    ''', [startDateStr, endDateStr]);
 
-      double totalAssets = 0.0;
+      double totalVariableAssets = 0.0;
 
-      if (results.isNotEmpty && results[0]['total_assets'] != null) {
-        totalAssets = results[0]['total_assets'] as double;
+      if (variableResults.isNotEmpty && variableResults[0]['total_assets'] != null) {
+        totalVariableAssets = variableResults[0]['total_assets'] as double;
       }
 
-      debugPrint('조회된 재테크 총액: $totalAssets');
+      // 2. 고정 거래 내역 (매달 반복되는 거래)
+      final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
+      SELECT tr.*
+      FROM transaction_record tr
+      JOIN category c ON tr.category_id = c.id
+      WHERE c.type = 'FINANCE'
+      AND c.is_fixed = 1
+    ''');
+
+      // 고정 거래 금액 합산
+      double totalFixedAssets = 0.0;
+
+      for (var transaction in fixedTransactions) {
+        final description = transaction['description'] as String;
+        final transactionNum = transaction['transaction_num'].toString();
+        double amount = transaction['amount'] as double;
+
+        if (description.contains('매월')) {
+          // 매월 거래는 그대로 더함
+          totalFixedAssets += amount.abs();
+        }
+        else if (description.contains('매주')) {
+          // 매주 거래는 해당 월의 요일 수에 맞게 계산
+          int weekday = int.parse(transactionNum);
+          int occurrences = _countWeekdaysInMonth(currentYear, currentMonth, weekday);
+          totalFixedAssets += amount.abs() * occurrences;
+        }
+        else if (description.contains('매일')) {
+          // 매일 거래는 해당 월의 일수만큼 더함
+          int daysInMonth = endOfMonth.day;
+          totalFixedAssets += amount.abs() * daysInMonth;
+        }
+      }
+
+      // 변동과 고정 자산 합산
+      final totalAssets = totalVariableAssets + totalFixedAssets;
+
+      debugPrint('조회된 재테크 총액 (변동: $totalVariableAssets, 고정: $totalFixedAssets): $totalAssets');
       return totalAssets;
     } catch (e) {
       debugPrint('재테크 가져오기 오류: $e');
       return 0.0;
     }
+  }
+
+// 한 달에 특정 요일이 몇 번 있는지 계산하는 함수
+  int _countWeekdaysInMonth(int year, int month, int weekday) {
+    int count = 0;
+    int daysInMonth = DateTime(year, month + 1, 0).day;
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      if (DateTime(year, month, day).weekday == weekday) {
+        count++;
+      }
+    }
+
+    return count;
   }
 }

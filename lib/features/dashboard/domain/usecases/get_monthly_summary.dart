@@ -6,9 +6,6 @@ class GetMonthlySummary {
 
   GetMonthlySummary(this.repository);
 
-  // lib/features/dashboard/domain/usecases/get_monthly_summary.dart
-// execute 메서드를 전체 수정
-
   Future<Map<String, dynamic>> execute() async {
     try {
       // 현재 날짜 정보
@@ -30,18 +27,18 @@ class GetMonthlySummary {
       // 이번 달 데이터 계산
       final currentMonthStart = DateTime(currentYear, currentMonth, 1);
       final currentMonthEnd =
-          DateTime(currentYear, currentMonth + 1, 0, 23, 59, 59);
+      DateTime(currentYear, currentMonth + 1, 0, 23, 59, 59);
 
       // 지난 달 데이터 계산
       final lastMonthStart = DateTime(lastMonthYear, lastMonthMonth, 1);
       final lastMonthEnd =
-          DateTime(lastMonthYear, lastMonthMonth + 1, 0, 23, 59, 59);
+      DateTime(lastMonthYear, lastMonthMonth + 1, 0, 23, 59, 59);
 
-      // 1. 이번 달 거래 내역 가져오기 (모든 거래)
+      // 1. 이번 달 변동 거래 내역 가져오기 (is_fixed=0인 거래만)
       final currentMonthTransactions = await repository
           .getTransactionsByDateRange(currentMonthStart, currentMonthEnd);
 
-      // 2. 지난 달 거래 내역 가져오기 (모든 거래)
+      // 2. 지난 달 변동 거래 내역 가져오기 (is_fixed=0인 거래만)
       final lastMonthTransactions = await repository.getTransactionsByDateRange(
           lastMonthStart, lastMonthEnd);
 
@@ -52,13 +49,16 @@ class GetMonthlySummary {
       final categories = await repository.getCategories();
       final categoryMap = {for (var c in categories) c.id: c};
 
-      // 이번 달 수입/지출 계산
+      // 이번 달 수입/지출 계산 (변동 거래만)
       double currentMonthIncome = 0;
       double currentMonthExpense = 0;
 
       for (var transaction in currentMonthTransactions) {
         final category = categoryMap[transaction.categoryId];
         if (category == null) continue;
+
+        // 고정 거래는 건너뛰기 (별도로 계산할 예정)
+        if (category.isFixed == 1) continue;
 
         if (category.type == 'INCOME') {
           currentMonthIncome += transaction.amount.abs(); // 수입은 양수로 변환
@@ -67,7 +67,7 @@ class GetMonthlySummary {
         }
       }
 
-      // 지난 달 수입/지출 계산
+      // 지난 달 수입/지출 계산 (변동 거래만)
       double lastMonthIncome = 0;
       double lastMonthExpense = 0;
 
@@ -75,12 +75,25 @@ class GetMonthlySummary {
         final category = categoryMap[transaction.categoryId];
         if (category == null) continue;
 
+        // 고정 거래는 건너뛰기 (별도로 계산할 예정)
+        if (category.isFixed == 1) continue;
+
         if (category.type == 'INCOME') {
           lastMonthIncome += transaction.amount.abs(); // 수입은 양수로 변환
         } else if (category.type == 'EXPENSE') {
           lastMonthExpense += transaction.amount.abs(); // 지출은 양수로 변환
         }
       }
+
+      // 3. 이번 달 고정 거래의 수입/지출 계산 (기존 함수 활용)
+      final currentMonthFixed = await _calculateFixedTransactions(currentYear, currentMonth);
+      currentMonthIncome += currentMonthFixed['income'] ?? 0;
+      currentMonthExpense += currentMonthFixed['expense'] ?? 0;
+
+      // 4. 지난 달 고정 거래의 수입/지출 계산 (기존 함수 활용)
+      final lastMonthFixed = await _calculateFixedTransactions(lastMonthYear, lastMonthMonth);
+      lastMonthIncome += lastMonthFixed['income'] ?? 0;
+      lastMonthExpense += lastMonthFixed['expense'] ?? 0;
 
       debugPrint('이번 달 수입: $currentMonthIncome, 지출: $currentMonthExpense');
       debugPrint('지난 달 수입: $lastMonthIncome, 지출: $lastMonthExpense');

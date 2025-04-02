@@ -5,7 +5,8 @@ import '../presentation/dashboard_controller.dart';
 class MonthlySummaryCard extends StatelessWidget {
   final DashboardController controller;
 
-  const MonthlySummaryCard({Key? key, required this.controller}) : super(key: key);
+  const MonthlySummaryCard({Key? key, required this.controller})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +33,21 @@ class MonthlySummaryCard extends StatelessWidget {
                 child: _buildSummaryCard(
                   title: '이번 달 수입',
                   amount: income,
-                  comparison: '지난달 대비 ${controller.getPercentageSign(controller.incomeChangePercentage.value)}${controller.incomeChangePercentage.value.toStringAsFixed(1)}%',
-                  comparisonColor: controller.incomeChangePercentage.value > 0 ? Colors.green : Colors.red,
-                  iconData: controller.incomeChangePercentage.value > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                  iconBackgroundColor: controller.incomeChangePercentage.value > 0 ? const Color(0xFFE6F4EA) : const Color(0xFFFEE8EC),
-                  iconColor: controller.incomeChangePercentage.value > 0 ? Colors.green : Colors.red,
+                  comparison:
+                      '지난달 대비 ${controller.getPercentageSign(controller.incomeChangePercentage.value)}${controller.incomeChangePercentage.value.toStringAsFixed(1)}%',
+                  comparisonColor: controller.incomeChangePercentage.value > 0
+                      ? Colors.green
+                      : Colors.red,
+                  iconData: controller.incomeChangePercentage.value > 0
+                      ? Icons.arrow_upward_rounded
+                      : Icons.arrow_downward_rounded,
+                  iconBackgroundColor:
+                      controller.incomeChangePercentage.value > 0
+                          ? const Color(0xFFE6F4EA)
+                          : const Color(0xFFFEE8EC),
+                  iconColor: controller.incomeChangePercentage.value > 0
+                      ? Colors.green
+                      : Colors.red,
                 ),
               ),
               const SizedBox(width: 12),
@@ -45,7 +56,8 @@ class MonthlySummaryCard extends StatelessWidget {
                 child: _buildSummaryCard(
                   title: '이번 달 재테크',
                   amount: assets,
-                  comparison: '', // No comparison for assets yet
+                  comparison: '',
+                  // No comparison for assets yet
                   comparisonColor: Colors.blue,
                   iconData: Icons.account_balance_outlined,
                   iconBackgroundColor: const Color(0xFFE3F2FD),
@@ -63,11 +75,21 @@ class MonthlySummaryCard extends StatelessWidget {
                 child: _buildSummaryCard(
                   title: '이번 달 지출',
                   amount: expense,
-                  comparison: '지난달 대비 ${controller.getPercentageSign(controller.expenseChangePercentage.value)}${controller.expenseChangePercentage.value.toStringAsFixed(1)}%',
-                  comparisonColor: controller.expenseChangePercentage.value > 0 ? Colors.red : Colors.green,
-                  iconData: controller.expenseChangePercentage.value > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                  iconBackgroundColor: controller.expenseChangePercentage.value > 0 ? const Color(0xFFFEE8EC) : const Color(0xFFE6F4EA),
-                  iconColor: controller.expenseChangePercentage.value > 0 ? Colors.red : Colors.green,
+                  comparison:
+                      '지난달 대비 ${controller.getPercentageSign(controller.expenseChangePercentage.value)}${controller.expenseChangePercentage.value.toStringAsFixed(1)}%',
+                  comparisonColor: controller.expenseChangePercentage.value > 0
+                      ? Colors.red
+                      : Colors.green,
+                  iconData: controller.expenseChangePercentage.value > 0
+                      ? Icons.arrow_upward_rounded
+                      : Icons.arrow_downward_rounded,
+                  iconBackgroundColor:
+                      controller.expenseChangePercentage.value > 0
+                          ? const Color(0xFFFEE8EC)
+                          : const Color(0xFFE6F4EA),
+                  iconColor: controller.expenseChangePercentage.value > 0
+                      ? Colors.red
+                      : Colors.green,
                 ),
               ),
               const SizedBox(width: 12),
@@ -99,6 +121,9 @@ class MonthlySummaryCard extends StatelessWidget {
     required Color iconBackgroundColor,
     required Color iconColor,
   }) {
+    // 금액 형식화
+    final formattedAmount = '₩${_formatAmount(amount)}';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16), // Reduced padding for smaller cards
@@ -127,13 +152,20 @@ class MonthlySummaryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6), // Reduced spacing
-                Text(
-                  '₩${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                  style: const TextStyle(
-                    fontSize: 20, // Smaller font for 2x2 layout
-                    fontWeight: FontWeight.bold,
+
+                // 금액을 표시하는 부분을 스크롤 가능하게 변경
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Text(
+                    formattedAmount,
+                    style: const TextStyle(
+                      fontSize: 16, // 더 작은 폰트 크기로 변경
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 3), // Reduced spacing
                 if (comparison.isNotEmpty)
                   Text(
@@ -162,5 +194,21 @@ class MonthlySummaryCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // 금액 형식화 함수 - 큰 숫자일 경우 간소화
+  String _formatAmount(double amount) {
+    // 절대값 사용
+    final absAmount = amount.abs();
+
+    // 숫자가 너무 클 경우 단위로 표시
+    if (absAmount >= 1000000000) {
+      // 10억 이상
+      return '${(absAmount / 1000000000).toStringAsFixed(1)}B';
+    } else {
+      // 일반적인 형식: 천 단위 구분자
+      return amount.toInt().toString().replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
+    }
   }
 }
