@@ -1,3 +1,6 @@
+// In lib/features/calendar/presentation/widgets/day_transactions_list.dart
+// Update the build method to include date checking logic
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -21,6 +24,18 @@ class DayTransactionsList extends StatelessWidget {
     return Obx(() {
       final selectedDay = controller.selectedDay.value;
       final summary = controller.selectedDaySummary.value;
+
+      // 현재 날짜
+      DateTime today = DateTime.now();
+      DateTime tomorrow = today.add(Duration(days: 1));
+      int tomorrowDay = tomorrow.day;
+
+      // Check if selected date is in the future
+      final isDateInFuture = selectedDay.isAfter(DateTime(
+        DateTime.now().year,
+        DateTime.now().month,
+        tomorrowDay,
+      ));
 
       // Filter transactions based on current filter
       final transactions = summary.transactions.where((transaction) =>
@@ -73,7 +88,8 @@ class DayTransactionsList extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$formattedDate 거래 내역',
+                      // Change text based on date
+                      '$formattedDate ${isDateInFuture ? '거래 예정' : '거래 내역'}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -119,7 +135,7 @@ class DayTransactionsList extends StatelessWidget {
           // Transaction list
           Expanded(
             child: transactions.isEmpty
-                ? _buildEmptyState(filterController)
+                ? _buildEmptyState(filterController, isDateInFuture)
                 : ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: transactions.length,
@@ -271,7 +287,7 @@ class DayTransactionsList extends StatelessWidget {
   }
 
 // Helper method for empty state display
-  Widget _buildEmptyState(CalendarFilterController filterController) {
+  Widget _buildEmptyState(CalendarFilterController filterController, bool isDateInFuture) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -283,7 +299,8 @@ class DayTransactionsList extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '표시할 거래 내역이 없습니다.',
+            // Change empty state text based on date
+            isDateInFuture ? '표시할 거래 예정이 없습니다.' : '표시할 거래 내역이 없습니다.',
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 14,
