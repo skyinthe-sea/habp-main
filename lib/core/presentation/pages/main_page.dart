@@ -19,43 +19,7 @@ class MainPage extends StatelessWidget {
 
     return Obx(() {
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 1,
-          title: const Text(
-            '이쁜정이 가계부',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search_outlined, color: Colors.grey),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: Colors.grey),
-              onPressed: () {},
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: AppColors.primary.withOpacity(0.1),
-                child: const Text(
-                  '정이',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        // appBar: AppBar(".""?////'''''
         body: IndexedStack(
           index: controller.selectedIndex.value,
           children: const [
