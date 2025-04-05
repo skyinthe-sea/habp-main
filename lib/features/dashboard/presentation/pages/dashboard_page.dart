@@ -69,57 +69,57 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12), // 16에서 12로 감소
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 월간 요약 카드
               MonthlySummaryCard(controller: _controller),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16), // 24에서 16으로 감소
 
               // 월별 지출 추이 차트
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14), // 16에서 14로 감소
                   boxShadow: [
                     BoxShadow(
                       color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 10,
+                      blurRadius: 8, // 10에서 8로 감소
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: MonthlyExpenseChart(controller: _controller),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16), // 24에서 16으로 감소
 
               // 카테고리별 차트 (탭으로 전환 가능)
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14), // 16에서 14로 감소
                   boxShadow: [
                     BoxShadow(
                       color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 10,
+                      blurRadius: 8, // 10에서 8로 감소
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: CategoryChartTabs(controller: _controller),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16), // 24에서 16으로 감소
 
               // 최근 거래 내역
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14), // 16에서 14로 감소
                   boxShadow: [
                     BoxShadow(
                       color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 10,
+                      blurRadius: 8, // 10에서 8로 감소
                       offset: const Offset(0, 2),
                     ),
                   ],

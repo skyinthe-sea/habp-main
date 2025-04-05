@@ -1,3 +1,5 @@
+// lib/features/dashboard/presentation/widgets/monthly_summary_card.dart 수정
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../presentation/dashboard_controller.dart';
@@ -33,40 +35,28 @@ class MonthlySummaryCard extends StatelessWidget {
                 child: _buildSummaryCard(
                   title: '이번 달 수입',
                   amount: income,
-                  comparison:
-                      '지난달 대비 ${controller.getPercentageSign(controller.incomeChangePercentage.value)}${controller.incomeChangePercentage.value.toStringAsFixed(1)}%',
-                  comparisonColor: controller.incomeChangePercentage.value > 0
-                      ? Colors.green
-                      : Colors.red,
-                  iconData: controller.incomeChangePercentage.value > 0
-                      ? Icons.arrow_upward_rounded
-                      : Icons.arrow_downward_rounded,
-                  iconBackgroundColor:
-                      controller.incomeChangePercentage.value > 0
-                          ? const Color(0xFFE6F4EA)
-                          : const Color(0xFFFEE8EC),
-                  iconColor: controller.incomeChangePercentage.value > 0
-                      ? Colors.green
-                      : Colors.red,
+                  percentChange: controller.incomeChangePercentage.value,
+                  isPositiveTrend: controller.incomeChangePercentage.value > 0,
+                  iconData: Icons.arrow_downward_rounded,
+                  cardType: 'income',
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8), // 좁아진 간격
               // Assets card
               Expanded(
                 child: _buildSummaryCard(
                   title: '이번 달 재테크',
                   amount: assets,
-                  comparison: '',
-                  // No comparison for assets yet
-                  comparisonColor: Colors.blue,
+                  percentChange: 0.0, // No comparison data
+                  isPositiveTrend: true,
                   iconData: Icons.account_balance_outlined,
-                  iconBackgroundColor: const Color(0xFFE3F2FD),
-                  iconColor: Colors.blue,
+                  cardType: 'assets',
+                  hasPercentage: false, // 퍼센티지 표시 안 함
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8), // 좁아진 간격
           // Second row: Expenses and Balance
           Row(
             children: [
@@ -75,34 +65,23 @@ class MonthlySummaryCard extends StatelessWidget {
                 child: _buildSummaryCard(
                   title: '이번 달 지출',
                   amount: expense,
-                  comparison:
-                      '지난달 대비 ${controller.getPercentageSign(controller.expenseChangePercentage.value)}${controller.expenseChangePercentage.value.toStringAsFixed(1)}%',
-                  comparisonColor: controller.expenseChangePercentage.value > 0
-                      ? Colors.red
-                      : Colors.green,
-                  iconData: controller.expenseChangePercentage.value > 0
-                      ? Icons.arrow_upward_rounded
-                      : Icons.arrow_downward_rounded,
-                  iconBackgroundColor:
-                      controller.expenseChangePercentage.value > 0
-                          ? const Color(0xFFFEE8EC)
-                          : const Color(0xFFE6F4EA),
-                  iconColor: controller.expenseChangePercentage.value > 0
-                      ? Colors.red
-                      : Colors.green,
+                  percentChange: controller.expenseChangePercentage.value,
+                  isPositiveTrend: controller.expenseChangePercentage.value <= 0, // 지출은 감소가 긍정적
+                  iconData: Icons.arrow_upward_rounded,
+                  cardType: 'expense',
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8), // 좁아진 간격
               // Balance card
               Expanded(
                 child: _buildSummaryCard(
                   title: '이번 달 잔액',
                   amount: balance,
-                  comparison: '',
-                  comparisonColor: Colors.grey,
+                  percentChange: 0.0, // No comparison data
+                  isPositiveTrend: balance >= 0, // 잔액이 양수면 긍정적
                   iconData: Icons.account_balance_wallet_outlined,
-                  iconBackgroundColor: const Color(0xFFF5F5F5),
-                  iconColor: Colors.grey,
+                  cardType: 'balance',
+                  hasPercentage: false, // 퍼센티지 표시 안 함
                 ),
               ),
             ],
@@ -115,82 +94,142 @@ class MonthlySummaryCard extends StatelessWidget {
   Widget _buildSummaryCard({
     required String title,
     required double amount,
-    required String comparison,
-    required Color comparisonColor,
+    required double percentChange,
+    required bool isPositiveTrend,
     required IconData iconData,
-    required Color iconBackgroundColor,
-    required Color iconColor,
+    required String cardType, // 'income', 'expense', 'assets', 'balance'
+    bool hasPercentage = true,
   }) {
     // 금액 형식화
     final formattedAmount = '₩${_formatAmount(amount)}';
 
+    // 카드 타입에 따른 색상 설정
+    Color textColor;
+    Color iconBgColor;
+    Color iconColor;
+
+    switch (cardType) {
+      case 'income':
+        textColor = Colors.green.shade700;
+        iconBgColor = const Color(0xFFE6F4EA);
+        iconColor = Colors.green.shade600;
+        break;
+      case 'expense':
+        textColor = Colors.red.shade700;
+        iconBgColor = const Color(0xFFFEE8EC);
+        iconColor = Colors.red.shade600;
+        break;
+      case 'assets':
+        textColor = Colors.blue.shade700;
+        iconBgColor = const Color(0xFFE3F2FD);
+        iconColor = Colors.blue;
+        break;
+      case 'balance':
+        textColor = amount >= 0 ? Colors.green.shade700 : Colors.red.shade700;
+        iconBgColor = const Color(0xFFF5F5F5);
+        iconColor = Colors.grey;
+        break;
+      default:
+        textColor = Colors.grey.shade800;
+        iconBgColor = Colors.grey.shade100;
+        iconColor = Colors.grey;
+    }
+
+    // 세로 방향 레이아웃으로 변경
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16), // Reduced padding for smaller cards
+      height: 80, // 고정된 높이로 모든 카드 통일
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // 제목과 아이콘을 한 줄에
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 11,
+                ),
+              ),
+              Container(
+                width: 24, // 더 작은 아이콘
+                height: 24,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  iconData,
+                  color: iconColor,
+                  size: 14,
+                ),
+              ),
+            ],
+          ),
+
+          // 금액
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 13, // Slightly smaller text
+                  formattedAmount,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
                   ),
                 ),
-                const SizedBox(height: 6), // Reduced spacing
-
-                // 금액을 표시하는 부분을 스크롤 가능하게 변경
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Text(
-                    formattedAmount,
-                    style: const TextStyle(
-                      fontSize: 16, // 더 작은 폰트 크기로 변경
-                      fontWeight: FontWeight.bold,
+                if (hasPercentage && percentChange != 0.0)
+                  Container(
+                    margin: const EdgeInsets.only(left: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: isPositiveTrend ? Colors.green.shade50 : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                  ),
-                ),
-
-                const SizedBox(height: 3), // Reduced spacing
-                if (comparison.isNotEmpty)
-                  Text(
-                    comparison,
-                    style: TextStyle(
-                      color: comparisonColor,
-                      fontSize: 11, // Smaller font
+                    child: Text(
+                      '${percentChange > 0 ? '+' : ''}${percentChange.toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: isPositiveTrend ? Colors.green.shade700 : Colors.red.shade700,
+                      ),
                     ),
                   ),
               ],
             ),
           ),
-          Container(
-            width: 36, // Slightly smaller icon container
-            height: 36,
-            decoration: BoxDecoration(
-              color: iconBackgroundColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              iconData,
-              color: iconColor,
-              size: 18, // Smaller icon
-            ),
-          ),
+
+          // 비교 텍스트 (항상 자리 차지하도록)
+          // SizedBox(
+          //   height: 14, // 공간 확보
+          //   child: hasPercentage
+          //       ? Text(
+          //     '지난달 대비',
+          //     style: TextStyle(
+          //       fontSize: 10,
+          //       color: Colors.grey.shade400,
+          //     ),
+          //   )
+          //       : const SizedBox(), // 빈 공간이지만 높이는 유지
+          // ),
         ],
       ),
     );
@@ -205,6 +244,12 @@ class MonthlySummaryCard extends StatelessWidget {
     if (absAmount >= 1000000000) {
       // 10억 이상
       return '${(absAmount / 1000000000).toStringAsFixed(1)}B';
+    } else if (absAmount >= 100000000) {
+      // 1억 이상
+      return '${(absAmount / 100000000).toStringAsFixed(1)}억';
+    } else if (absAmount >= 10000) {
+      // 만 이상
+      return '${(absAmount / 10000).toStringAsFixed(1)}만';
     } else {
       // 일반적인 형식: 천 단위 구분자
       return amount.toInt().toString().replaceAllMapped(

@@ -168,7 +168,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   }
 
   Widget _buildCategoryChart(List<CategoryExpense> data, String type) {
-    // Define colors based on type
+    // 색상 정의는 그대로 유지
     Color baseColor;
     switch (type) {
       case '수입':
@@ -184,7 +184,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Animated Pie Chart
+        // 애니메이션 도넛 차트
         TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0.0, end: 1.0),
           duration: const Duration(milliseconds: 800),
@@ -192,8 +192,8 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
           builder: (context, value, child) {
             return PieChart(
               PieChartData(
-                sectionsSpace: 2,
-                centerSpaceRadius: 70,
+                sectionsSpace: 1, // 2에서 1로 감소
+                centerSpaceRadius: 55, // 70에서 55로 감소
                 sections: _createSections(data, baseColor, value),
                 startDegreeOffset: 180,
               ),
@@ -201,32 +201,32 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
           },
         ),
 
-        // Center Text
+        // 중앙 텍스트
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               type,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14, // 16에서 14로 감소
                 fontWeight: FontWeight.bold,
                 color: baseColor,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2), // 4에서 2로 감소
             Text(
               '카테고리 비율',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 10, // 12에서 10으로 감소
                 color: Colors.grey.shade600,
               ),
             ),
           ],
         ),
 
-        // Legend below the chart (optional)
+        // 하단 범례
         Positioned(
-          bottom: 20,
+          bottom: 15, // 20에서 15로 감소
           left: 0,
           right: 0,
           child: _buildLegend(data, type),

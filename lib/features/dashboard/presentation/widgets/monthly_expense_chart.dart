@@ -15,7 +15,7 @@ class MonthlyExpenseChart extends StatelessWidget {
     return Obx(() {
       if (controller.isExpenseTrendLoading.value) {
         return Container(
-          height: 300,
+          height: 200, // 300에서 200으로 감소
           alignment: Alignment.center,
           child: const CircularProgressIndicator(),
         );
@@ -23,7 +23,7 @@ class MonthlyExpenseChart extends StatelessWidget {
 
       if (controller.monthlyExpenses.isEmpty) {
         return Container(
-          height: 300,
+          height: 200, // 300에서 200으로 감소
           alignment: Alignment.center,
           child: const Text('데이터가 없습니다'),
         );
@@ -36,21 +36,21 @@ class MonthlyExpenseChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // 16,8에서 12,6으로 감소
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   '월별 지출 추이',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14, // 16에서 14로 감소
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   '최근 ${expenses.length}개월',
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 10, // 12에서 10으로 감소
                     color: Colors.grey,
                   ),
                 ),
@@ -60,8 +60,8 @@ class MonthlyExpenseChart extends StatelessWidget {
 
           // 그래프 영역
           Container(
-            height: 240,
-            padding: const EdgeInsets.all(16),
+            height: 200, // 240에서 200으로 감소
+            padding: const EdgeInsets.all(12), // 16에서 12로 감소
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
@@ -77,6 +77,7 @@ class MonthlyExpenseChart extends StatelessWidget {
                         const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
+                          fontSize: 10, // 추가: 툴팁 폰트 사이즈 지정
                         ),
                       );
                     },
@@ -92,19 +93,19 @@ class MonthlyExpenseChart extends StatelessWidget {
                         if (index >= 0 && index < expenses.length) {
                           final month = expenses[index].date.month;
                           return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
+                            padding: const EdgeInsets.only(top: 6.0), // 8에서 6으로 감소
                             child: Text(
                               '${month}월',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w500,
-                                fontSize: 12,
+                                fontSize: 10, // 12에서 10으로 감소
                               ),
                             ),
                           );
                         }
                         return const SizedBox();
                       },
-                      reservedSize: 28,
+                      reservedSize: 22, // 28에서 22로 감소
                     ),
                   ),
                   leftTitles: AxisTitles(
@@ -125,17 +126,17 @@ class MonthlyExpenseChart extends StatelessWidget {
                         }
 
                         return Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(right: 4), // 8에서 4로 감소
                           child: Text(
                             text,
                             style: const TextStyle(
-                              fontSize: 10,
+                              fontSize: 8, // 10에서 8로 감소
                               color: Colors.grey,
                             ),
                           ),
                         );
                       },
-                      reservedSize: 40,
+                      reservedSize: 30, // 40에서 30으로 감소
                     ),
                   ),
                   topTitles: AxisTitles(
@@ -150,18 +151,18 @@ class MonthlyExpenseChart extends StatelessWidget {
                 ),
                 gridData: FlGridData(
                   show: true,
-                  drawVerticalLine: true, // 세로 점선 표시
+                  drawVerticalLine: true,
                   drawHorizontalLine: true,
                   horizontalInterval: _calculateInterval(expenses),
                   getDrawingHorizontalLine: (value) => FlLine(
                     color: Colors.grey.shade200,
-                    strokeWidth: 1,
-                    dashArray: [5, 5], // 가로 점선으로 표시
+                    strokeWidth: 0.8, // 1에서 0.8로 감소
+                    dashArray: [5, 5],
                   ),
                   getDrawingVerticalLine: (value) => FlLine(
                     color: Colors.grey.shade200,
                     strokeWidth: 0,
-                    dashArray: [5, 5], // 세로 점선으로 표시
+                    dashArray: [5, 5],
                   ),
                 ),
                 barGroups: expenses.asMap().entries.map((entry) {
@@ -173,9 +174,9 @@ class MonthlyExpenseChart extends StatelessWidget {
                     barRods: [
                       BarChartRodData(
                         toY: expense.amount,
-                        color: AppColors.primary, // primary 컬러 사용
-                        width: 40, // 막대 두께 줄임
-                        borderRadius: BorderRadius.circular(2), // 막대 모서리 각도 줄임
+                        color: AppColors.primary,
+                        width: 30, // 40에서 30으로 감소
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ],
                   );

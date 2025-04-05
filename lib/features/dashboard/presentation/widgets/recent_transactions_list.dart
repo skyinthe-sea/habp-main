@@ -296,11 +296,11 @@ class RecentTransactionsList extends StatelessWidget {
 
     // 금액
     final formattedAmount =
-        NumberFormat('#,###').format(transaction.amount.abs()).toString();
+    NumberFormat('#,###').format(transaction.amount.abs()).toString();
     final isIncome = transaction.categoryType == 'INCOME';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12), // 12,16에서 8,12로 감소
       child: Row(
         children: [
           // 날짜
@@ -309,7 +309,7 @@ class RecentTransactionsList extends StatelessWidget {
             child: Text(
               date,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12, // 14에서 12로 감소
                 color: Colors.grey[700],
               ),
             ),
@@ -321,7 +321,7 @@ class RecentTransactionsList extends StatelessWidget {
             child: Text(
               transaction.description,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 12, // 14에서 12로 감소
                 fontWeight: FontWeight.w500,
               ),
               overflow: TextOverflow.ellipsis,
@@ -332,15 +332,15 @@ class RecentTransactionsList extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), // 8,2에서 6,1로 감소
               decoration: BoxDecoration(
                 color: categoryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10), // 12에서 10으로 감소
               ),
               child: Text(
                 transaction.categoryName,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10, // 12에서 10으로 감소
                   fontWeight: FontWeight.w500,
                   color: categoryColor,
                 ),
@@ -356,7 +356,7 @@ class RecentTransactionsList extends StatelessWidget {
             child: Text(
               (isIncome ? '+' : '-') + formattedAmount + '원',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12, // 14에서 12로 감소
                 fontWeight: FontWeight.w500,
                 color: isIncome ? Colors.green[600] : Colors.grey[850],
               ),
