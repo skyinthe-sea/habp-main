@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/presentation/pages/main_page.dart';
@@ -10,6 +11,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final bool isFirstTimeUser = prefs.getBool('isFirstTimeUser') ?? true;
+
+  // AdMob 초기화
+  // await MobileAds.instance.initialize();
 
   // 이벤트 버스 서비스 초기화
   await Get.putAsync(() => EventBusService().init());
