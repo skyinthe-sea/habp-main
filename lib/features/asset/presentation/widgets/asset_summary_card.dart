@@ -78,37 +78,37 @@ class AssetSummaryCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              assetSummary!.netWorth >= 0
-                                  ? Icons.arrow_upward
-                                  : Icons.arrow_downward,
-                              color: assetSummary!.netWorth >= 0 ? Colors.white : Colors.red.shade300,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '순자산 ${currencyFormat.format(assetSummary!.netWorth.toInt())}원',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   children: [
+                  //     Container(
+                  //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  //       decoration: BoxDecoration(
+                  //         color: Colors.white.withOpacity(0.2),
+                  //         borderRadius: BorderRadius.circular(16),
+                  //       ),
+                  //       child: Row(
+                  //         children: [
+                  //           Icon(
+                  //             assetSummary!.netWorth >= 0
+                  //                 ? Icons.arrow_upward
+                  //                 : Icons.arrow_downward,
+                  //             color: assetSummary!.netWorth >= 0 ? Colors.white : Colors.red.shade300,
+                  //             size: 16,
+                  //           ),
+                  //           const SizedBox(width: 4),
+                  //           Text(
+                  //             '순자산 ${currencyFormat.format(assetSummary!.netWorth.toInt())}원',
+                  //             style: const TextStyle(
+                  //               color: Colors.white,
+                  //               fontSize: 12,
+                  //               fontWeight: FontWeight.bold,
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                 ],
               ),
               const SizedBox(height: 16),
