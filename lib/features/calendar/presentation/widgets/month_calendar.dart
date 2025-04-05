@@ -273,7 +273,6 @@ class MonthCalendar extends StatelessWidget {
       final monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: AppColors.primary.withOpacity(0.05),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
