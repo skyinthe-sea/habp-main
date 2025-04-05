@@ -63,6 +63,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
       for (var transaction in fixedTransactions) {
         final description = transaction['description'] as String;
         final transactionNum = transaction['transaction_num'].toString();
+        final categoryId = transaction['category_id'] as int;
 
         if (description.contains('매월')) {
           // 매월 고정 거래는 해당 월의 특정 날짜에 추가
@@ -74,12 +75,26 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               ? adjustedDate
               : DateTime(month.year, month.month + 1, 0);
 
+          // 해당 날짜에 유효한 설정 찾기
+          final List<Map<String, dynamic>> settings = await db.rawQuery('''
+            SELECT * FROM fixed_transaction_setting
+            WHERE category_id = ? AND date(effective_from) <= date(?)
+            ORDER BY effective_from DESC
+            LIMIT 1
+          ''', [categoryId, validDate.toIso8601String()]);
+
+          // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+          double amount = transaction['amount'] as double;
+          if (settings.isNotEmpty) {
+            amount = settings.first['amount'] as double;
+          }
+
           resultTransactions.add(CalendarTransaction(
             id: transaction['id'],
             categoryId: transaction['category_id'],
             categoryName: transaction['category_name'],
             categoryType: transaction['category_type'],
-            amount: transaction['amount'],
+            amount: amount,
             description: transaction['description'],
             transactionDate: validDate,
             isFixed: true,
@@ -93,12 +108,26 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
           for (int day = 1; day <= daysInMonth; day++) {
             final date = DateTime(month.year, month.month, day);
             if (date.weekday == weekday) {
+              // 해당 날짜에 유효한 설정 찾기
+              final List<Map<String, dynamic>> settings = await db.rawQuery('''
+                SELECT * FROM fixed_transaction_setting
+                WHERE category_id = ? AND date(effective_from) <= date(?)
+                ORDER BY effective_from DESC
+                LIMIT 1
+              ''', [categoryId, date.toIso8601String()]);
+
+              // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+              double amount = transaction['amount'] as double;
+              if (settings.isNotEmpty) {
+                amount = settings.first['amount'] as double;
+              }
+
               resultTransactions.add(CalendarTransaction(
                 id: transaction['id'],
                 categoryId: transaction['category_id'],
                 categoryName: transaction['category_name'],
                 categoryType: transaction['category_type'],
-                amount: transaction['amount'],
+                amount: amount,
                 description: transaction['description'],
                 transactionDate: date,
                 isFixed: true,
@@ -110,14 +139,30 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
           // 매일 고정 거래는 해당 월의 모든 날짜에 추가
           final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
           for (int day = 1; day <= daysInMonth; day++) {
+            final date = DateTime(month.year, month.month, day);
+
+            // 해당 날짜에 유효한 설정 찾기
+            final List<Map<String, dynamic>> settings = await db.rawQuery('''
+              SELECT * FROM fixed_transaction_setting
+              WHERE category_id = ? AND date(effective_from) <= date(?)
+              ORDER BY effective_from DESC
+              LIMIT 1
+            ''', [categoryId, date.toIso8601String()]);
+
+            // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+            double amount = transaction['amount'] as double;
+            if (settings.isNotEmpty) {
+              amount = settings.first['amount'] as double;
+            }
+
             resultTransactions.add(CalendarTransaction(
               id: transaction['id'],
               categoryId: transaction['category_id'],
               categoryName: transaction['category_name'],
               categoryType: transaction['category_type'],
-              amount: transaction['amount'],
+              amount: amount,
               description: transaction['description'],
-              transactionDate: DateTime(month.year, month.month, day),
+              transactionDate: date,
               isFixed: true,
             ));
           }
@@ -226,7 +271,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
       for (var transaction in fixedTransactions) {
         final description = transaction['description'] as String;
         final transactionNum = transaction['transaction_num'].toString();
-        final amount = transaction['amount'] as double;
+        final categoryId = transaction['category_id'] as int;
         final type = transaction['category_type'] as String;
 
         bool shouldInclude = false;
@@ -248,10 +293,30 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
 
         // 고정 거래 처리 부분을 업데이트
         if (shouldInclude) {
+          // 해당 날짜에 유효한 설정 찾기
+          final List<Map<String, dynamic>> settings = await db.rawQuery('''
+            SELECT * FROM fixed_transaction_setting
+            WHERE category_id = ? AND date(effective_from) <= date(?)
+            ORDER BY effective_from DESC
+            LIMIT 1
+          ''', [categoryId, targetDate.toIso8601String()]);
+
+          // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+          double amount = transaction['amount'] as double;
+          if (settings.isNotEmpty) {
+            amount = settings.first['amount'] as double;
+          }
+
           if (type == 'INCOME') {
             income += amount;
           } else if (type == 'EXPENSE') {
             expense += amount.abs();
+          } else if (type == 'FINANCE') {
+            if (amount >= 0) {
+              income += amount;
+            } else {
+              expense += amount.abs();
+            }
           }
 
           // 거래 시간 추출 (고정 거래의 경우 임의로 시간 설정)

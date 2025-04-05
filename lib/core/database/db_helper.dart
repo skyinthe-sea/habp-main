@@ -162,6 +162,19 @@ class DBHelper {
     )
   ''');
 
+    // 고정 거래 설정 테이블
+    await db.execute('''
+    CREATE TABLE fixed_transaction_setting (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category_id INTEGER,
+      amount REAL NOT NULL,
+      effective_from TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (category_id) REFERENCES category (id)
+    )
+  ''');
+
     // 기본 카테고리 데이터 추가
     await _insertDefaultCategories(db);
   }

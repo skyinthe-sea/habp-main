@@ -50,7 +50,6 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
   @override
   Future<List<MonthlyExpense>> getMonthlyExpenses(int months) async {
-    // Existing implementation
     try {
       final db = await dbHelper.database;
       final now = DateTime.now();
@@ -72,12 +71,12 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
         // 1. 변동 거래 내역 (해당 월에 직접 기록된 거래)
         final List<Map<String, dynamic>> variableTransactions = await db.rawQuery('''
-        SELECT tr.* FROM transaction_record tr
-        JOIN category c ON tr.category_id = c.id
-        WHERE c.type = 'EXPENSE'
-        AND c.is_fixed = 0
-        AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
-      ''', [startDateStr, endDateStr]);
+          SELECT tr.* FROM transaction_record tr
+          JOIN category c ON tr.category_id = c.id
+          WHERE c.type = 'EXPENSE'
+          AND c.is_fixed = 0
+          AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+        ''', [startDateStr, endDateStr]);
 
         // 변동 거래 금액 합산
         for (var transaction in variableTransactions) {
@@ -86,32 +85,46 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
         // 2. 고정 거래 내역 (매달 반복되는 거래)
         final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
-        SELECT tr.*, c.type FROM transaction_record2 tr
-        JOIN category c ON tr.category_id = c.id
-        WHERE c.type = 'EXPENSE'
-        AND c.is_fixed = 1
-      ''');
+          SELECT tr.*, c.type FROM transaction_record2 tr
+          JOIN category c ON tr.category_id = c.id
+          WHERE c.type = 'EXPENSE'
+          AND c.is_fixed = 1
+        ''');
 
         // 고정 거래 금액 합산 (description을 확인하여 매달/매주/매일 구분)
         for (var transaction in fixedTransactions) {
           final description = transaction['description'] as String;
           final transactionNum = transaction['transaction_num'].toString();
-          double amount = transaction['amount'] as double;
+          final categoryId = transaction['category_id'] as int;
+
+          // 해당 월에 적용되는 설정 찾기
+          final List<Map<String, dynamic>> settings = await db.rawQuery('''
+            SELECT * FROM fixed_transaction_setting
+            WHERE category_id = ? AND date(effective_from) <= date(?)
+            ORDER BY effective_from DESC
+            LIMIT 1
+          ''', [categoryId, endOfMonth.toIso8601String()]);
+
+          // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+          double amount = (transaction['amount'] as double).abs();
+          if (settings.isNotEmpty) {
+            amount = (settings.first['amount'] as double).abs();
+          }
 
           if (description.contains('매월')) {
             // 매월 거래는 그대로 더함
-            totalExpense += amount.abs(); // 절대값 사용
+            totalExpense += amount;
           }
           else if (description.contains('매주')) {
             // 매주 거래는 해당 월의 요일 수에 맞게 계산
             int weekday = int.parse(transactionNum);
             int occurrences = _countWeekdaysInMonth(targetMonth.year, targetMonth.month, weekday);
-            totalExpense += amount.abs() * occurrences; // 절대값 사용
+            totalExpense += amount * occurrences;
           }
           else if (description.contains('매일')) {
             // 매일 거래는 해당 월의 일수만큼 더함
             int daysInMonth = endOfMonth.day;
-            totalExpense += amount.abs() * daysInMonth; // 절대값 사용
+            totalExpense += amount * daysInMonth;
           }
         }
 
@@ -131,7 +144,6 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
   @override
   Future<List<CategoryExpense>> getCategoryExpenses() async {
-    // Existing implementation for expenses
     try {
       return await _getCategoryData('EXPENSE');
     } catch (e) {
@@ -226,9 +238,22 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       final categoryId = transaction['category_id'] as int;
       final description = transaction['description'] as String;
       final transactionNum = transaction['transaction_num'].toString();
-      double amount = transaction['amount'] as double;
 
       if (!categoryDataMap.containsKey(categoryId)) continue;
+
+      // 해당 카테고리의 가장 최근 설정 찾기
+      final List<Map<String, dynamic>> settings = await db.rawQuery('''
+        SELECT * FROM fixed_transaction_setting
+        WHERE category_id = ? AND date(effective_from) <= date(?)
+        ORDER BY effective_from DESC
+        LIMIT 1
+      ''', [categoryId, endOfMonth.toIso8601String()]);
+
+      // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+      double amount = (transaction['amount'] as double).abs();
+      if (settings.isNotEmpty) {
+        amount = (settings.first['amount'] as double).abs();
+      }
 
       if (description.contains('매월')) {
         // 매월 거래는 그대로 더함
@@ -282,7 +307,6 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
   @override
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit) async {
-    // Existing implementation
     try {
       final db = await dbHelper.database;
 
@@ -290,40 +314,90 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       final now = DateTime.now();
       final todayDateStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
-      // 오늘 날짜를 포함한 이전의 거래만 조회
-      final List<Map<String, dynamic>> results = await db.rawQuery('''
-      SELECT * FROM (
-          SELECT tr.*, c.name as category_name, c.type as category_type 
-          FROM transaction_record tr
-          JOIN category c ON tr.category_id = c.id
-          WHERE date(substr(tr.transaction_date, 1, 10)) <= date(?) -- transaction_record 필터링
+      // 변동 거래 내역
+      final List<Map<String, dynamic>> variableResults = await db.rawQuery('''
+        SELECT tr.*, c.name as category_name, c.type as category_type 
+        FROM transaction_record tr
+        JOIN category c ON tr.category_id = c.id
+        WHERE date(substr(tr.transaction_date, 1, 10)) <= date(?)
+        ORDER BY transaction_date DESC
+        LIMIT ?
+      ''', [todayDateStr, limit]);
 
-          UNION ALL
+      // 고정 거래 내역
+      final List<Map<String, dynamic>> fixedResults = await db.rawQuery('''
+        SELECT tr2.*, c.name as category_name, c.type as category_type 
+        FROM transaction_record2 tr2
+        JOIN category c ON tr2.category_id = c.id
+        WHERE date(substr(tr2.transaction_date, 1, 10)) <= date(?)
+        ORDER BY transaction_date DESC
+        LIMIT ?
+      ''', [todayDateStr, limit]);
 
-          SELECT tr2.*, c.name as category_name, c.type as category_type 
-          FROM transaction_record2 tr2
-          JOIN category c ON tr2.category_id = c.id
-          WHERE date(substr(tr2.transaction_date, 1, 10)) <= date(?) -- transaction_record2 필터링
-      ) AS combined_transactions
-      ORDER BY transaction_date DESC -- 합쳐진 결과 정렬
-      LIMIT ? -- 합쳐진 결과 제한
-    ''', [todayDateStr, todayDateStr, limit]);
+      // 변동 거래 처리
+      List<TransactionWithCategory> variableTransactions = variableResults.map((row) =>
+          TransactionWithCategory(
+            id: row['id'] as int,
+            userId: row['user_id'] as int,
+            categoryId: row['category_id'] as int,
+            categoryName: row['category_name'] as String,
+            categoryType: row['category_type'] as String,
+            amount: row['amount'] as double,
+            description: row['description'] as String,
+            transactionDate: DateTime.parse(row['transaction_date']),
+            transactionNum: row['transaction_num'].toString(),
+            createdAt: DateTime.parse(row['created_at']),
+            updatedAt: DateTime.parse(row['updated_at']),
+          )
+      ).toList();
 
-      debugPrint('조회된 최근 거래 내역 수: ${results.length}');
+      // 고정 거래 처리 (fixed_transaction_setting 테이블 활용)
+      List<TransactionWithCategory> fixedTransactions = [];
 
-      return results.map((row) => TransactionWithCategory(
-        id: row['id'] as int,
-        userId: row['user_id'] as int,
-        categoryId: row['category_id'] as int,
-        categoryName: row['category_name'] as String,
-        categoryType: row['category_type'] as String,
-        amount: row['amount'] as double,
-        description: row['description'] as String,
-        transactionDate: DateTime.parse(row['transaction_date']),
-        transactionNum: row['transaction_num'].toString(),
-        createdAt: DateTime.parse(row['created_at']),
-        updatedAt: DateTime.parse(row['updated_at']),
-      )).toList();
+      for (var row in fixedResults) {
+        final transactionDate = DateTime.parse(row['transaction_date']);
+        final categoryId = row['category_id'] as int;
+
+        // 해당 거래 날짜에 유효한 설정 찾기
+        final List<Map<String, dynamic>> settings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ? AND date(effective_from) <= date(?)
+          ORDER BY effective_from DESC
+          LIMIT 1
+        ''', [categoryId, row['transaction_date']]);
+
+        // 설정이 있으면 금액 업데이트, 없으면 원래 금액 사용
+        double amount = row['amount'] as double;
+        if (settings.isNotEmpty) {
+          amount = settings.first['amount'] as double;
+        }
+
+        fixedTransactions.add(TransactionWithCategory(
+          id: row['id'] as int,
+          userId: row['user_id'] as int,
+          categoryId: categoryId,
+          categoryName: row['category_name'] as String,
+          categoryType: row['category_type'] as String,
+          amount: amount,
+          description: row['description'] as String,
+          transactionDate: transactionDate,
+          transactionNum: row['transaction_num'].toString(),
+          createdAt: DateTime.parse(row['created_at']),
+          updatedAt: DateTime.parse(row['updated_at']),
+        ));
+      }
+
+      // 두 리스트 병합 및 날짜순 정렬
+      List<TransactionWithCategory> allTransactions = [...variableTransactions, ...fixedTransactions];
+      allTransactions.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+
+      // 개수 제한
+      if (allTransactions.length > limit) {
+        allTransactions = allTransactions.sublist(0, limit);
+      }
+
+      debugPrint('조회된 최근 거래 내역 수: ${allTransactions.length}');
+      return allTransactions;
     } catch (e) {
       debugPrint('최근 거래 내역 가져오기 오류: $e');
       return [];
@@ -332,31 +406,58 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
   @override
   Future<List<TransactionModel>> getTransactionsByDateRange(DateTime start, DateTime end) async {
-    // Existing implementation
     try {
       final db = await dbHelper.database;
+      List<TransactionModel> result = [];
 
       // 날짜 형식 변환 (YYYY-MM-DD)
       final startDateStr = "${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}";
       final endDateStr = "${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}";
 
-      // transaction_record와 transaction_record2를 UNION ALL로 합친 후 기간 필터링 및 정렬
-      final List<Map<String, dynamic>> transactions = await db.rawQuery('''
-      SELECT * FROM (
-          SELECT *
-          FROM transaction_record
-          WHERE date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?) -- transaction_record 기간 필터링
+      // 1. 변동 거래 내역 가져오기
+      final List<Map<String, dynamic>> variableTransactions = await db.rawQuery('''
+        SELECT * FROM transaction_record
+        WHERE date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ''', [startDateStr, endDateStr]);
 
-          UNION ALL
+      for (var transaction in variableTransactions) {
+        result.add(TransactionModel.fromJson(transaction));
+      }
 
-          SELECT *
-          FROM transaction_record2
-          WHERE date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?) -- transaction_record2 기간 필터링
-      ) AS combined_transactions
-      ORDER BY transaction_date DESC -- 합쳐진 결과 정렬
-    ''', [startDateStr, endDateStr, startDateStr, endDateStr]);
+      // 2. 고정 거래 내역 가져오기
+      final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
+        SELECT * FROM transaction_record2
+        WHERE date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ''', [startDateStr, endDateStr]);
 
-      return transactions.map((json) => TransactionModel.fromJson(json)).toList();
+      // 3. 각 고정 거래에 대해 해당 날짜에 유효한 설정 찾기
+      for (var transaction in fixedTransactions) {
+        final categoryId = transaction['category_id'] as int;
+        final transactionDate = DateTime.parse(transaction['transaction_date']);
+
+        // 해당 거래 날짜에 유효한 설정 찾기
+        final List<Map<String, dynamic>> settings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ? AND date(effective_from) <= date(?)
+          ORDER BY effective_from DESC
+          LIMIT 1
+        ''', [categoryId, transaction['transaction_date']]);
+
+        Map<String, dynamic> transactionCopy = Map<String, dynamic>.from(transaction);
+
+        // 설정이 있으면 금액 업데이트
+        if (settings.isNotEmpty) {
+          transactionCopy['amount'] = settings.first['amount'];
+        }
+
+        result.add(TransactionModel.fromJson(transactionCopy));
+      }
+
+      // 4. 날짜 기준 정렬
+      result.sort((a, b) =>
+          b.transactionDate.compareTo(a.transactionDate)); // 내림차순 정렬
+
+      return result;
     } catch (e) {
       debugPrint('날짜 범위 기준 거래 내역 가져오기 오류: $e');
       return [];
@@ -365,7 +466,6 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
   @override
   Future<double> getAssets() async {
-    // Existing implementation
     try {
       final db = await dbHelper.database;
       final now = DateTime.now();
@@ -413,22 +513,36 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       for (var transaction in fixedTransactions) {
         final description = transaction['description'] as String;
         final transactionNum = transaction['transaction_num'].toString();
-        double amount = transaction['amount'] as double;
+        final categoryId = transaction['category_id'] as int;
+
+        // 해당 카테고리와 날짜에 맞는 설정 가져오기
+        final List<Map<String, dynamic>> settings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ? AND date(effective_from) <= date(?)
+          ORDER BY effective_from DESC
+          LIMIT 1
+        ''', [categoryId, endOfMonth.toIso8601String()]);
+
+        // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+        double amount = (transaction['amount'] as double).abs();
+        if (settings.isNotEmpty) {
+          amount = (settings.first['amount'] as double).abs();
+        }
 
         if (description.contains('매월')) {
           // 매월 거래는 그대로 더함
-          totalFixedAssets += amount.abs();
+          totalFixedAssets += amount;
         }
         else if (description.contains('매주')) {
           // 매주 거래는 해당 월의 요일 수에 맞게 계산
           int weekday = int.parse(transactionNum);
           int occurrences = _countWeekdaysInMonth(currentYear, currentMonth, weekday);
-          totalFixedAssets += amount.abs() * occurrences;
+          totalFixedAssets += amount * occurrences;
         }
         else if (description.contains('매일')) {
           // 매일 거래는 해당 월의 일수만큼 더함
           int daysInMonth = endOfMonth.day;
-          totalFixedAssets += amount.abs() * daysInMonth;
+          totalFixedAssets += amount * daysInMonth;
         }
       }
 
