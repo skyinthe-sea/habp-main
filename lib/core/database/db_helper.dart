@@ -282,6 +282,13 @@ class DBHelper {
       debugPrint(transaction.toString());
     }
 
+    // 고정 거래 수정 내역
+    final transactions3 = await db.query('fixed_transaction_setting');
+    debugPrint("\n고정 거래 수정 내역: ${transactions3.length}개");
+    for (var transaction in transactions3) {
+      debugPrint(transaction.toString());
+    }
+
     // 예산 정보
     final budgets = await db.query('budget');
     debugPrint("\n예산 정보: ${budgets.length}개");

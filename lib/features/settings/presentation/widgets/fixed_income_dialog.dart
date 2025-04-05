@@ -1,9 +1,8 @@
-// lib/features/settings/presentation/widgets/fixed_income_dialog.dart
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/database/db_helper.dart';
 import '../../data/datasources/fixed_transaction_local_data_source.dart';
 import '../controllers/settings_controller.dart';
 
@@ -17,16 +16,53 @@ class FixedIncomeDialog extends StatefulWidget {
 class _FixedIncomeDialogState extends State<FixedIncomeDialog> {
   late final SettingsController _controller;
 
+  // Map to cache latest transactions for categories without settings
+  final Map<int, Map<String, dynamic>?> _latestTransactions = {};
+  bool _isLoadingTransactions = true;
+
   @override
   void initState() {
     super.initState();
     _controller = Get.find<SettingsController>();
+    _loadLatestTransactions();
+  }
+
+  // Load latest transactions for categories that don't have settings
+  Future<void> _loadLatestTransactions() async {
+    setState(() {
+      _isLoadingTransactions = true;
+    });
+
+    // Create a new instance of DBHelper (this is safe since it's a singleton)
+    final dbHelper = DBHelper();
+    final db = await dbHelper.database;
+
+    for (final category in _controller.incomeCategories) {
+      // Only check transaction_record2 if no settings exist
+      if (category.settings.isEmpty) {
+        final List<Map<String, dynamic>> transactions = await db.query(
+          'transaction_record2',
+          where: 'category_id = ?',
+          whereArgs: [category.id],
+          orderBy: 'transaction_date DESC',
+          limit: 1,
+        );
+
+        if (transactions.isNotEmpty) {
+          _latestTransactions[category.id] = transactions.first;
+        }
+      }
+    }
+
+    setState(() {
+      _isLoadingTransactions = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (_controller.isLoadingIncome.value) {
+      if (_controller.isLoadingIncome.value || _isLoadingTransactions) {
         return const Center(child: CircularProgressIndicator());
       }
 
@@ -90,6 +126,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> {
                       final latestSetting = category.settings.isNotEmpty
                           ? category.settings.first
                           : null;
+                      final latestTransaction = _latestTransactions[category.id];
 
                       return ListTile(
                         title: Text(
@@ -102,6 +139,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> {
                             ? Text(
                           '현재 금액: ${_formatCurrency(latestSetting.amount)}원\n'
                               '마지막 수정: ${_formatDate(latestSetting.effectiveFrom)}부터 적용',
+                          style: const TextStyle(fontSize: 12),
+                        )
+                            : latestTransaction != null
+                            ? Text(
+                          '현재 금액: ${_formatCurrency(latestTransaction['amount'].abs())}원\n'
+                              '마지막 거래: ${_formatDate(DateTime.parse(latestTransaction['transaction_date']))}',
                           style: const TextStyle(fontSize: 12),
                         )
                             : const Text('설정된 금액 없음'),
@@ -154,6 +197,15 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> {
     // 기존 금액이 있으면 입력 필드에 설정
     if (category.settings.isNotEmpty) {
       amountController.text = category.settings.first.amount.toStringAsFixed(0);
+    } else {
+      // 거래 내역에서 금액 가져오기
+      final latestTransaction = _latestTransactions[category.id];
+      if (latestTransaction != null) {
+        final amount = latestTransaction['amount'];
+        if (amount is num) {
+          amountController.text = amount.abs().toStringAsFixed(0);
+        }
+      }
     }
 
     // 적용 시작 월 선택 (기본값은 현재 월)
