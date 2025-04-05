@@ -165,6 +165,6 @@ class TransactionRepository {
   TransactionRepository(this._db);
 
   Future<int> createTransaction(TransactionRecord transaction) async {
-    return await _db.insert('transaction_record', transaction.toMap());
+    return await _db.insert('transaction_record2', transaction.toMap());
   }
 }

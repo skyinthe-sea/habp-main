@@ -76,6 +76,23 @@ class DBHelper {
       )
     ''');
 
+    // 거래 내역 테이블
+    await db.execute('''
+      CREATE TABLE transaction_record2 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        category_id INTEGER,
+        amount REAL NOT NULL,
+        description TEXT,
+        transaction_date TEXT NOT NULL,
+        transaction_num TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES user (id),
+        FOREIGN KEY (category_id) REFERENCES category (id)
+      )
+    ''');
+
     // 예산 테이블
     await db.execute('''
       CREATE TABLE budget (
@@ -238,10 +255,17 @@ class DBHelper {
       debugPrint(category.toString());
     }
 
-    // 거래 내역
+    // 변동 거래 내역
     final transactions = await db.query('transaction_record');
-    debugPrint("\n거래 내역: ${transactions.length}개");
+    debugPrint("\n변동 거래 내역: ${transactions.length}개");
     for (var transaction in transactions) {
+      debugPrint(transaction.toString());
+    }
+
+    // 고정 거래 내역
+    final transactions2 = await db.query('transaction_record2');
+    debugPrint("\n고정 거래 내역: ${transactions2.length}개");
+    for (var transaction in transactions2) {
       debugPrint(transaction.toString());
     }
 

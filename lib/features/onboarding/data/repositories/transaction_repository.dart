@@ -9,14 +9,14 @@ class TransactionRepository {
   // 거래 내역 추가
   Future<int> createTransaction(TransactionRecord transaction) async {
     final db = await _dbHelper.database;
-    return await db.insert('transaction_record', transaction.toMap());
+    return await db.insert('transaction_record2', transaction.toMap());
   }
 
   // 거래 내역 조회
   Future<TransactionRecord?> getTransaction(int id) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'transaction_record',
+      'transaction_record2',
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -29,7 +29,7 @@ class TransactionRepository {
   Future<List<TransactionRecord>> getAllTransactions() async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'transaction_record',
+      'transaction_record2',
       orderBy: 'transaction_date DESC',
     );
     return List.generate(maps.length, (i) => TransactionRecord.fromMap(maps[i]));
@@ -39,7 +39,7 @@ class TransactionRepository {
   Future<List<TransactionRecord>> getTransactionsByUser(int userId) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'transaction_record',
+      'transaction_record2',
       where: 'user_id = ?',
       whereArgs: [userId],
       orderBy: 'transaction_date DESC',
@@ -51,7 +51,7 @@ class TransactionRepository {
   Future<List<TransactionRecord>> getTransactionsByCategory(int categoryId) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'transaction_record',
+      'transaction_record2',
       where: 'category_id = ?',
       whereArgs: [categoryId],
       orderBy: 'transaction_date DESC',
@@ -63,7 +63,7 @@ class TransactionRepository {
   Future<List<TransactionRecord>> getTransactionsByDateRange(DateTime start, DateTime end) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'transaction_record',
+      'transaction_record2',
       where: 'transaction_date BETWEEN ? AND ?',
       whereArgs: [start.toIso8601String(), end.toIso8601String()],
       orderBy: 'transaction_date DESC',
@@ -75,7 +75,7 @@ class TransactionRepository {
   Future<int> updateTransaction(TransactionRecord transaction) async {
     final db = await _dbHelper.database;
     return await db.update(
-      'transaction_record',
+      'transaction_record2',
       transaction.toMap(),
       where: 'id = ?',
       whereArgs: [transaction.id],
@@ -86,7 +86,7 @@ class TransactionRepository {
   Future<int> deleteTransaction(int id) async {
     final db = await _dbHelper.database;
     return await db.delete(
-      'transaction_record',
+      'transaction_record2',
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -97,7 +97,7 @@ class TransactionRepository {
     final db = await _dbHelper.database;
     final result = await db.rawQuery('''
       SELECT SUM(amount) as total
-      FROM transaction_record
+      FROM transaction_record2
       WHERE category_id = ?
     ''', [categoryId]);
 
