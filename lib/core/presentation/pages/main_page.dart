@@ -19,6 +19,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   late MainController controller;
+
   // late AdService adService;
 
   @override
@@ -38,6 +39,44 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Obx(() {
       return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 1,
+          title: const Text(
+            '정편가계부',
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search_outlined, color: Colors.grey),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon:
+                  const Icon(Icons.notifications_outlined, color: Colors.grey),
+              onPressed: () {},
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                child: const Text(
+                  '설정',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         body: Column(
           children: [
             // 상단 광고 배너
@@ -62,7 +101,8 @@ class _MainPageState extends State<MainPage> {
           ],
         ),
         bottomNavigationBar: _buildBottomNavigationBar(),
-        floatingActionButton: const QuickAddButton(), // 새로운 QuickAddButton 사용
+        floatingActionButton: const QuickAddButton(),
+        // 새로운 QuickAddButton 사용
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       );
     });

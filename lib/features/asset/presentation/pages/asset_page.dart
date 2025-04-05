@@ -130,26 +130,27 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
                 return Column(
                   children: [
                     // 상단 헤더 (타이틀)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            '나의 자산',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.refresh),
-                            onPressed: _refreshData,
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Padding(
+                    //   padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                    //   child: Row(
+                    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //     children: [
+                    //       const Text(
+                    //         '나의 자산',
+                    //         style: TextStyle(
+                    //           fontSize: 22,
+                    //           fontWeight: FontWeight.bold,
+                    //         ),
+                    //       ),
+                    //       IconButton(
+                    //         icon: const Icon(Icons.refresh),
+                    //         onPressed: _refreshData,
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
 
+                    const SizedBox(height: 20),
                     // 스크롤 가능한 콘텐츠
                     Expanded(
                       child: RefreshIndicator(
