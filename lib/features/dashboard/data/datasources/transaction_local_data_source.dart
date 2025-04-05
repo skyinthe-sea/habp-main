@@ -28,7 +28,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
   Future<List<TransactionModel>> getTransactions() async {
     try {
       final db = await dbHelper.database;
-      final transactions = await db.query('transaction_record');
+      final transactions = await db.query('transaction_record2');
       return transactions.map((json) => TransactionModel.fromJson(json)).toList();
     } catch (e) {
       debugPrint('데이터 소스에서 거래 내역 가져오기 오류: $e');
@@ -86,7 +86,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
         // 2. 고정 거래 내역 (매달 반복되는 거래)
         final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
-        SELECT tr.*, c.type FROM transaction_record tr
+        SELECT tr.*, c.type FROM transaction_record2 tr
         JOIN category c ON tr.category_id = c.id
         WHERE c.type = 'EXPENSE'
         AND c.is_fixed = 1
@@ -215,7 +215,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
     // 2. 고정 거래 내역 (매달 반복되는 거래)
     final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
-      SELECT tr.* FROM transaction_record tr
+      SELECT tr.* FROM transaction_record2 tr
       JOIN category c ON tr.category_id = c.id
       WHERE c.type = ?
       AND c.is_fixed = 1
@@ -292,13 +292,22 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
       // 오늘 날짜를 포함한 이전의 거래만 조회
       final List<Map<String, dynamic>> results = await db.rawQuery('''
-      SELECT tr.*, c.name as category_name, c.type as category_type 
-      FROM transaction_record tr
-      JOIN category c ON tr.category_id = c.id
-      WHERE date(substr(tr.transaction_date, 1, 10)) <= date(?)
-      ORDER BY tr.transaction_date DESC
-      LIMIT ?
-    ''', [todayDateStr, limit]);
+      SELECT * FROM (
+          SELECT tr.*, c.name as category_name, c.type as category_type 
+          FROM transaction_record tr
+          JOIN category c ON tr.category_id = c.id
+          WHERE date(substr(tr.transaction_date, 1, 10)) <= date(?) -- transaction_record 필터링
+
+          UNION ALL
+
+          SELECT tr2.*, c.name as category_name, c.type as category_type 
+          FROM transaction_record2 tr2
+          JOIN category c ON tr2.category_id = c.id
+          WHERE date(substr(tr2.transaction_date, 1, 10)) <= date(?) -- transaction_record2 필터링
+      ) AS combined_transactions
+      ORDER BY transaction_date DESC -- 합쳐진 결과 정렬
+      LIMIT ? -- 합쳐진 결과 제한
+    ''', [todayDateStr, todayDateStr, limit]);
 
       debugPrint('조회된 최근 거래 내역 수: ${results.length}');
 
@@ -327,17 +336,25 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     try {
       final db = await dbHelper.database;
 
-      // 날짜 형식 변환
-      final startDateStr = start.toIso8601String();
-      final endDateStr = end.toIso8601String();
+      // 날짜 형식 변환 (YYYY-MM-DD)
+      final startDateStr = "${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}";
+      final endDateStr = "${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}";
 
-      // 주어진 기간 내의 모든 트랜잭션 쿼리
+      // transaction_record와 transaction_record2를 UNION ALL로 합친 후 기간 필터링 및 정렬
       final List<Map<String, dynamic>> transactions = await db.rawQuery('''
-      SELECT *
-      FROM transaction_record
-      WHERE date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
-      ORDER BY transaction_date DESC
-    ''', [startDateStr.substring(0, 10), endDateStr.substring(0, 10)]);
+      SELECT * FROM (
+          SELECT *
+          FROM transaction_record
+          WHERE date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?) -- transaction_record 기간 필터링
+
+          UNION ALL
+
+          SELECT *
+          FROM transaction_record2
+          WHERE date(substr(transaction_date, 1, 10)) BETWEEN date(?) AND date(?) -- transaction_record2 기간 필터링
+      ) AS combined_transactions
+      ORDER BY transaction_date DESC -- 합쳐진 결과 정렬
+    ''', [startDateStr, endDateStr, startDateStr, endDateStr]);
 
       return transactions.map((json) => TransactionModel.fromJson(json)).toList();
     } catch (e) {
@@ -384,7 +401,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       // 2. 고정 거래 내역 (매달 반복되는 거래)
       final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
       SELECT tr.*
-      FROM transaction_record tr
+      FROM transaction_record2 tr
       JOIN category c ON tr.category_id = c.id
       WHERE c.type = 'FINANCE'
       AND c.is_fixed = 1

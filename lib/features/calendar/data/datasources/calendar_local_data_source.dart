@@ -36,7 +36,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
       // 고정 거래 내역 가져오기 (모든 고정 거래)
       final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
         SELECT tr.*, c.name AS category_name, c.type AS category_type, c.is_fixed
-        FROM transaction_record tr
+        FROM transaction_record2 tr
         JOIN category c ON tr.category_id = c.id
         WHERE c.is_fixed = 1
       ''');
@@ -181,7 +181,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
       // 고정 거래 내역
       final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
         SELECT tr.*, c.name AS category_name, c.type AS category_type, c.is_fixed
-        FROM transaction_record tr
+        FROM transaction_record2 tr
         JOIN category c ON tr.category_id = c.id
         WHERE c.is_fixed = 1
       ''');

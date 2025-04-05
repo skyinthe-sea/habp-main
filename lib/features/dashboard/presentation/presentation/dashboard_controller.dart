@@ -136,7 +136,7 @@ class DashboardController extends GetxController {
   Future<void> fetchRecentTransactions() async {
     isRecentTransactionsLoading.value = true;
     try {
-      final result = await getRecentTransactions.execute(5); // 최근 5개 거래
+      final result = await getRecentTransactions.execute(10); // 최근 5개 거래
       recentTransactions.value = result;
     } catch (e) {
       debugPrint('최근 거래 내역 가져오기 오류: $e');
