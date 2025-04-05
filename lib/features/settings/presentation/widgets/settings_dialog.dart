@@ -1,9 +1,17 @@
-// lib/features/settings/presentation/widgets/settings_dialog.dart
+// lib/features/settings/presentation/widgets/settings_dialog.dart 수정
+
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/database/db_helper.dart';
+import '../../data/datasources/fixed_transaction_local_data_source.dart';
+import '../../domain/repositories/fixed_transaction_repository.dart';
+import '../../domain/usecases/get_fixed_categories_by_type.dart';
+import '../../domain/usecases/add_fixed_transaction_setting.dart';
+import '../controllers/settings_controller.dart';
+import 'fixed_income_dialog.dart';
 
 class SettingsDialog extends StatefulWidget {
   const SettingsDialog({Key? key}) : super(key: key);
@@ -17,6 +25,7 @@ class _SettingsDialogState extends State<SettingsDialog>
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  late SettingsController _settingsController;
 
   @override
   void initState() {
@@ -42,8 +51,35 @@ class _SettingsDialogState extends State<SettingsDialog>
       curve: Curves.easeOut,
     ));
 
+    // SettingsController 초기화
+    _initSettingsController();
+
     // 애니메이션 시작
     _animationController.forward();
+  }
+
+  void _initSettingsController() {
+    // 이미 컨트롤러가 등록되어 있는지 확인
+    if (!Get.isRegistered<SettingsController>()) {
+      // 의존성 주입
+      final dbHelper = DBHelper();
+      final dataSource = FixedTransactionLocalDataSourceImpl(dbHelper: dbHelper);
+      final repository = FixedTransactionRepositoryImpl(localDataSource: dataSource);
+
+      final getFixedCategoriesByType = GetFixedCategoriesByType(repository);
+      final addFixedTransactionSetting = AddFixedTransactionSetting(repository);
+
+      // 컨트롤러 생성 및 등록
+      _settingsController = SettingsController(
+        getFixedCategoriesByType: getFixedCategoriesByType,
+        addFixedTransactionSetting: addFixedTransactionSetting,
+      );
+
+      Get.put(_settingsController);
+    } else {
+      // 이미 등록된 컨트롤러 가져오기
+      _settingsController = Get.find<SettingsController>();
+    }
   }
 
   @override
@@ -149,21 +185,68 @@ class _SettingsDialogState extends State<SettingsDialog>
                           child: ListView(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             children: [
+                              // 소득/지출/재테크 관리 섹션
+                              const Padding(
+                                padding: EdgeInsets.fromLTRB(24, 16, 24, 8),
+                                child: Text(
+                                  '고정 거래 관리',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
                               _buildSettingItem(
-                                icon: Icons.person_outline,
-                                title: '고정소득',
-                                onTap: () {},
+                                icon: Icons.attach_money,
+                                title: '고정 소득',
+                                onTap: () => Get.showFixedIncomeDialog(),
+                              ),
+                              _buildSettingItem(
+                                icon: Icons.money_off,
+                                title: '고정 지출',
+                                onTap: () {
+                                  // TODO: 고정 지출 다이얼로그 구현
+                                  Get.snackbar('준비중', '고정 지출 설정 기능은 준비중입니다.');
+                                },
+                              ),
+                              _buildSettingItem(
+                                icon: Icons.account_balance,
+                                title: '고정 재테크',
+                                onTap: () {
+                                  // TODO: 고정 재테크 다이얼로그 구현
+                                  Get.snackbar('준비중', '고정 재테크 설정 기능은 준비중입니다.');
+                                },
                               ),
                               const Divider(height: 32),
+
+                              // 기타 설정 섹션
+                              const Padding(
+                                padding: EdgeInsets.fromLTRB(24, 16, 24, 8),
+                                child: Text(
+                                  '기타',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
                               _buildSettingItem(
                                 icon: Icons.help_outline,
                                 title: '도움말',
-                                onTap: () {},
+                                onTap: () {
+                                  // TODO: 도움말 화면 구현
+                                  Get.snackbar('준비중', '도움말 기능은 준비중입니다.');
+                                },
                               ),
                               _buildSettingItem(
                                 icon: Icons.info_outline,
                                 title: '앱 정보',
-                                onTap: () {},
+                                onTap: () {
+                                  // TODO: 앱 정보 화면 구현
+                                  Get.snackbar('준비중', '앱 정보 기능은 준비중입니다.');
+                                },
                               ),
                             ],
                           ),
