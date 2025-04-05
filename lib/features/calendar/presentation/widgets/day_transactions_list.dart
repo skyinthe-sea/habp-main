@@ -1,6 +1,4 @@
-// In lib/features/calendar/presentation/widgets/day_transactions_list.dart
-// Update the build method to include date checking logic
-
+// lib/features/calendar/presentation/widgets/day_transactions_list.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -12,11 +10,13 @@ import '../../domain/entities/calendar_transaction.dart';
 class DayTransactionsList extends StatelessWidget {
   final CalendarController controller;
   final CalendarFilterController filterController;
+  final bool nestedScrollEnabled;
 
   const DayTransactionsList({
     Key? key,
     required this.controller,
     required this.filterController,
+    this.nestedScrollEnabled = false,
   }) : super(key: key);
 
   @override
@@ -27,7 +27,7 @@ class DayTransactionsList extends StatelessWidget {
 
       // 현재 날짜
       DateTime today = DateTime.now();
-      DateTime tomorrow = today.add(Duration(days: 1));
+      DateTime tomorrow = today.add(const Duration(days: 1));
       int tomorrowDay = tomorrow.day;
 
       // Check if selected date is in the future
@@ -73,44 +73,21 @@ class DayTransactionsList extends StatelessWidget {
         return const Center(child: CircularProgressIndicator());
       }
 
-      // Build filter status text
-      String filterStatusText = _buildFilterStatusText(filterController);
-
       return Column(
         children: [
-          // Header with date, filter status, and total net amount
+          // Header with date and total net amount
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      // Change text based on date
-                      '$formattedDate ${isDateInFuture ? '거래 예정' : '거래 내역'}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    // Filter status display
-                    Row(
-                      children: [
-                        Icon(Icons.filter_list, size: 14, color: Colors.grey[600]),
-                        const SizedBox(width: 4),
-                        Text(
-                          filterStatusText,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                Text(
+                  // Change text based on date
+                  '$formattedDate ${isDateInFuture ? '거래 예정' : '거래 내역'}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 // Total net amount (always show as long as there are transactions)
                 if (transactions.isNotEmpty)
@@ -125,6 +102,25 @@ class DayTransactionsList extends StatelessWidget {
               ],
             ),
           ),
+
+          // Filter status indicator (smaller and more subtle now)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Row(
+              children: [
+                Icon(Icons.filter_list, size: 12, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  _buildFilterStatusText(filterController),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           const SizedBox(height: 16),
 
           // Summary cards for income, expense, and finance
@@ -132,12 +128,23 @@ class DayTransactionsList extends StatelessWidget {
             _buildSummaryCards(filteredIncome, filteredExpense, filteredFinance),
           const SizedBox(height: 16),
 
-          // Transaction list
-          Expanded(
+          // Transaction list - 중첩 스크롤을 위해 Container로 변경
+          Container(
+            // 상위 스크롤과 함께 동작하도록 고정 높이 제거하고 스크롤 물리학 설정
+            height: transactions.isEmpty ? 200 : null, // 빈 상태일 때만 최소 높이
+            constraints: BoxConstraints(
+              minHeight: 200, // 최소 높이 보장
+              maxHeight: nestedScrollEnabled ? 500 : double.infinity, // 중첩 스크롤일 때는 최대 높이 제한
+            ),
             child: transactions.isEmpty
                 ? _buildEmptyState(filterController, isDateInFuture)
                 : ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              // 중첩 스크롤 설정
+              physics: nestedScrollEnabled
+                  ? const ClampingScrollPhysics()
+                  : const AlwaysScrollableScrollPhysics(),
+              shrinkWrap: nestedScrollEnabled, // 중첩 스크롤일 때 내용에 맞게 축소
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
               itemCount: transactions.length,
               separatorBuilder: (context, index) => const Divider(),
               itemBuilder: (context, index) {
@@ -150,7 +157,7 @@ class DayTransactionsList extends StatelessWidget {
     });
   }
 
-// Helper method to build the filter status text
+  // Helper method to build the filter status text
   String _buildFilterStatusText(CalendarFilterController filterController) {
     final currentFilter = filterController.currentFilter.value;
     if (currentFilter.categoryType != null || currentFilter.selectedCategoryIds.isNotEmpty) {
@@ -169,14 +176,8 @@ class DayTransactionsList extends StatelessWidget {
     return '전체';
   }
 
-// Helper method to build summary cards
+  // Helper method to build summary cards
   Widget _buildSummaryCards(double income, double expense, double finance) {
-    // Determine how many cards we need to show
-    int cardCount = 0;
-    if (income > 0) cardCount++;
-    if (expense > 0) cardCount++;
-    if (finance != 0) cardCount++;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SingleChildScrollView(
@@ -192,6 +193,13 @@ class DayTransactionsList extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.green.shade50,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -223,6 +231,13 @@ class DayTransactionsList extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -254,6 +269,13 @@ class DayTransactionsList extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -286,34 +308,44 @@ class DayTransactionsList extends StatelessWidget {
     );
   }
 
-// Helper method for empty state display
+  // Helper method for empty state display
   Widget _buildEmptyState(CalendarFilterController filterController, bool isDateInFuture) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 48,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            // Change empty state text based on date
-            isDateInFuture ? '표시할 거래 예정이 없습니다.' : '표시할 거래 내역이 없습니다.',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
+      child: Padding(
+        // Add bottom padding to ensure the empty state isn't hidden by the floating button
+        padding: const EdgeInsets.only(bottom: 20, top: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: 36,
+              color: Colors.grey[400],
             ),
-          ),
-          const SizedBox(height: 8),
-          if (filterController.currentFilter.value.categoryType != null ||
-              filterController.currentFilter.value.selectedCategoryIds.isNotEmpty)
-            TextButton(
-              onPressed: filterController.resetFilter,
-              child: const Text('필터 초기화하기'),
+            const SizedBox(height: 12),
+            Text(
+              // Change empty state text based on date
+              isDateInFuture ? '표시할 거래 예정이 없습니다.' : '표시할 거래 내역이 없습니다.',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
             ),
-        ],
+            const SizedBox(height: 8),
+            if (filterController.currentFilter.value.categoryType != null ||
+                filterController.currentFilter.value.selectedCategoryIds.isNotEmpty)
+              TextButton(
+                onPressed: filterController.resetFilter,
+                child: Text(
+                  '필터 초기화하기',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

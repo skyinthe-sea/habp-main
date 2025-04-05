@@ -1,3 +1,4 @@
+// lib/features/calendar/presentation/pages/calendar_page.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -10,8 +11,8 @@ import '../controllers/calendar_controller.dart';
 import '../controllers/calendar_filter_controller.dart';
 import '../widgets/month_calendar.dart';
 import '../widgets/day_transactions_list.dart';
-import '../widgets/filter_chips.dart';
 import '../widgets/filter_modal.dart';
+import '../widgets/filter_floating_button.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({Key? key}) : super(key: key);
@@ -110,24 +111,25 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
           body: SafeArea(
             child: Stack(
               children: [
-                Column(
-                  children: [
-                    // 필터 칩 영역 추가
-                    Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      child: FilterChips(controller: _filterController),
+                // 전체 페이지가 스크롤되는 구조로 변경
+                CustomScrollView(
+                  slivers: [
+                    // 월간 캘린더 (이제 전체 페이지 스크롤의 일부)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: MonthCalendar(controller: _controller),
+                      ),
                     ),
 
-                    // 월간 캘린더 (스크롤되지 않는 고정 영역)
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: MonthCalendar(controller: _controller),
-                    ),
-
-                    // 거래 내역 (스크롤 가능한 영역)
-                    Expanded(
+                    // 거래 내역 (전체 스크롤의 일부이면서 내부에서도 스크롤 가능)
+                    SliverToBoxAdapter(
                       child: Container(
                         width: double.infinity,
+                        // 최소 높이 지정 (화면의 60% 정도)
+                        constraints: BoxConstraints(
+                          minHeight: MediaQuery.of(context).size.height * 0.6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: const BorderRadius.vertical(
@@ -144,24 +146,22 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
                         child: DayTransactionsList(
                           controller: _controller,
                           filterController: _filterController,
+                          nestedScrollEnabled: true, // 중첩 스크롤 활성화
                         ),
                       ),
+                    ),
+
+                    // 플로팅 버튼 아래 여백 추가
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: 80),
                     ),
                   ],
                 ),
 
-                // 필터 버튼 (FAB)
-                // Positioned(
-                //   right: 16,
-                //   bottom: 16,
-                //   child: FloatingActionButton(
-                //     onPressed: _filterController.openFilterModal,
-                //     backgroundColor: AppColors.primary,
-                //     child: const Icon(Icons.filter_alt),
-                //   ),
-                // ),
+                // 새로운 필터 플로팅 버튼
+                FilterFloatingButton(controller: _filterController),
 
-                // 필터 모달
+                // 필터 모달 (기존 코드 유지)
                 FilterModal(controller: _filterController),
               ],
             ),
