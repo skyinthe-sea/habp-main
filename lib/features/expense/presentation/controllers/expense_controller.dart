@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/database/db_helper.dart';
 import '../../../../core/services/event_bus_service.dart';
 import '../../data/models/category_model.dart';
 import '../../domain/entities/budget_status.dart';
@@ -62,6 +64,25 @@ class ExpenseController extends GetxController {
 
     // 초기 데이터 로드
     _loadData();
+
+    // 이후 현재 달에 예산이 없으면 이전 달에서 자동 복사 시도
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (budgetStatusList.isEmpty || budgetStatusList.every((status) => status.budgetAmount == 0)) {
+        // 오늘이 월의 1-3일이면 자동 복사 시도 (월 초에만 자동 복사)
+        final today = DateTime.now();
+        if (today.day <= 3) {
+          final copied = await copyBudgetFromPreviousMonth();
+          if (copied) {
+            Get.snackbar(
+              '자동 예산 설정',
+              '이전 달의 예산이 자동으로 복사되었습니다.',
+              snackPosition: SnackPosition.TOP,
+              duration: const Duration(seconds: 3),
+            );
+          }
+        }
+      }
+    });
   }
 
   @override
@@ -71,6 +92,83 @@ class ExpenseController extends GetxController {
     if (!dataInitialized.value) {
       debugPrint('ExpenseController: onReady에서 데이터 다시 로드');
       _loadData();
+    }
+  }
+
+  /// 이전 달의 예산을 현재 선택된 달로 복사
+  Future<bool> copyBudgetFromPreviousMonth() async {
+    try {
+      // 현재 선택된 달
+      final current = DateTime.parse('${selectedPeriod.value}-01');
+
+      // 이전 달 계산
+      final previousMonth = DateTime(current.year, current.month - 1, 1);
+      final previousPeriod = DateFormat('yyyy-MM').format(previousMonth);
+
+      // 이전 달 시작일과 종료일 계산
+      final previousStartDate = DateTime(previousMonth.year, previousMonth.month, 1).toIso8601String();
+      final previousEndDate = DateTime(previousMonth.year, previousMonth.month + 1, 0).toIso8601String();
+
+      // 현재 달 시작일과 종료일 계산
+      final currentStartDate = DateTime(current.year, current.month, 1).toIso8601String();
+      final currentEndDate = DateTime(current.year, current.month + 1, 0).toIso8601String();
+
+      debugPrint('이전 달 예산 데이터 복사: $previousPeriod -> ${selectedPeriod.value}');
+
+      // 이전 달 예산 데이터 조회
+      final db = await Get.find<DBHelper>().database;
+      final previousBudgets = await db.query(
+        'budget',
+        where: 'user_id = ? AND start_date = ? AND end_date = ?',
+        whereArgs: [userId, previousStartDate, previousEndDate],
+      );
+
+      if (previousBudgets.isEmpty) {
+        debugPrint('복사할 이전 달 예산 데이터가 없습니다.');
+        return false;
+      }
+
+      // 현재 달 기존 예산 데이터 확인 (중복 방지)
+      final existingBudgets = await db.query(
+        'budget',
+        where: 'user_id = ? AND start_date = ? AND end_date = ?',
+        whereArgs: [userId, currentStartDate, currentEndDate],
+      );
+
+      if (existingBudgets.isNotEmpty) {
+        debugPrint('현재 달에 이미 예산 데이터가 있습니다. 복사를 건너뜁니다.');
+        return false;
+      }
+
+      // 이전 달 예산을 현재 달로 복사
+      final now = DateTime.now().toIso8601String();
+      int copiedCount = 0;
+
+      for (var budget in previousBudgets) {
+        await db.insert('budget', {
+          'user_id': budget['user_id'],
+          'category_id': budget['category_id'],
+          'amount': budget['amount'],
+          'start_date': currentStartDate,
+          'end_date': currentEndDate,
+          'created_at': now,
+          'updated_at': now,
+        });
+        copiedCount++;
+      }
+
+      debugPrint('$copiedCount개의 예산이 성공적으로 복사되었습니다.');
+
+      // 예산 상태 다시 불러오기
+      await fetchBudgetStatus();
+
+      // 이벤트 버스를 통해 변경 알림
+      _eventBusService.emitTransactionChanged();
+
+      return true;
+    } catch (e) {
+      debugPrint('이전 달 예산 복사 중 오류: $e');
+      return false;
     }
   }
 
