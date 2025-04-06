@@ -245,6 +245,7 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
     return Center(
       child: Container(
         height: 200,
+        width: 400,
         // Explicit height prevents layout issues
         padding: const EdgeInsets.symmetric(horizontal: 60),
         margin: const EdgeInsets.symmetric(vertical: 8),
