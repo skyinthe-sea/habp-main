@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/database/db_helper.dart';
+import '../../../../core/routes/app_router.dart';
+import '../../../../core/services/event_bus_service.dart';
 import '../../data/datasources/fixed_transaction_local_data_source.dart';
 import '../../domain/repositories/fixed_transaction_repository.dart';
 import '../../domain/usecases/get_fixed_categories_by_type.dart';
@@ -490,17 +492,7 @@ class _SettingsDialogState extends State<SettingsDialog>
             ),
             onPressed: () {
               Navigator.pop(context);
-
-              // 초기화 성공 메시지
-              Get.snackbar(
-                '준비중',
-                '데이터 초기화 기능은 곧 제공될 예정입니다',
-                backgroundColor: Colors.black87,
-                colorText: Colors.white,
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(16),
-                duration: const Duration(seconds: 2),
-              );
+              _showFinalConfirmationDialog();
             },
             child: const Text('초기화'),
           ),
@@ -510,6 +502,127 @@ class _SettingsDialogState extends State<SettingsDialog>
         ),
       ),
     );
+  }
+
+  void _showFinalConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          '최종 확인',
+          style: TextStyle(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              '⚠️ 경고: 이 작업은 되돌릴 수 없습니다',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '• 모든 거래 내역이 삭제됩니다\n'
+                  '• 모든 카테고리 설정이 초기화됩니다\n'
+                  '• 모든 자산 정보가 삭제됩니다\n'
+                  '• 모든 예산 설정이 삭제됩니다\n'
+                  '• 모든 고정 거래 설정이 삭제됩니다',
+              style: TextStyle(fontSize: 13),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '다시 한번 확인합니다. 정말로 모든 데이터를 초기화하시겠습니까?',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await _resetAllData();
+            },
+            child: const Text('최종 확인'),
+          ),
+        ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _resetAllData() async {
+    // 로딩 다이얼로그 표시
+    Get.dialog(
+      const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+
+    try {
+      // DBHelper 인스턴스 가져오기
+      final dbHelper = DBHelper();
+
+      // 데이터베이스 초기화
+      await dbHelper.resetDatabase();
+
+      // 로딩 다이얼로그 닫기
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      // 설정 다이얼로그 닫기
+      _closeDialog();
+
+      // 이벤트 버스를 통해 앱 전체에 데이터 변경 알림
+      final eventBusService = Get.find<EventBusService>();
+      eventBusService.emitTransactionChanged();
+
+      // 성공 메시지 표시
+      Get.snackbar(
+        '초기화 완료',
+        '모든 데이터가 성공적으로 초기화되었습니다.',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      );
+
+      // 메인 페이지로 이동 (초기화 후 앱 상태 리셋)
+      Get.offAllNamed(AppRoutes.main);
+    } catch (e) {
+      // 로딩 다이얼로그 닫기
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      // 오류 메시지 표시
+      Get.snackbar(
+        '오류 발생',
+        '데이터 초기화 중 오류가 발생했습니다: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 }
 

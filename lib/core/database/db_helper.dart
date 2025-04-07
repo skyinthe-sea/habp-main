@@ -240,11 +240,25 @@ class DBHelper {
   // 데이터베이스 리셋 (개발 및 테스트용)
   Future<void> resetDatabase() async {
     final db = await database;
+
+    // 외래 키 제약 조건 일시적으로 비활성화
+    await db.execute('PRAGMA foreign_keys = OFF');
+
+    // 모든 테이블 삭제 (외래 키 종속성 순서대로)
+    await db.execute('DROP TABLE IF EXISTS asset_valuation_history');
+    await db.execute('DROP TABLE IF EXISTS fixed_transaction_setting');
+    await db.execute('DROP TABLE IF EXISTS asset');
     await db.execute('DROP TABLE IF EXISTS financial_account');
     await db.execute('DROP TABLE IF EXISTS budget');
+    await db.execute('DROP TABLE IF EXISTS transaction_record2');
     await db.execute('DROP TABLE IF EXISTS transaction_record');
     await db.execute('DROP TABLE IF EXISTS category');
     await db.execute('DROP TABLE IF EXISTS user');
+
+    // 외래 키 제약 조건 다시 활성화
+    await db.execute('PRAGMA foreign_keys = ON');
+
+    // 테이블 다시 생성
     await _createDB(db, 1);
   }
 
