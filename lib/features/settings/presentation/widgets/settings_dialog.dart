@@ -12,6 +12,8 @@ import '../../domain/usecases/get_fixed_categories_by_type.dart';
 import '../../domain/usecases/add_fixed_transaction_setting.dart';
 import '../controllers/settings_controller.dart';
 import 'fixed_income_dialog.dart';
+import 'fixed_expense_dialog.dart';
+import 'fixed_finance_dialog.dart';
 import 'help_dialog.dart';
 import 'app_info_dialog.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -261,33 +263,13 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 icon: Icons.money_off,
                                 title: '고정 지출',
                                 subtitle: '매월 반복되는 지출 항목을 관리합니다',
-                                onTap: () {
-                                  Get.snackbar(
-                                    '준비중',
-                                    '고정 지출 설정 기능은 곧 제공될 예정입니다',
-                                    backgroundColor: Colors.black87,
-                                    colorText: Colors.white,
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    margin: const EdgeInsets.all(16),
-                                    duration: const Duration(seconds: 2),
-                                  );
-                                },
+                                onTap: () => Get.showFixedExpenseDialog(),
                               ),
                               _buildSettingItem(
                                 icon: Icons.account_balance,
                                 title: '고정 재테크',
                                 subtitle: '매월 반복되는 재테크 항목을 관리합니다',
-                                onTap: () {
-                                  Get.snackbar(
-                                    '준비중',
-                                    '고정 재테크 설정 기능은 곧 제공될 예정입니다',
-                                    backgroundColor: Colors.black87,
-                                    colorText: Colors.white,
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    margin: const EdgeInsets.all(16),
-                                    duration: const Duration(seconds: 2),
-                                  );
-                                },
+                                onTap: () => Get.showFixedFinanceDialog(),
                               ),
 
                               // 데이터 섹션
