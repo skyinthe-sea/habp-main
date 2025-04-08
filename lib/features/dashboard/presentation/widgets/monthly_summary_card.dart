@@ -1,5 +1,4 @@
-// lib/features/dashboard/presentation/widgets/monthly_summary_card.dart 수정
-
+// lib/features/dashboard/presentation/widgets/monthly_summary_card.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../presentation/dashboard_controller.dart';
@@ -27,13 +26,17 @@ class MonthlySummaryCard extends StatelessWidget {
 
       return Column(
         children: [
-          // First row: Income and Assets
+          // 월 선택 컨트롤
+          _buildMonthSelector(),
+          const SizedBox(height: 10),
+
+          // First row: Income and Expense
           Row(
             children: [
               // Income card
               Expanded(
                 child: _buildSummaryCard(
-                  title: '이번 달 수입',
+                  title: '소득',
                   amount: income,
                   percentChange: controller.incomeChangePercentage.value,
                   isPositiveTrend: controller.incomeChangePercentage.value > 0,
@@ -42,10 +45,27 @@ class MonthlySummaryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8), // 좁아진 간격
-              // Assets card
+              // Expense card
               Expanded(
                 child: _buildSummaryCard(
-                  title: '이번 달 재테크',
+                  title: '지출',
+                  amount: expense,
+                  percentChange: controller.expenseChangePercentage.value,
+                  isPositiveTrend: controller.expenseChangePercentage.value <= 0, // 지출은 감소가 긍정적
+                  iconData: Icons.arrow_upward_rounded,
+                  cardType: 'expense',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8), // 좁아진 간격
+          // Second row: Finance and Balance
+          Row(
+            children: [
+              // Finance card
+              Expanded(
+                child: _buildSummaryCard(
+                  title: '재테크',
                   amount: assets,
                   percentChange: 0.0, // No comparison data
                   isPositiveTrend: true,
@@ -54,28 +74,11 @@ class MonthlySummaryCard extends StatelessWidget {
                   hasPercentage: false, // 퍼센티지 표시 안 함
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8), // 좁아진 간격
-          // Second row: Expenses and Balance
-          Row(
-            children: [
-              // Expenses card
-              Expanded(
-                child: _buildSummaryCard(
-                  title: '이번 달 지출',
-                  amount: expense,
-                  percentChange: controller.expenseChangePercentage.value,
-                  isPositiveTrend: controller.expenseChangePercentage.value <= 0, // 지출은 감소가 긍정적
-                  iconData: Icons.arrow_upward_rounded,
-                  cardType: 'expense',
-                ),
-              ),
               const SizedBox(width: 8), // 좁아진 간격
               // Balance card
               Expanded(
                 child: _buildSummaryCard(
-                  title: '이번 달 잔액',
+                  title: '잔액',
                   amount: balance,
                   percentChange: 0.0, // No comparison data
                   isPositiveTrend: balance >= 0, // 잔액이 양수면 긍정적
@@ -89,6 +92,65 @@ class MonthlySummaryCard extends StatelessWidget {
         ],
       );
     });
+  }
+
+  Widget _buildMonthSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // 이전 달로 이동
+          IconButton(
+            icon: const Icon(Icons.chevron_left, color: Colors.grey),
+            onPressed: controller.goToPreviousMonth,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+
+          // 현재 선택된 월 표시 - 클릭하면 현재 달로 이동
+          GestureDetector(
+            onTap: controller.goToCurrentMonth,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                controller.getMonthYearString(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+
+          // 다음 달로 이동 - 현재 달 이후는 비활성화
+          IconButton(
+            icon: const Icon(Icons.chevron_right,
+                color: Colors.grey),
+            onPressed: controller.selectedMonth.value.year == DateTime.now().year &&
+                controller.selectedMonth.value.month == DateTime.now().month ?
+            null : controller.goToNextMonth,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSummaryCard({
@@ -216,20 +278,6 @@ class MonthlySummaryCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // 비교 텍스트 (항상 자리 차지하도록)
-          // SizedBox(
-          //   height: 14, // 공간 확보
-          //   child: hasPercentage
-          //       ? Text(
-          //     '지난달 대비',
-          //     style: TextStyle(
-          //       fontSize: 10,
-          //       color: Colors.grey.shade400,
-          //     ),
-          //   )
-          //       : const SizedBox(), // 빈 공간이지만 높이는 유지
-          // ),
         ],
       ),
     );

@@ -1,3 +1,4 @@
+// lib/features/dashboard/presentation/widgets/monthly_expense_chart.dart
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
@@ -15,7 +16,7 @@ class MonthlyExpenseChart extends StatelessWidget {
     return Obx(() {
       if (controller.isExpenseTrendLoading.value) {
         return Container(
-          height: 200, // 300에서 200으로 감소
+          height: 200,
           alignment: Alignment.center,
           child: const CircularProgressIndicator(),
         );
@@ -23,34 +24,34 @@ class MonthlyExpenseChart extends StatelessWidget {
 
       if (controller.monthlyExpenses.isEmpty) {
         return Container(
-          height: 200, // 300에서 200으로 감소
+          height: 200,
           alignment: Alignment.center,
           child: const Text('데이터가 없습니다'),
         );
       }
 
-      // 원본 데이터 직접 사용 (정규화된 데이터 대신)
+      // 원본 데이터 사용
       final expenses = controller.monthlyExpenses;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // 16,8에서 12,6으로 감소
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   '월별 지출 추이',
                   style: TextStyle(
-                    fontSize: 14, // 16에서 14로 감소
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   '최근 ${expenses.length}개월',
                   style: const TextStyle(
-                    fontSize: 10, // 12에서 10으로 감소
+                    fontSize: 10,
                     color: Colors.grey,
                   ),
                 ),
@@ -58,138 +59,230 @@ class MonthlyExpenseChart extends StatelessWidget {
             ),
           ),
 
-          // 그래프 영역
-          Container(
-            height: 200, // 240에서 200으로 감소
-            padding: const EdgeInsets.all(12), // 16에서 12로 감소
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: _calculateMaxY(expenses),
-                minY: 0,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final expense = expenses[groupIndex];
-                      return BarTooltipItem(
-                        '${_formatAmount(expense.amount)}원',
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10, // 추가: 툴팁 폰트 사이즈 지정
-                        ),
-                      );
+          // 슬라이더 컨트롤 추가
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Text('3', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                Expanded(
+                  child: Slider(
+                    value: controller.monthRange.value.toDouble(),
+                    min: 3,
+                    max: 12,
+                    divisions: 9,
+                    label: '${controller.monthRange.value}개월',
+                    activeColor: AppColors.primary,
+                    inactiveColor: AppColors.primary.withOpacity(0.2),
+                    onChanged: (value) {
+                      controller.setMonthRange(value.toInt());
                     },
                   ),
                 ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index >= 0 && index < expenses.length) {
-                          final month = expenses[index].date.month;
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 6.0), // 8에서 6으로 감소
-                            child: Text(
-                              '${month}월',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 10, // 12에서 10으로 감소
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox();
-                      },
-                      reservedSize: 22, // 28에서 22로 감소
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (value == 0) return const SizedBox();
-
-                        String text;
-                        if (value >= 10000000) {
-                          text = '${(value / 10000000).toStringAsFixed(0)}천만';
-                        } else if (value >= 1000000) {
-                          text = '${(value / 1000000).toStringAsFixed(0)}백만';
-                        } else if (value >= 10000) {
-                          text = '${(value / 10000).toStringAsFixed(0)}만';
-                        } else {
-                          text = value.toInt().toString();
-                        }
-
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 4), // 8에서 4로 감소
-                          child: Text(
-                            text,
-                            style: const TextStyle(
-                              fontSize: 8, // 10에서 8로 감소
-                              color: Colors.grey,
-                            ),
-                          ),
-                        );
-                      },
-                      reservedSize: 30, // 40에서 30으로 감소
-                    ),
-                  ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: false,
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: true,
-                  drawHorizontalLine: true,
-                  horizontalInterval: _calculateInterval(expenses),
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: Colors.grey.shade200,
-                    strokeWidth: 0.8, // 1에서 0.8로 감소
-                    dashArray: [5, 5],
-                  ),
-                  getDrawingVerticalLine: (value) => FlLine(
-                    color: Colors.grey.shade200,
-                    strokeWidth: 0,
-                    dashArray: [5, 5],
-                  ),
-                ),
-                barGroups: expenses.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final expense = entry.value;
-
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: expense.amount,
-                        color: AppColors.primary,
-                        width: 30, // 40에서 30으로 감소
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
+                const Text('12', style: TextStyle(fontSize: 10, color: Colors.grey)),
+              ],
             ),
+          ),
+
+          // 그래프 영역
+          Container(
+            height: 200,
+            padding: const EdgeInsets.all(12),
+            child: _buildAnimatedChart(expenses),
           ),
         ],
       );
     });
   }
 
-  // 최대 Y값 계산 - 그대로유지
+  Widget _buildAnimatedChart(List<MonthlyExpense> expenses) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return LineChart(
+          LineChartData(
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: true,
+              getDrawingHorizontalLine: (value) => FlLine(
+                color: Colors.grey.shade200,
+                strokeWidth: 0.8,
+                dashArray: [5, 5],
+              ),
+              getDrawingVerticalLine: (value) => FlLine(
+                color: Colors.grey.shade200,
+                strokeWidth: 0.8,
+                dashArray: [5, 5],
+              ),
+            ),
+            titlesData: FlTitlesData(
+              show: true,
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  getTitlesWidget: (double value, TitleMeta meta) {
+                    final int index = value.toInt();
+                    if (index >= 0 && index < expenses.length) {
+                      final month = expenses[index].date.month;
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 5),
+                        child: Text(
+                          '$month월',
+                          style: TextStyle(
+                            color: index == expenses.length - 1
+                                ? Colors.black
+                                : Colors.grey,
+                            fontWeight: index == expenses.length - 1
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            fontSize: 10,
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox();
+                  },
+                  reservedSize: 22,
+                ),
+              ),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  getTitlesWidget: (double value, TitleMeta meta) {
+                    if (value == 0) return const SizedBox();
+
+                    String text;
+                    if (value >= 10000000) {
+                      text = '${(value / 10000000).toStringAsFixed(0)}천만';
+                    } else if (value >= 1000000) {
+                      text = '${(value / 1000000).toStringAsFixed(0)}백만';
+                    } else if (value >= 10000) {
+                      text = '${(value / 10000).toStringAsFixed(0)}만';
+                    } else {
+                      text = value.toInt().toString();
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Text(
+                        text,
+                        style: const TextStyle(
+                          fontSize: 8,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    );
+                  },
+                  reservedSize: 30,
+                ),
+              ),
+              topTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+            ),
+            borderData: FlBorderData(
+              show: true,
+              border: Border(
+                bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+                left: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+            ),
+            minX: 0,
+            maxX: expenses.length - 1.0,
+            minY: 0,
+            maxY: _calculateMaxY(expenses),
+            lineBarsData: [
+              // 주요 라인 차트
+              LineChartBarData(
+                spots: _createSpots(expenses, value),
+                isCurved: true,
+                color: AppColors.primary,
+                barWidth: 3 * value,
+                isStrokeCapRound: true,
+                dotData: FlDotData(
+                  show: true,
+                  getDotPainter: (spot, percent, barData, index) {
+                    Color dotColor = AppColors.primary;
+                    return FlDotCirclePainter(
+                      radius: 4 * value,
+                      color: dotColor,
+                      strokeWidth: 1,
+                      strokeColor: Colors.white,
+                    );
+                  },
+                ),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.3 * value),
+                      AppColors.primary.withOpacity(0.05 * value),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+              // 강조된 선택된 달 (맨 오른쪽 데이터)
+              LineChartBarData(
+                spots: expenses.isNotEmpty ? [
+                  FlSpot(expenses.length - 1.0, expenses.last.amount * value),
+                ] : [],
+                color: Colors.transparent,
+                barWidth: 0,
+                dotData: FlDotData(
+                  show: true,
+                  getDotPainter: (spot, percent, barData, index) {
+                    return FlDotCirclePainter(
+                      radius: 6 * value,
+                      color: AppColors.primary,
+                      strokeWidth: 2,
+                      strokeColor: Colors.white,
+                    );
+                  },
+                ),
+              ),
+            ],
+            lineTouchData: LineTouchData(
+              enabled: true,
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                  return touchedSpots.map((LineBarSpot touchedSpot) {
+                    final expense = expenses[touchedSpot.x.toInt()];
+                    return LineTooltipItem(
+                      '${expense.date.month}월\n₩${_formatAmount(expense.amount)}',
+                      const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    );
+                  }).toList();
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 애니메이션에 따라 변화하는 데이터 포인트 생성
+  List<FlSpot> _createSpots(List<MonthlyExpense> expenses, double animationValue) {
+    return expenses.asMap().entries.map((entry) {
+      return FlSpot(
+        entry.key.toDouble(),
+        entry.value.amount * animationValue,
+      );
+    }).toList();
+  }
+
+  // 최대 Y값 계산
   double _calculateMaxY(List<MonthlyExpense> expenses) {
     if (expenses.isEmpty) return 100000;
 
@@ -210,20 +303,7 @@ class MonthlyExpenseChart extends StatelessWidget {
     }
   }
 
-  // 그리드 간격 계산 - 그대로유지
-  double _calculateInterval(List<MonthlyExpense> expenses) {
-    final maxY = _calculateMaxY(expenses);
-
-    // 그리드 라인 4-6개 정도 표시되도록 간격 계산
-    if (maxY <= 10000) return 2000;
-    if (maxY <= 100000) return 20000;
-    if (maxY <= 500000) return 100000;
-    if (maxY <= 1000000) return 200000;
-    if (maxY <= 5000000) return 1000000;
-    return 2000000;
-  }
-
-  // 금액 포맷팅 - 그대로유지
+  // 금액 포맷팅
   String _formatAmount(double amount) {
     if (amount >= 10000000) {
       return '${(amount / 10000000).toStringAsFixed(1)}천만';

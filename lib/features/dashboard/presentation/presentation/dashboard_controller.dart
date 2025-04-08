@@ -62,6 +62,10 @@ class DashboardController extends GetxController {
   final RxList<TransactionWithCategory> recentTransactions = <TransactionWithCategory>[].obs;
   final RxBool isRecentTransactionsLoading = false.obs;
 
+  // 월 탐색을 위한 새 변수들
+  final Rx<DateTime> selectedMonth = DateTime.now().obs;
+  final RxInt monthRange = 6.obs; // 기본 6개월 표시
+
   // EventBusService 인스턴스
   late final EventBusService _eventBusService;
 
@@ -78,8 +82,53 @@ class DashboardController extends GetxController {
       _refreshAllData();
     });
 
+    // 선택된 월 변경 이벤트 구독
+    ever(selectedMonth, (_) {
+      debugPrint('선택된 월 변경됨: ${getMonthYearString()}');
+      _refreshAllData();
+    });
+
+    // 월 범위 변경 이벤트 구독
+    ever(monthRange, (_) {
+      debugPrint('월 범위 변경됨: ${monthRange.value}개월');
+      fetchMonthlyExpensesTrend();
+    });
+
     // 초기 데이터 로드
     _refreshAllData();
+  }
+
+  // 이전 달로 이동
+  void goToPreviousMonth() {
+    final prevMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month - 1, 1);
+    selectedMonth.value = prevMonth;
+  }
+
+  // 다음 달로 이동
+  void goToNextMonth() {
+    final nextMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month + 1, 1);
+    // 미래 달로는 이동 제한
+    if (nextMonth.isBefore(DateTime.now()) ||
+        (nextMonth.year == DateTime.now().year && nextMonth.month == DateTime.now().month)) {
+      selectedMonth.value = nextMonth;
+    }
+  }
+
+  // 현재 달로 이동
+  void goToCurrentMonth() {
+    selectedMonth.value = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  }
+
+  // 월 범위 설정
+  void setMonthRange(int range) {
+    if (range >= 3 && range <= 12) {
+      monthRange.value = range;
+    }
+  }
+
+  // 현재 선택된 월의 연월 문자열 반환 (예: 2025년 4월)
+  String getMonthYearString() {
+    return '${selectedMonth.value.year}년 ${selectedMonth.value.month}월';
   }
 
   // 모든 데이터를 새로고침하는 메서드
@@ -96,6 +145,7 @@ class DashboardController extends GetxController {
   Future<void> fetchAssets() async {
     isAssetsLoading.value = true;
     try {
+      // 이 메서드를 수정하여 선택된 월에 대한 자산 정보를 가져오도록
       final result = await getAssets.execute();
       monthlyAssets.value = result;
       debugPrint('월간 재테크 정보 로드 완료: ${monthlyAssets.value}');
@@ -111,22 +161,24 @@ class DashboardController extends GetxController {
       // Set loading state
       isRecentTransactionsLoading.value = true;
 
-      // Get current month date range
-      final now = DateTime.now();
-      final firstDayOfMonth = DateTime(now.year, now.month, 1);
+      // Get selected month date range
+      final firstDayOfMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month, 1);
+      final lastDayOfMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month + 1, 0);
 
       // Get all transactions with a large limit
       final allTransactions = await getRecentTransactions.execute(1000); // Using a large limit
 
-      // Filter for current month only
-      final currentMonthTransactions = allTransactions
-          .where((tx) => tx.transactionDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))))
+      // Filter for selected month only
+      final selectedMonthTransactions = allTransactions
+          .where((tx) =>
+      tx.transactionDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) &&
+          tx.transactionDate.isBefore(lastDayOfMonth.add(const Duration(days: 1))))
           .toList();
 
-      debugPrint('이번 달 전체 거래 내역 개수: ${currentMonthTransactions.length}');
-      return currentMonthTransactions;
+      debugPrint('선택된 달 전체 거래 내역 개수: ${selectedMonthTransactions.length}');
+      return selectedMonthTransactions;
     } catch (e) {
-      debugPrint('이번 달 전체 거래 내역 가져오기 오류: $e');
+      debugPrint('선택된 달 전체 거래 내역 가져오기 오류: $e');
       return [];
     } finally {
       isRecentTransactionsLoading.value = false;
@@ -136,8 +188,19 @@ class DashboardController extends GetxController {
   Future<void> fetchRecentTransactions() async {
     isRecentTransactionsLoading.value = true;
     try {
-      final result = await getRecentTransactions.execute(10); // 최근 5개 거래
-      recentTransactions.value = result;
+      // 선택된 월의 최근 거래 내역을 가져오기
+      final result = await getRecentTransactions.execute(10); // 최근 10개 거래
+
+      // 선택된 월에 해당하는 거래만 필터링
+      final firstDayOfMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month, 1);
+      final lastDayOfMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month + 1, 0);
+
+      final filteredResult = result.where((tx) =>
+      tx.transactionDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) &&
+          tx.transactionDate.isBefore(lastDayOfMonth.add(const Duration(days: 1))))
+          .toList();
+
+      recentTransactions.value = filteredResult;
     } catch (e) {
       debugPrint('최근 거래 내역 가져오기 오류: $e');
     } finally {
@@ -148,6 +211,7 @@ class DashboardController extends GetxController {
   Future<void> fetchCategoryExpenses() async {
     isCategoryExpenseLoading.value = true;
     try {
+      // 선택된 월의 카테고리별 지출 정보를 가져오도록 수정 필요
       final result = await getCategoryExpenses.execute();
       categoryExpenses.value = result;
       debugPrint('카테고리별 지출 개수: ${result.length}');
@@ -158,10 +222,10 @@ class DashboardController extends GetxController {
     }
   }
 
-  // 새로 추가: 카테고리별 수입 데이터 가져오기
   Future<void> fetchCategoryIncome() async {
     isCategoryIncomeLoading.value = true;
     try {
+      // 선택된 월의 카테고리별 수입 정보를 가져오도록 수정 필요
       final result = await getCategoryIncome.execute();
       categoryIncome.value = result;
       debugPrint('카테고리별 수입 개수: ${result.length}');
@@ -172,10 +236,10 @@ class DashboardController extends GetxController {
     }
   }
 
-  // 새로 추가: 카테고리별 재테크 데이터 가져오기
   Future<void> fetchCategoryFinance() async {
     isCategoryFinanceLoading.value = true;
     try {
+      // 선택된 월의 카테고리별 재테크 정보를 가져오도록 수정 필요
       final result = await getCategoryFinance.execute();
       categoryFinance.value = result;
       debugPrint('카테고리별 재테크 개수: ${result.length}');
@@ -189,6 +253,7 @@ class DashboardController extends GetxController {
   Future<void> fetchMonthlySummary() async {
     isLoading.value = true;
     try {
+      // 선택된 월의 요약 정보를 가져오도록 수정 필요
       final result = await getMonthlySummary.execute();
 
       // 월간 요약 정보
@@ -211,7 +276,8 @@ class DashboardController extends GetxController {
   Future<void> fetchMonthlyExpensesTrend() async {
     isExpenseTrendLoading.value = true;
     try {
-      final result = await getMonthlyExpensesTrend.execute(6); // 최대 6개월
+      // 설정된 범위만큼의 월별 지출 추이 데이터 가져오기
+      final result = await getMonthlyExpensesTrend.execute(monthRange.value);
       monthlyExpenses.value = result;
     } catch (e) {
       debugPrint('월별 지출 추이 가져오기 오류: $e');
