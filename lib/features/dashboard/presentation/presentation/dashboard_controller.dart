@@ -1,4 +1,5 @@
 // lib/features/dashboard/presentation/presentation/dashboard_controller.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/services/event_bus_service.dart';
@@ -66,6 +67,15 @@ class DashboardController extends GetxController {
   final Rx<DateTime> selectedMonth = DateTime.now().obs;
   final RxInt monthRange = 6.obs; // 기본 6개월 표시
 
+  // 새로 추가: 전체 월 데이터 저장 (최대 12개월)
+  final RxList<MonthlyExpense> allMonthlyExpenses = <MonthlyExpense>[].obs;
+
+  // 새로 추가: 애니메이션 상태 관리
+  final RxBool isChartAnimating = false.obs;
+
+  // 새로 추가: 압축된 월별 데이터 관리
+  final RxBool isCompressedData = true.obs; // 기본값으로 압축 활성화
+
   // EventBusService 인스턴스
   late final EventBusService _eventBusService;
 
@@ -85,6 +95,7 @@ class DashboardController extends GetxController {
     // 선택된 월 변경 이벤트 구독
     ever(selectedMonth, (_) {
       debugPrint('선택된 월 변경됨: ${getMonthYearString()}');
+      isChartAnimating.value = true; // 애니메이션 상태 활성화
       _refreshAllData();
     });
 
@@ -96,6 +107,81 @@ class DashboardController extends GetxController {
 
     // 초기 데이터 로드
     _refreshAllData();
+  }
+
+  // 새로 추가: 중복 월 데이터 압축 메서드
+  List<MonthlyExpense> _compressMonthlyData(List<MonthlyExpense> expenses) {
+    if (expenses.isEmpty) return [];
+
+    // 월별로 그룹핑하기 위한 맵
+    final Map<String, MonthlyExpense> monthMap = {};
+
+    // 모든 지출 항목을 순회하며 같은 연도/월 항목 병합
+    for (var expense in expenses) {
+      final year = expense.date.year;
+      final month = expense.date.month;
+      final key = '$year-$month';
+
+      if (monthMap.containsKey(key)) {
+        // 기존 항목이 있으면 금액 합산
+        final existingExpense = monthMap[key]!;
+        monthMap[key] = MonthlyExpense(
+            date: existingExpense.date, // 기존 날짜 유지
+            amount: existingExpense.amount + expense.amount // 금액 합산
+        );
+      } else {
+        // 처음 등장하는 연도/월 조합이면 그대로 추가
+        monthMap[key] = expense;
+      }
+    }
+
+    // 맵의 값들을 리스트로 변환하고 날짜순으로 정렬
+    final result = monthMap.values.toList();
+    result.sort((a, b) => a.date.compareTo(b.date));
+
+    debugPrint('압축 전 데이터 개수: ${expenses.length}, 압축 후: ${result.length}');
+    return result;
+  }
+
+  // 수정: 선택된 월을 기준으로 월별 지출 추이 데이터 필터링
+  List<MonthlyExpense> get filteredMonthlyExpenses {
+    // 압축된 전체 데이터 가져오기
+    final List<MonthlyExpense> compressedData = isCompressedData.value
+        ? _compressMonthlyData(allMonthlyExpenses)
+        : allMonthlyExpenses;
+
+    // 선택된 월이 존재하지 않는 경우 빈 리스트 반환
+    if (compressedData.isEmpty) return [];
+
+    // 선택된 월 기준으로 데이터 필터링
+    final selectedDate = DateTime(selectedMonth.value.year, selectedMonth.value.month, 1);
+
+    // 선택된 월의 인덱스 찾기
+    int selectedMonthIndex = -1;
+    for (int i = 0; i < compressedData.length; i++) {
+      final expense = compressedData[i];
+      if (expense.date.year == selectedDate.year && expense.date.month == selectedDate.month) {
+        selectedMonthIndex = i;
+        break;
+      }
+    }
+
+    // 선택된 월이 데이터에 없는 경우
+    if (selectedMonthIndex == -1) return [];
+
+    // 선택된 월을 끝으로 하는 범위 계산
+    int startIndex = selectedMonthIndex - monthRange.value + 1;
+    if (startIndex < 0) startIndex = 0;
+
+    // 선택된 월이 마지막이 되도록 데이터 추출
+    final result = compressedData.sublist(startIndex, selectedMonthIndex + 1);
+
+    return result;
+  }
+
+  // 새로 추가: 차트 애니메이션 완료 처리
+  void onChartAnimationComplete() {
+    isChartAnimating.value = false;
   }
 
   // 이전 달로 이동
@@ -291,9 +377,14 @@ class DashboardController extends GetxController {
   Future<void> fetchMonthlyExpensesTrend() async {
     isExpenseTrendLoading.value = true;
     try {
-      // 설정된 범위만큼의 월별 지출 추이 데이터 가져오기
-      final result = await getMonthlyExpensesTrend.execute(monthRange.value);
-      monthlyExpenses.value = result;
+      // 설정된 범위만큼의 월별 지출 추이 데이터 가져오기 (최대 12개월)
+      final result = await getMonthlyExpensesTrend.execute(12);
+      allMonthlyExpenses.value = result;
+
+      // 필터링된 데이터를 monthlyExpenses에 할당
+      monthlyExpenses.value = filteredMonthlyExpenses;
+
+      debugPrint('월별 지출 추이 데이터 로드 완료: 전체 ${allMonthlyExpenses.length}개, 필터링 ${monthlyExpenses.length}개, 압축 적용: ${isCompressedData.value}');
     } catch (e) {
       debugPrint('월별 지출 추이 가져오기 오류: $e');
     } finally {
