@@ -44,7 +44,7 @@ class _MainPageState extends State<MainPage> {
           actions: [
             // 설정 버튼만 남김
             IconButton(
-              icon: const Icon(Icons.settings_outlined, color: AppColors.primary),
+              icon: const Icon(Icons.menu, color: AppColors.primary),
               onPressed: () => Get.showSettingsDialog(),
               tooltip: '설정',
             ),

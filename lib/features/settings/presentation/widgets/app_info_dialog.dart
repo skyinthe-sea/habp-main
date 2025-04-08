@@ -176,7 +176,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
 
           // 앱 이름
           const Text(
-            '우리 정이 가계부',
+            '정편가계부',
             style: TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -234,7 +234,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           ),
           const SizedBox(height: 12),
           Text(
-            '우리 정이 가계부는 개인 자산과 지출을 쉽고 효과적으로 관리할 수 있는 앱입니다. '
+            '정편가계부는 개인 자산과 지출을 쉽고 효과적으로 관리할 수 있는 앱입니다. '
                 '다양한 자산 유형을 관리하고, 지출을 추적하며, 예산을 설정하여 재정 목표를 달성하세요.',
             style: TextStyle(
               fontSize: 15,
@@ -317,7 +317,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           ),
           const SizedBox(height: 16),
           Text(
-            '우리 정이 가계부는 개인 재정 관리의 어려움을 해결하기 위해 만들어진 앱입니다. '
+            '정편가계부는 개인 재정 관리의 어려움을 해결하기 위해 만들어진 앱입니다. '
                 '저희 팀은 사용자의 재정 건강을 개선하고 재정 목표 달성을 돕기 위해 노력하고 있습니다.',
             style: TextStyle(
               fontSize: 15,
@@ -338,22 +338,22 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           ),
           const SizedBox(height: 16),
           _buildTeamMember(
-            name: '홍길동',
+            name: '임준섭',
             role: '프로젝트 리더 & UX 디자이너',
             description: '사용자 경험과 인터페이스 디자인 전문가. 복잡한 재정 앱을 직관적이고 사용하기 쉽게 만드는 데 집중.',
           ),
           _buildTeamMember(
-            name: '김영희',
+            name: '김태수',
             role: '앱 개발자',
             description: 'Flutter 프레임워크 전문가. 안드로이드와 iOS 모두에서 최적의 성능을 내는 크로스플랫폼 앱 개발.',
           ),
           _buildTeamMember(
-            name: '이철수',
+            name: '정석현',
             role: '백엔드 개발자',
             description: '데이터베이스 및 서버 인프라 전문가. 사용자 데이터의 안전한 저장과 처리를 담당.',
           ),
           _buildTeamMember(
-            name: '박민지',
+            name: '정한솔',
             role: '데이터 분석가',
             description: '사용자의 지출 패턴을 분석하고 유용한 인사이트를 제공하는 알고리즘 개발.',
           ),
@@ -383,16 +383,16 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                   _buildContactItem(
                     icon: Icons.email,
                     title: '이메일',
-                    content: 'support@example.com',
+                    content: 'myclick90@gmail.com',
                     onTap: () => _launchUrl('mailto:support@example.com'),
                   ),
-                  const Divider(height: 24),
-                  _buildContactItem(
-                    icon: Icons.web,
-                    title: '웹사이트',
-                    content: 'www.example.com',
-                    onTap: () => _launchUrl('https://www.example.com'),
-                  ),
+                  // const Divider(height: 24),
+                  // _buildContactItem(
+                  //   icon: Icons.web,
+                  //   title: '웹사이트',
+                  //   content: 'www.example.com',
+                  //   onTap: () => _launchUrl('https://www.example.com'),
+                  // ),
                   const Divider(height: 24),
                   _buildContactItem(
                     icon: Icons.question_answer,
