@@ -9,10 +9,11 @@ abstract class TransactionRepository {
   Future<List<Transaction>> getTransactions();
   Future<List<Category>> getCategories();
   Future<List<MonthlyExpense>> getMonthlyExpenses(int months);
-  Future<List<CategoryExpense>> getCategoryExpenses();
-  Future<List<CategoryExpense>> getCategoryIncome(); // New method
-  Future<List<CategoryExpense>> getCategoryFinance(); // New method
+  Future<List<CategoryExpense>> getCategoryExpenses(int year, int month);
+  Future<List<CategoryExpense>> getCategoryIncome(int year, int month);
+  Future<List<CategoryExpense>> getCategoryFinance(int year, int month);
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit);
   Future<List<Transaction>> getTransactionsByDateRange(DateTime start, DateTime end);
-  Future<double> getAssets();
+  Future<double> getAssets(int year, int month);
+  Future<Map<String, dynamic>> getMonthlySummary(int year, int month);
 }

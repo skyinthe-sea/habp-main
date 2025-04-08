@@ -5,7 +5,7 @@ class GetAssets {
 
   GetAssets(this.repository);
 
-  Future<double> execute() async {
-    return await repository.getAssets();
+  Future<double> execute(int year, int month) async {
+    return await repository.getAssets(year, month);
   }
 }

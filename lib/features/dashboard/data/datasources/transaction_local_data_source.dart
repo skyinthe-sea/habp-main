@@ -11,12 +11,13 @@ abstract class TransactionLocalDataSource {
   Future<List<TransactionModel>> getTransactions();
   Future<List<CategoryModel>> getCategories();
   Future<List<MonthlyExpense>> getMonthlyExpenses(int months);
-  Future<List<CategoryExpense>> getCategoryExpenses();
-  Future<List<CategoryExpense>> getCategoryIncome(); // New method for income
-  Future<List<CategoryExpense>> getCategoryFinance(); // New method for finance
+  Future<List<CategoryExpense>> getCategoryExpenses(int year, int month);
+  Future<List<CategoryExpense>> getCategoryIncome(int year, int month);
+  Future<List<CategoryExpense>> getCategoryFinance(int year, int month);
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit);
   Future<List<TransactionModel>> getTransactionsByDateRange(DateTime start, DateTime end);
-  Future<double> getAssets();
+  Future<double> getAssets(int year, int month);
+  Future<Map<String, dynamic>> getMonthlySummary(int year, int month);
 }
 
 class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
@@ -143,9 +144,9 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
   }
 
   @override
-  Future<List<CategoryExpense>> getCategoryExpenses() async {
+  Future<List<CategoryExpense>> getCategoryExpenses(int year, int month) async {
     try {
-      return await _getCategoryData('EXPENSE');
+      return await _getCategoryData('EXPENSE', year, month);
     } catch (e) {
       debugPrint('카테고리별 지출 가져오기 오류: $e');
       return [];
@@ -153,9 +154,9 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
   }
 
   @override
-  Future<List<CategoryExpense>> getCategoryIncome() async {
+  Future<List<CategoryExpense>> getCategoryIncome(int year, int month) async {
     try {
-      return await _getCategoryData('INCOME');
+      return await _getCategoryData('INCOME', year, month);
     } catch (e) {
       debugPrint('카테고리별 수입 가져오기 오류: $e');
       return [];
@@ -163,34 +164,33 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
   }
 
   @override
-  Future<List<CategoryExpense>> getCategoryFinance() async {
+  Future<List<CategoryExpense>> getCategoryFinance(int year, int month) async {
     try {
-      return await _getCategoryData('FINANCE');
+      return await _getCategoryData('FINANCE', year, month);
     } catch (e) {
       debugPrint('카테고리별 재테크 가져오기 오류: $e');
       return [];
     }
   }
 
-  // Common method to fetch category data by type (refactored from getCategoryExpenses)
-  Future<List<CategoryExpense>> _getCategoryData(String categoryType) async {
+// 공통 메서드 수정
+  Future<List<CategoryExpense>> _getCategoryData(String categoryType, int year, int month) async {
     final db = await dbHelper.database;
-    final now = DateTime.now();
-    final currentMonth = now.month;
-    final currentYear = now.year;
 
-    // 현재 월의 시작과 끝 날짜
-    final startOfMonth = DateTime(currentYear, currentMonth, 1);
-    final endOfMonth = DateTime(currentYear, currentMonth + 1, 0);
+    // 선택된 월의 시작과 끝 날짜
+    final startOfMonth = DateTime(year, month, 1);
+    final endOfMonth = DateTime(year, month + 1, 0);
 
     final startDateStr = "${startOfMonth.year}-${startOfMonth.month.toString().padLeft(2, '0')}-01";
     final endDateStr = "${endOfMonth.year}-${endOfMonth.month.toString().padLeft(2, '0')}-${endOfMonth.day.toString().padLeft(2, '0')}";
 
+    debugPrint('카테고리 데이터 조회 기간: $startDateStr ~ $endDateStr');
+
     // 해당 타입의 카테고리 가져오기
     final List<Map<String, dynamic>> allCategories = await db.rawQuery('''
-      SELECT * FROM category
-      WHERE type = ?
-    ''', [categoryType]);
+    SELECT * FROM category
+    WHERE type = ?
+  ''', [categoryType]);
 
     // 카테고리별 금액 맵 초기화
     Map<int, Map<String, dynamic>> categoryDataMap = {};
@@ -205,14 +205,14 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
     // 1. 변동 거래 내역 (해당 월에 직접 기록된 거래)
     final List<Map<String, dynamic>> variableTransactions = await db.rawQuery('''
-      SELECT tr.category_id, SUM(tr.amount) as total_amount
-      FROM transaction_record tr
-      JOIN category c ON tr.category_id = c.id
-      WHERE c.type = ?
-      AND c.is_fixed = 0
-      AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
-      GROUP BY tr.category_id
-    ''', [categoryType, startDateStr, endDateStr]);
+    SELECT tr.category_id, SUM(tr.amount) as total_amount
+    FROM transaction_record tr
+    JOIN category c ON tr.category_id = c.id
+    WHERE c.type = ?
+    AND c.is_fixed = 0
+    AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+    GROUP BY tr.category_id
+  ''', [categoryType, startDateStr, endDateStr]);
 
     // 변동 거래 금액 합산
     for (var transaction in variableTransactions) {
@@ -227,11 +227,11 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
     // 2. 고정 거래 내역 (매달 반복되는 거래)
     final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
-      SELECT tr.* FROM transaction_record2 tr
-      JOIN category c ON tr.category_id = c.id
-      WHERE c.type = ?
-      AND c.is_fixed = 1
-    ''', [categoryType]);
+    SELECT tr.* FROM transaction_record2 tr
+    JOIN category c ON tr.category_id = c.id
+    WHERE c.type = ?
+    AND c.is_fixed = 1
+  ''', [categoryType]);
 
     // 고정 거래 금액 합산
     for (var transaction in fixedTransactions) {
@@ -243,11 +243,11 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
       // 해당 카테고리의 가장 최근 설정 찾기
       final List<Map<String, dynamic>> settings = await db.rawQuery('''
-        SELECT * FROM fixed_transaction_setting
-        WHERE category_id = ? AND date(effective_from) <= date(?)
-        ORDER BY effective_from DESC
-        LIMIT 1
-      ''', [categoryId, endOfMonth.toIso8601String()]);
+      SELECT * FROM fixed_transaction_setting
+      WHERE category_id = ? AND date(effective_from) <= date(?)
+      ORDER BY effective_from DESC
+      LIMIT 1
+    ''', [categoryId, endOfMonth.toIso8601String()]);
 
       // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
       double amount = (transaction['amount'] as double).abs();
@@ -263,7 +263,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
       else if (description.contains('매주')) {
         // 매주 거래는 해당 월의 요일 수에 맞게 계산
         int weekday = int.parse(transactionNum);
-        int occurrences = _countWeekdaysInMonth(currentYear, currentMonth, weekday);
+        int occurrences = _countWeekdaysInMonth(year, month, weekday);
         categoryDataMap[categoryId]!['total_amount'] =
             (categoryDataMap[categoryId]!['total_amount'] as double) + (amount * occurrences);
       }
@@ -465,16 +465,13 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
   }
 
   @override
-  Future<double> getAssets() async {
+  Future<double> getAssets(int year, int month) async {
     try {
       final db = await dbHelper.database;
-      final now = DateTime.now();
-      final currentMonth = now.month;
-      final currentYear = now.year;
 
-      // Current month date range
-      final startOfMonth = DateTime(currentYear, currentMonth, 1);
-      final endOfMonth = DateTime(currentYear, currentMonth + 1, 0, 23, 59, 59);
+      // 선택된 월의 날짜 범위
+      final startOfMonth = DateTime(year, month, 1);
+      final endOfMonth = DateTime(year, month + 1, 0, 23, 59, 59);
 
       // Format dates for query
       final startDateStr = "${startOfMonth.year}-${startOfMonth.month.toString().padLeft(2, '0')}-01";
@@ -484,13 +481,13 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
       // 1. 변동 거래 내역 (해당 월에 직접 기록된 거래)
       final List<Map<String, dynamic>> variableResults = await db.rawQuery('''
-      SELECT SUM(ABS(tr.amount)) as total_assets
-      FROM transaction_record tr
-      JOIN category c ON tr.category_id = c.id
-      WHERE c.type = 'FINANCE'
-      AND c.is_fixed = 0
-      AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
-    ''', [startDateStr, endDateStr]);
+    SELECT SUM(ABS(tr.amount)) as total_assets
+    FROM transaction_record tr
+    JOIN category c ON tr.category_id = c.id
+    WHERE c.type = 'FINANCE'
+    AND c.is_fixed = 0
+    AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+  ''', [startDateStr, endDateStr]);
 
       double totalVariableAssets = 0.0;
 
@@ -500,12 +497,12 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
       // 2. 고정 거래 내역 (매달 반복되는 거래)
       final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
-      SELECT tr.*
-      FROM transaction_record2 tr
-      JOIN category c ON tr.category_id = c.id
-      WHERE c.type = 'FINANCE'
-      AND c.is_fixed = 1
-    ''');
+    SELECT tr.*
+    FROM transaction_record2 tr
+    JOIN category c ON tr.category_id = c.id
+    WHERE c.type = 'FINANCE'
+    AND c.is_fixed = 1
+  ''');
 
       // 고정 거래 금액 합산
       double totalFixedAssets = 0.0;
@@ -517,11 +514,11 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
         // 해당 카테고리와 날짜에 맞는 설정 가져오기
         final List<Map<String, dynamic>> settings = await db.rawQuery('''
-          SELECT * FROM fixed_transaction_setting
-          WHERE category_id = ? AND date(effective_from) <= date(?)
-          ORDER BY effective_from DESC
-          LIMIT 1
-        ''', [categoryId, endOfMonth.toIso8601String()]);
+        SELECT * FROM fixed_transaction_setting
+        WHERE category_id = ? AND date(effective_from) <= date(?)
+        ORDER BY effective_from DESC
+        LIMIT 1
+      ''', [categoryId, endOfMonth.toIso8601String()]);
 
         // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
         double amount = (transaction['amount'] as double).abs();
@@ -536,7 +533,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
         else if (description.contains('매주')) {
           // 매주 거래는 해당 월의 요일 수에 맞게 계산
           int weekday = int.parse(transactionNum);
-          int occurrences = _countWeekdaysInMonth(currentYear, currentMonth, weekday);
+          int occurrences = _countWeekdaysInMonth(year, month, weekday);
           totalFixedAssets += amount * occurrences;
         }
         else if (description.contains('매일')) {
@@ -569,5 +566,198 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     }
 
     return count;
+  }
+
+  @override
+  Future<Map<String, dynamic>> getMonthlySummary(int year, int month) async {
+    try {
+      // 선택된 월 정보
+      final selectedYear = year;
+      final selectedMonth = month;
+
+      // 지난달 정보
+      final lastMonth = selectedMonth == 1
+          ? DateTime(selectedYear - 1, 12)
+          : DateTime(selectedYear, selectedMonth - 1);
+      final lastMonthYear = lastMonth.year;
+      final lastMonthMonth = lastMonth.month;
+
+      debugPrint('선택된 달: $selectedYear년 $selectedMonth월');
+      debugPrint('지난 달: $lastMonthYear년 $lastMonthMonth월');
+
+      // 선택된 달 데이터 계산
+      final selectedMonthStart = DateTime(selectedYear, selectedMonth, 1);
+      final selectedMonthEnd = DateTime(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+
+      // 지난 달 데이터 계산
+      final lastMonthStart = DateTime(lastMonthYear, lastMonthMonth, 1);
+      final lastMonthEnd = DateTime(lastMonthYear, lastMonthMonth + 1, 0, 23, 59, 59);
+
+      // 1. 선택된 달의 변동 거래 내역 가져오기
+      final currentMonthTransactions = await getTransactionsByDateRange(
+          selectedMonthStart, selectedMonthEnd);
+
+      // 2. 지난 달 변동 거래 내역 가져오기
+      final lastMonthTransactions = await getTransactionsByDateRange(
+          lastMonthStart, lastMonthEnd);
+
+      debugPrint('선택된 달 거래 수: ${currentMonthTransactions.length}');
+      debugPrint('지난 달 거래 수: ${lastMonthTransactions.length}');
+
+      // 카테고리 정보 가져오기
+      final categories = await getCategories();
+      final categoryMap = {for (var c in categories) c.id: c};
+
+      // 선택된 달 수입/지출 계산 (변동 거래만)
+      double currentMonthIncome = 0;
+      double currentMonthExpense = 0;
+
+      for (var transaction in currentMonthTransactions) {
+        final category = categoryMap[transaction.categoryId];
+        if (category == null) continue;
+
+        // 고정 거래는 건너뛰기 (별도로 계산할 예정)
+        if (category.isFixed == 1) continue;
+
+        if (category.type == 'INCOME') {
+          currentMonthIncome += transaction.amount.abs(); // 수입은 양수로 변환
+        } else if (category.type == 'EXPENSE') {
+          currentMonthExpense += transaction.amount.abs(); // 지출은 양수로 변환
+        }
+      }
+
+      // 지난 달 수입/지출 계산 (변동 거래만)
+      double lastMonthIncome = 0;
+      double lastMonthExpense = 0;
+
+      for (var transaction in lastMonthTransactions) {
+        final category = categoryMap[transaction.categoryId];
+        if (category == null) continue;
+
+        // 고정 거래는 건너뛰기 (별도로 계산할 예정)
+        if (category.isFixed == 1) continue;
+
+        if (category.type == 'INCOME') {
+          lastMonthIncome += transaction.amount.abs(); // 수입은 양수로 변환
+        } else if (category.type == 'EXPENSE') {
+          lastMonthExpense += transaction.amount.abs(); // 지출은 양수로 변환
+        }
+      }
+
+      // 3. 선택된 달 고정 거래의 수입/지출 계산
+      final currentMonthFixed = await _calculateFixedTransactions(selectedYear, selectedMonth);
+      currentMonthIncome += currentMonthFixed['income'] ?? 0;
+      currentMonthExpense += currentMonthFixed['expense'] ?? 0;
+
+      // 4. 지난 달 고정 거래의 수입/지출 계산
+      final lastMonthFixed = await _calculateFixedTransactions(lastMonthYear, lastMonthMonth);
+      lastMonthIncome += lastMonthFixed['income'] ?? 0;
+      lastMonthExpense += lastMonthFixed['expense'] ?? 0;
+
+      debugPrint('선택된 달 수입: $currentMonthIncome, 지출: $currentMonthExpense');
+      debugPrint('지난 달 수입: $lastMonthIncome, 지출: $lastMonthExpense');
+
+      // 선택된 달 잔액 계산
+      final currentMonthBalance = currentMonthIncome - currentMonthExpense;
+
+      // 증감율 계산 및 소수점 한 자리로 반올림
+      double incomeChangePercentage = 0.0;
+      double expenseChangePercentage = 0.0;
+
+      // 수입 증감율 계산
+      if (lastMonthIncome > 0) {
+        incomeChangePercentage =
+            ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100;
+        incomeChangePercentage =
+            double.parse(incomeChangePercentage.toStringAsFixed(1));
+      } else if (currentMonthIncome > 0) {
+        incomeChangePercentage = 100.0;
+      }
+
+      // 지출 증감율 계산
+      if (lastMonthExpense > 0) {
+        expenseChangePercentage =
+            ((currentMonthExpense - lastMonthExpense) / lastMonthExpense) * 100;
+        expenseChangePercentage =
+            double.parse(expenseChangePercentage.toStringAsFixed(1));
+      } else if (currentMonthExpense > 0) {
+        expenseChangePercentage = 100.0;
+      }
+
+      debugPrint('수입 증감율: $incomeChangePercentage%');
+      debugPrint('지출 증감율: $expenseChangePercentage%');
+
+      return {
+        'income': currentMonthIncome,
+        'expense': currentMonthExpense,
+        'balance': currentMonthBalance,
+        'incomeChangePercentage': incomeChangePercentage,
+        'expenseChangePercentage': expenseChangePercentage,
+      };
+    } catch (e) {
+      debugPrint('월간 요약 계산 중 오류 발생: $e');
+      // 오류 발생시 기본값 반환
+      return {
+        'income': 0.0,
+        'expense': 0.0,
+        'balance': 0.0,
+        'incomeChangePercentage': 0.0,
+        'expenseChangePercentage': 0.0,
+      };
+    }
+  }
+
+// 고정 거래 계산 (기존 _calculateFixedTransactions 메서드 활용)
+  Future<Map<String, double>> _calculateFixedTransactions(int year, int month) async {
+    final transactions = await getTransactions();
+    final categories = await getCategories();
+    final categoryMap = {for (var c in categories) c.id: c};
+
+    double monthlyIncome = 0;
+    double monthlyExpense = 0;
+
+    for (var transaction in transactions) {
+      final category = categoryMap[transaction.categoryId];
+      if (category == null) continue;
+
+      // 고정 거래만 처리
+      if (_isFixedTransaction(transaction.description)) {
+        double amount = 0;
+
+        // 매월 거래
+        if (transaction.description.contains('매월')) {
+          amount = transaction.amount;
+        }
+        // 매주 거래
+        else if (transaction.description.contains('매주')) {
+          // 해당 월에 요일이 몇 번 등장하는지 계산
+          int weekdayCount = _countWeekdaysInMonth(
+              year, month, int.parse(transaction.transactionNum));
+          amount = transaction.amount * weekdayCount;
+        }
+        // 매일 거래
+        else if (transaction.description.contains('매일')) {
+          // 해당 월의 일수
+          int daysInMonth = DateTime(year, month + 1, 0).day;
+          amount = transaction.amount * daysInMonth;
+        }
+
+        // 수입/지출 분류
+        if (category.type == 'INCOME') {
+          monthlyIncome += amount;
+        } else if (category.type == 'EXPENSE') {
+          monthlyExpense += amount.abs();
+        }
+      }
+    }
+
+    return {'income': monthlyIncome, 'expense': monthlyExpense};
+  }
+
+// 고정 거래 여부 확인 헬퍼 함수
+  bool _isFixedTransaction(String description) {
+    return description.contains('매월') ||
+        description.contains('매주') ||
+        description.contains('매일');
   }
 }

@@ -29,21 +29,6 @@ class TransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<List<CategoryExpense>> getCategoryExpenses() async {
-    return await localDataSource.getCategoryExpenses();
-  }
-
-  @override
-  Future<List<CategoryExpense>> getCategoryIncome() async {
-    return await localDataSource.getCategoryIncome();
-  }
-
-  @override
-  Future<List<CategoryExpense>> getCategoryFinance() async {
-    return await localDataSource.getCategoryFinance();
-  }
-
-  @override
   Future<List<TransactionWithCategory>> getRecentTransactions(int limit) async {
     return await localDataSource.getRecentTransactions(limit);
   }
@@ -54,7 +39,27 @@ class TransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<double> getAssets() async {
-    return await localDataSource.getAssets();
+  Future<List<CategoryExpense>> getCategoryExpenses(int year, int month) async {
+    return await localDataSource.getCategoryExpenses(year, month);
+  }
+
+  @override
+  Future<List<CategoryExpense>> getCategoryIncome(int year, int month) async {
+    return await localDataSource.getCategoryIncome(year, month);
+  }
+
+  @override
+  Future<List<CategoryExpense>> getCategoryFinance(int year, int month) async {
+    return await localDataSource.getCategoryFinance(year, month);
+  }
+
+  @override
+  Future<double> getAssets(int year, int month) async {
+    return await localDataSource.getAssets(year, month);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getMonthlySummary(int year, int month) async {
+    return await localDataSource.getMonthlySummary(year, month);
   }
 }

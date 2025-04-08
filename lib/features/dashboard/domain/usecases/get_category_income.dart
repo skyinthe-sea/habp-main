@@ -7,7 +7,7 @@ class GetCategoryIncome {
 
   GetCategoryIncome(this.repository);
 
-  Future<List<CategoryExpense>> execute() async {
-    return await repository.getCategoryIncome();
+  Future<List<CategoryExpense>> execute(int year, int month) async {
+    return await repository.getCategoryIncome(year, month);
   }
 }

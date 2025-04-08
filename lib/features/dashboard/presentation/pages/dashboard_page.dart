@@ -48,6 +48,8 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
     final recentTransactionsUseCase = GetRecentTransactions(repository);
     final assetsUseCase = GetAssets(repository);
 
+    dbHelper.printDatabaseInfo();
+
     // 개발 중에만 데이터베이스 정보 출력
     //dbHelper.printDatabaseInfo();
 

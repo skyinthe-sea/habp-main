@@ -142,20 +142,6 @@ class DashboardController extends GetxController {
     fetchAssets();
   }
 
-  Future<void> fetchAssets() async {
-    isAssetsLoading.value = true;
-    try {
-      // 이 메서드를 수정하여 선택된 월에 대한 자산 정보를 가져오도록
-      final result = await getAssets.execute();
-      monthlyAssets.value = result;
-      debugPrint('월간 재테크 정보 로드 완료: ${monthlyAssets.value}');
-    } catch (e) {
-      debugPrint('월간 재테크 정보 가져오기 오류: $e');
-    } finally {
-      isAssetsLoading.value = false;
-    }
-  }
-
   Future<List<TransactionWithCategory>> getAllCurrentMonthTransactions() async {
     try {
       // Set loading state
@@ -211,8 +197,11 @@ class DashboardController extends GetxController {
   Future<void> fetchCategoryExpenses() async {
     isCategoryExpenseLoading.value = true;
     try {
-      // 선택된 월의 카테고리별 지출 정보를 가져오도록 수정 필요
-      final result = await getCategoryExpenses.execute();
+      // 선택된 월의 카테고리별 지출 정보 가져오기
+      final result = await getCategoryExpenses.execute(
+          selectedMonth.value.year,
+          selectedMonth.value.month
+      );
       categoryExpenses.value = result;
       debugPrint('카테고리별 지출 개수: ${result.length}');
     } catch (e) {
@@ -225,8 +214,11 @@ class DashboardController extends GetxController {
   Future<void> fetchCategoryIncome() async {
     isCategoryIncomeLoading.value = true;
     try {
-      // 선택된 월의 카테고리별 수입 정보를 가져오도록 수정 필요
-      final result = await getCategoryIncome.execute();
+      // 선택된 월의 카테고리별 수입 정보 가져오기
+      final result = await getCategoryIncome.execute(
+          selectedMonth.value.year,
+          selectedMonth.value.month
+      );
       categoryIncome.value = result;
       debugPrint('카테고리별 수입 개수: ${result.length}');
     } catch (e) {
@@ -239,8 +231,11 @@ class DashboardController extends GetxController {
   Future<void> fetchCategoryFinance() async {
     isCategoryFinanceLoading.value = true;
     try {
-      // 선택된 월의 카테고리별 재테크 정보를 가져오도록 수정 필요
-      final result = await getCategoryFinance.execute();
+      // 선택된 월의 카테고리별 재테크 정보 가져오기
+      final result = await getCategoryFinance.execute(
+          selectedMonth.value.year,
+          selectedMonth.value.month
+      );
       categoryFinance.value = result;
       debugPrint('카테고리별 재테크 개수: ${result.length}');
     } catch (e) {
@@ -250,11 +245,31 @@ class DashboardController extends GetxController {
     }
   }
 
+  Future<void> fetchAssets() async {
+    isAssetsLoading.value = true;
+    try {
+      // 선택된 월에 대한 자산 정보 가져오기
+      final result = await getAssets.execute(
+          selectedMonth.value.year,
+          selectedMonth.value.month
+      );
+      monthlyAssets.value = result;
+      debugPrint('월간 재테크 정보 로드 완료: ${monthlyAssets.value}');
+    } catch (e) {
+      debugPrint('월간 재테크 정보 가져오기 오류: $e');
+    } finally {
+      isAssetsLoading.value = false;
+    }
+  }
+
   Future<void> fetchMonthlySummary() async {
     isLoading.value = true;
     try {
-      // 선택된 월의 요약 정보를 가져오도록 수정 필요
-      final result = await getMonthlySummary.execute();
+      // 선택된 월의 요약 정보를 가져오도록 수정
+      final result = await getMonthlySummary.execute(
+          selectedMonth.value.year,
+          selectedMonth.value.month
+      );
 
       // 월간 요약 정보
       monthlyIncome.value = result['income'] ?? 0.0;
