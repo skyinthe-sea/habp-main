@@ -6,56 +6,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../data/entities/category_expense.dart';
 import '../presentation/dashboard_controller.dart';
 
-class CategoryChartTabs extends StatefulWidget {
+class CategoryChartTabs extends StatelessWidget {
   final DashboardController controller;
 
   const CategoryChartTabs({Key? key, required this.controller}) : super(key: key);
-
-  @override
-  State<CategoryChartTabs> createState() => _CategoryChartTabsState();
-}
-
-class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  late PageController _pageController;
-  int _currentIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _pageController = PageController(initialPage: 0);
-
-    // Load initial data
-    _loadInitialData();
-
-    // Listen to tab change
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() {
-          _currentIndex = _tabController.index;
-          _pageController.animateToPage(
-            _currentIndex,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        });
-      }
-    });
-  }
-
-  void _loadInitialData() {
-    widget.controller.fetchCategoryExpenses();
-    widget.controller.fetchCategoryIncome();
-    widget.controller.fetchCategoryFinance();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _pageController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,32 +29,70 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Text(
-                  '이번 달',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '터치하여 상세보기',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[400],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '이번 달',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
-          // PageView for swiping
+          // 세 개의 미니 도넛 차트를 가로로 배치
           SizedBox(
-            height: 300,
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentIndex = index;
-                  _tabController.animateTo(index);
-                });
-              },
+            height: 220, // 높이 축소
+            child: Row(
               children: [
-                _buildExpenseChart(),
-                _buildIncomeChart(),
-                _buildFinanceChart(),
+                // 소득 차트
+                Expanded(
+                  child: _buildMiniChart(
+                    data: controller.categoryIncome,
+                    title: '소득',
+                    isLoading: controller.isCategoryIncomeLoading.value,
+                    emptyMessage: '소득 데이터가 없습니다',
+                    baseColor: Colors.green.shade400,
+                    type: 'INCOME',
+                  ),
+                ),
+
+                // 지출 차트
+                Expanded(
+                  child: _buildMiniChart(
+                    data: controller.categoryExpenses,
+                    title: '지출',
+                    isLoading: controller.isCategoryExpenseLoading.value,
+                    emptyMessage: '지출 데이터가 없습니다',
+                    baseColor: AppColors.primary,
+                    type: 'EXPENSE',
+                  ),
+                ),
+
+                // 재테크 차트
+                Expanded(
+                  child: _buildMiniChart(
+                    data: controller.categoryFinance,
+                    title: '재테크',
+                    isLoading: controller.isCategoryFinanceLoading.value,
+                    emptyMessage: '재테크 데이터가 없습니다',
+                    baseColor: Colors.blue.shade400,
+                    type: 'FINANCE',
+                  ),
+                ),
               ],
             ),
           ),
@@ -109,165 +101,441 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     });
   }
 
-  Widget _buildExpenseChart() {
-    if (widget.controller.isCategoryExpenseLoading.value) {
-      return const Center(child: CircularProgressIndicator());
+  Widget _buildMiniChart({
+    required List<CategoryExpense> data,
+    required String title,
+    required bool isLoading,
+    required String emptyMessage,
+    required Color baseColor,
+    required String type,
+  }) {
+    if (isLoading) {
+      return const Center(child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2)
+      ));
     }
 
-    if (widget.controller.categoryExpenses.isEmpty) {
-      return _buildEmptyState('지출 데이터가 없습니다');
+    if (data.isEmpty) {
+      return _buildEmptyState(emptyMessage);
     }
 
-    final expenses = widget.controller.categoryExpenses;
-    return _buildCategoryChart(expenses, '지출');
+    // 합계 계산
+    double total = 0;
+    for (var item in data) {
+      total += item.amount;
+    }
+
+    // 5% 미만 항목 처리를 위한 데이터 가공
+    List<CategoryExpense> mainCategories = [];
+    List<CategoryExpense> smallCategories = [];
+    double otherAmount = 0;
+
+    for (var item in data) {
+      if (item.percentage >= 5) {
+        mainCategories.add(item);
+      } else {
+        smallCategories.add(item);
+        otherAmount += item.amount;
+      }
+    }
+
+    // '기타' 카테고리 추가 (작은 항목들 통합)
+    if (smallCategories.isNotEmpty) {
+      mainCategories.add(CategoryExpense(
+        categoryId: -1,
+        categoryName: '기타',
+        amount: otherAmount,
+        percentage: (otherAmount / total) * 100,
+      ));
+    }
+
+    // 탭 시 상세 보기 표시
+    return GestureDetector(
+      onTap: () => _showDetailChart(Get.context!, data, title.replaceAll('소득', '수입'), baseColor, type, total),
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade200, width: 1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              // 차트 타이틀 - 더 눈에 띄게 개선
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: baseColor.withOpacity(0.1),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+                ),
+                width: double.infinity,
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: baseColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              // 제목과 차트 사이 간격 추가
+              const SizedBox(height: 8),
+
+              // 미니 도넛 차트
+              SizedBox(
+                height: 120,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    PieChart(
+                      PieChartData(
+                        sectionsSpace: 1,
+                        centerSpaceRadius: 35, // 중앙 공간 축소
+                        sections: _createSections(mainCategories, data, baseColor, type),
+                        startDegreeOffset: 180,
+                      ),
+                    ),
+
+                    // 중앙 총액 표시
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatAmount(total),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: baseColor,
+                          ),
+                        ),
+                        Text(
+                          '원',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // 간단한 범례 (상위 2개 항목)
+              Padding(
+                padding: const EdgeInsets.only(top: 2, bottom: 4, left: 4, right: 4),
+                child: _buildSimpleLegend(data, baseColor, type),
+              ),
+
+              const Spacer(flex: 1),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget _buildIncomeChart() {
-    if (widget.controller.isCategoryIncomeLoading.value) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  // 간단한 범례 (상위 2개 항목만 표시)
+  Widget _buildSimpleLegend(List<CategoryExpense> data, Color baseColor, String type) {
+    if (data.isEmpty) return const SizedBox();
 
-    if (widget.controller.categoryIncome.isEmpty) {
-      return _buildEmptyState('수입 데이터가 없습니다');
-    }
+    // 금액 기준 내림차순 정렬 및 상위 2개 항목만 선택
+    final sortedData = List<CategoryExpense>.from(data)
+      ..sort((a, b) => b.amount.compareTo(a.amount));
+    final topItems = sortedData.take(2).toList();
 
-    final income = widget.controller.categoryIncome;
-    return _buildCategoryChart(income, '수입');
+    return Column(
+      children: topItems.map((item) {
+        Color color;
+        if (type == 'EXPENSE') {
+          color = AppColors.getCategoryColor(item.categoryId);
+        } else if (type == 'INCOME') {
+          color = Color.lerp(Colors.lightGreen, Colors.green.shade700, data.indexOf(item) / data.length)!;
+        } else {
+          color = Color.lerp(Colors.lightBlue, Colors.indigo, data.indexOf(item) / data.length)!;
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  '${item.categoryName} ${item.percentage.toInt()}%',
+                  style: const TextStyle(fontSize: 10),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
   }
 
-  Widget _buildFinanceChart() {
-    if (widget.controller.isCategoryFinanceLoading.value) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  // 도넛 차트 섹션 생성
+  List<PieChartSectionData> _createSections(
+      List<CategoryExpense> mainCategories,
+      List<CategoryExpense> allData,
+      Color baseColor,
+      String type) {
+    return mainCategories.map((item) {
+      // 색상 결정
+      Color color;
+      if (type == 'EXPENSE') {
+        color = item.categoryId == -1
+            ? Colors.grey
+            : AppColors.getCategoryColor(item.categoryId);
+      } else if (type == 'INCOME') {
+        if (item.categoryId == -1) {
+          color = Colors.grey;
+        } else {
+          int index = allData.indexWhere((e) => e.categoryId == item.categoryId);
+          color = Color.lerp(Colors.lightGreen, Colors.green.shade700, index / allData.length)!;
+        }
+      } else {
+        if (item.categoryId == -1) {
+          color = Colors.grey;
+        } else {
+          int index = allData.indexWhere((e) => e.categoryId == item.categoryId);
+          color = Color.lerp(Colors.lightBlue, Colors.indigo, index / allData.length)!;
+        }
+      }
 
-    if (widget.controller.categoryFinance.isEmpty) {
-      return _buildEmptyState('재테크 데이터가 없습니다');
-    }
-
-    final finance = widget.controller.categoryFinance;
-    return _buildCategoryChart(finance, '재테크');
+      return PieChartSectionData(
+        color: color,
+        value: item.amount,
+        title: '', // 미니 차트에서는 제목 표시 X
+        radius: 45, // 반지름 축소
+        badgeWidget: null, // 미니 차트에서는 배지 표시 X
+      );
+    }).toList();
   }
 
+  // 빈 상태 위젯
   Widget _buildEmptyState(String message) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bar_chart, size: 48, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
+          Icon(Icons.bar_chart, size: 24, color: Colors.grey.shade300),
+          const SizedBox(height: 8),
           Text(
             message,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 12,
               color: Colors.grey.shade500,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryChart(List<CategoryExpense> data, String type) {
-    // 색상 정의는 그대로 유지
-    Color baseColor;
-    switch (type) {
-      case '수입':
-        baseColor = Colors.green.shade400;
-        break;
-      case '재테크':
-        baseColor = Colors.blue.shade400;
-        break;
-      default:
-        baseColor = AppColors.primary;
-    }
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // 애니메이션 도넛 차트
-        TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.easeInOutCubic,
-          builder: (context, value, child) {
-            return PieChart(
-              PieChartData(
-                sectionsSpace: 1, // 2에서 1로 감소
-                centerSpaceRadius: 55, // 70에서 55로 감소
-                sections: _createSections(data, baseColor, value),
-                startDegreeOffset: 180,
+  // 상세 차트 다이얼로그 표시
+  void _showDetailChart(BuildContext context, List<CategoryExpense> data, String title, Color baseColor, String type, double total) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: double.maxFinite,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 다이얼로그 헤더
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '$title 상세',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: baseColor,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
 
-        // 중앙 텍스트
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              type,
-              style: TextStyle(
-                fontSize: 14, // 16에서 14로 감소
-                fontWeight: FontWeight.bold,
-                color: baseColor,
+              // 총액 정보
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  '총 금액: ${_formatAmount(total)}원',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 2), // 4에서 2로 감소
-            Text(
-              '카테고리 비율',
-              style: TextStyle(
-                fontSize: 10, // 12에서 10으로 감소
-                color: Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
 
-        // 하단 범례
-        Positioned(
-          bottom: 15, // 20에서 15로 감소
-          left: 0,
-          right: 0,
-          child: _buildLegend(data, type),
+              // 상세 도넛 차트
+              SizedBox(
+                height: 300,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: 60,
+                        sections: _createDetailSections(data, baseColor, type),
+                        startDegreeOffset: 180,
+                      ),
+                    ),
+
+                    // 중앙 텍스트
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: baseColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '카테고리 비율',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // 카테고리 목록
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: data.length,
+                  itemBuilder: (context, index) {
+                    final item = data[index];
+                    // 색상 설정
+                    Color color;
+                    if (type == 'EXPENSE') {
+                      color = AppColors.getCategoryColor(item.categoryId);
+                    } else if (type == 'INCOME') {
+                      color = Color.lerp(Colors.lightGreen, Colors.green.shade700, index / data.length)!;
+                    } else {
+                      color = Color.lerp(Colors.lightBlue, Colors.indigo, index / data.length)!;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              item.categoryName,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${_formatAmount(item.amount)}원',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${item.percentage.toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 
-  List<PieChartSectionData> _createSections(List<CategoryExpense> data, Color baseColor, double animationValue) {
+  // 상세 차트용 섹션 생성
+  List<PieChartSectionData> _createDetailSections(List<CategoryExpense> data, Color baseColor, String type) {
     return data.map((item) {
-      // Color varies based on the type and index for visual distinction
+      // 색상 설정
       Color color;
-      if (baseColor == AppColors.primary) {
-        // For expenses, use category colors
+      if (type == 'EXPENSE') {
         color = AppColors.getCategoryColor(item.categoryId);
-      } else if (baseColor == Colors.green.shade400) {
-        // For income, use shades of green
+      } else if (type == 'INCOME') {
         color = Color.lerp(Colors.lightGreen, Colors.green.shade700, data.indexOf(item) / data.length)!;
       } else {
-        // For finance, use shades of blue
         color = Color.lerp(Colors.lightBlue, Colors.indigo, data.indexOf(item) / data.length)!;
       }
 
-      // Animate the radius and value
-      final radius = 60 * animationValue;
-      final value = item.amount * animationValue;
-      final percentage = item.percentage * animationValue;
-
       return PieChartSectionData(
         color: color,
-        value: value,
+        value: item.amount,
         title: '',
-        radius: radius,
+        radius: 60,
         titlePositionPercentageOffset: 0.6,
-        badgeWidget: percentage > 5 ? _getBadgeWidget(item.categoryName, percentage, color) : null,
+        badgeWidget: _getBadgeWidget(item.categoryName, item.percentage, color),
         badgePositionPercentageOffset: 1.2,
       );
     }).toList();
   }
 
+  // 배지 위젯 (라벨)
   Widget _getBadgeWidget(String categoryName, double percentage, Color color) {
+    // 비율이 매우 낮은 경우 배지 표시 안함
+    if (percentage < 3) return const SizedBox();
+
     return Padding(
       padding: const EdgeInsets.all(2.0),
       child: Text.rich(
@@ -276,14 +544,14 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
             TextSpan(
               text: '$categoryName ',
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),
             TextSpan(
               text: '${percentage.toInt()}%',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: color,
                 shadows: const [
@@ -306,62 +574,14 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     );
   }
 
-  Widget _buildLegend(List<CategoryExpense> data, String type) {
-    // Only show for items with smaller percentages that don't have badges
-    final smallItems = data.where((item) => item.percentage <= 5).toList();
-    if (smallItems.isEmpty) return const SizedBox.shrink();
-
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          alignment: WrapAlignment.center,
-          children: smallItems.map((item) {
-            Color color;
-            // Determine color based on type
-            if (type == '지출') {
-              color = AppColors.getCategoryColor(item.categoryId);
-            } else if (type == '수입') {
-              color = Color.lerp(Colors.lightGreen, Colors.green.shade700, data.indexOf(item) / data.length)!;
-            } else {
-              color = Color.lerp(Colors.lightBlue, Colors.indigo, data.indexOf(item) / data.length)!;
-            }
-
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${item.categoryName} ${item.percentage.toInt()}%',
-                  style: const TextStyle(fontSize: 10),
-                ),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
-    );
+  // 금액 포맷팅
+  String _formatAmount(double amount) {
+    if (amount >= 1000000) {
+      return '${(amount / 10000).toStringAsFixed(0)}만';
+    } else if (amount >= 10000) {
+      return '${(amount / 10000).toStringAsFixed(1)}만';
+    } else {
+      return amount.toStringAsFixed(0);
+    }
   }
 }
