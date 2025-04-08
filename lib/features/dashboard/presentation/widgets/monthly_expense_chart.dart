@@ -18,9 +18,7 @@ class MonthlyExpenseChart extends StatefulWidget {
 }
 
 class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTickerProviderStateMixin {
-  // 현재 슬라이더 값을 내부적으로 관리
-  double _currentSliderValue = 6.0;
-  bool _isDragging = false;
+  // 삭제: _currentSliderValue와 _isDragging 상태는 이제 컨트롤러에서 관리
 
   // 애니메이션 컨트롤러
   late AnimationController _animationController;
@@ -31,7 +29,6 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   @override
   void initState() {
     super.initState();
-    _currentSliderValue = widget.controller.monthRange.value.toDouble();
 
     // 애니메이션 컨트롤러 초기화
     _animationController = AnimationController(
@@ -101,6 +98,11 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
       final selectedMonth = expenses.last.date;
       final selectedMonthText = DateFormat('yyyy년 M월').format(selectedMonth);
 
+      // 현재 slider 값 가져오기 (sliding 중이면 sliderMonthRange, 아니면 monthRange)
+      final currentRangeValue = widget.controller.isSliding.value
+          ? widget.controller.sliderMonthRange.value
+          : widget.controller.monthRange.value.toDouble();
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -151,9 +153,9 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // 현재 선택된 월 및 데이터 범위
+                    // 날짜 범위 표시 개선 (시작월 ~ 종료월)
                     Text(
-                      '~$selectedMonthText (${expenses.length}개월)',
+                      widget.controller.getMonthRangeString(),
                       style: const TextStyle(
                         fontSize: 10,
                         color: Colors.grey,
@@ -165,7 +167,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             ),
           ),
 
-          // 개월 수 조절 슬라이더
+          // 개월 수 조절 슬라이더 (수정)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -173,27 +175,27 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                 const Text('3', style: TextStyle(fontSize: 10, color: Colors.grey)),
                 Expanded(
                   child: Slider(
-                    value: _currentSliderValue,
+                    value: currentRangeValue,
                     min: 3,
                     max: 12,
                     divisions: 9,
-                    label: '${_currentSliderValue.toInt()}개월',
+                    label: '${currentRangeValue.toInt()}개월',
                     activeColor: AppColors.primary,
                     inactiveColor: AppColors.primary.withOpacity(0.2),
+                    onChangeStart: (_) {
+                      // 새로 추가: 슬라이더 드래그 시작 시 컨트롤러에 알림
+                      widget.controller.onSlideStart();
+                    },
                     onChanged: (value) {
-                      setState(() {
-                        _currentSliderValue = value;
-                        _isDragging = true;
-                      });
+                      // 즉시 컨트롤러의 임시 값 업데이트 (UI가 즉시 반응)
+                      widget.controller.updateSliderValue(value);
                     },
                     onChangeEnd: (value) {
-                      if (_isDragging) {
-                        widget.controller.setMonthRange(value.toInt());
-                        setState(() {
-                          _isDragging = false;
-                        });
-                      }
+                      // 슬라이더 드래그 종료 처리
+                      widget.controller.onSlideEnd(value);
                     },
+                    // 단발성 터치에서도 부드럽게 동작하도록 추가 속성 설정
+                    mouseCursor: MouseCursor.defer,
                   ),
                 ),
                 const Text('12', style: TextStyle(fontSize: 10, color: Colors.grey)),
@@ -212,6 +214,12 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
       );
     });
   }
+
+  // 기존 _buildLineChart 메서드 (동일하게 유지)...
+
+  // 기존 _buildColumnChart 메서드 (동일하게 유지)...
+
+  // 기존 _formatAmount 메서드 (동일하게 유지)...
 
   // 라인 차트 구현
   Widget _buildLineChart(List<ExpenseData> chartData) {
@@ -262,7 +270,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         },
       ),
       series: <CartesianSeries<ExpenseData, DateTime>>[
-        // 스풀라인 시리즈
+        // 스플라인 시리즈
         SplineAreaSeries<ExpenseData, DateTime>(
           dataSource: chartData,
           xValueMapper: (ExpenseData data, _) => data.date,
@@ -270,7 +278,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           color: AppColors.primary.withOpacity(0.2),
           borderColor: AppColors.primary,
           borderWidth: 3,
-          animationDuration: 800,
+          // 변경: 슬라이딩 중에도 미세한 애니메이션 제공 (단발성 터치에서 더 자연스럽게)
+          animationDuration: widget.controller.isSliding.value ? 100 : 800,
           markerSettings: const MarkerSettings(
             isVisible: true,
             height: 8,
@@ -303,7 +312,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             color: AppColors.primary.withOpacity(0.3),
             shape: DataMarkerType.circle,
           ),
-          animationDuration: 800,
+          // 변경: 슬라이딩 중에도 미세한 애니메이션 제공 (단발성 터치에서 더 자연스럽게)
+          animationDuration: widget.controller.isSliding.value ? 100 : 800,
         ),
       ],
       onMarkerRender: (MarkerRenderArgs args) {
@@ -372,7 +382,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           yValueMapper: (ExpenseData data, _) => data.amount,
           borderRadius: BorderRadius.circular(4),
           width: 0.6,
-          animationDuration: 800,
+          // 변경: 슬라이딩 중 애니메이션 최적화
+          animationDuration: widget.controller.isSliding.value ? 0 : 800,
           // 막대 색상 설정 - 마지막 항목만 강조
           pointColorMapper: (ExpenseData data, index) {
             return index == chartData.length - 1
@@ -399,7 +410,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   }
 }
 
-// 차트 데이터 모델
+// 차트 데이터 모델 (동일하게 유지)
 class ExpenseData {
   final DateTime date;
   final double amount;

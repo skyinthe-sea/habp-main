@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/services/event_bus_service.dart';
 import '../../data/entities/category_expense.dart';
 import '../../data/entities/monthly_expense.dart';
@@ -79,6 +80,12 @@ class DashboardController extends GetxController {
   // EventBusService 인스턴스
   late final EventBusService _eventBusService;
 
+  // 변경: 실시간 슬라이더 값을 위한 새로운 변수 (임시 범위)
+  final RxDouble sliderMonthRange = 6.0.obs;
+
+  // 변경: 데이터 검색 없이 즉시 UI 업데이트를 위한 플래그
+  final RxBool isSliding = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -99,14 +106,68 @@ class DashboardController extends GetxController {
       _refreshAllData();
     });
 
-    // 월 범위 변경 이벤트 구독
+    // 월 범위 변경 이벤트 구독 (수정)
     ever(monthRange, (_) {
       debugPrint('월 범위 변경됨: ${monthRange.value}개월');
-      fetchMonthlyExpensesTrend();
+      // 변경: 슬라이딩 중이 아닐 때만 새로운 데이터 페칭
+      if (!isSliding.value) {
+        fetchMonthlyExpensesTrend();
+      }
+    });
+
+    // 추가: 슬라이더 실시간 값 변경 구독
+    ever(sliderMonthRange, (_) {
+      // 슬라이딩 중에 실시간 UI 업데이트
+      if (isSliding.value) {
+        // 필터링된 데이터로 monthlyExpenses 업데이트
+        monthlyExpenses.value = filteredMonthlyExpenses;
+      }
     });
 
     // 초기 데이터 로드
     _refreshAllData();
+  }
+
+  // 새 메서드: 슬라이더 이동 시작 처리
+  void onSlideStart() {
+    // 단발성 터치에서도 즉시 반응하도록 플래그 설정
+    isSliding.value = true;
+  }
+
+  // 새 메서드: 슬라이더 값 실시간 업데이트
+  void updateSliderValue(double value) {
+    if (value >= 3 && value <= 12) {
+      // 슬라이딩 중으로 표시하여 단발성 터치에서도 즉시 반응하도록 함
+      if (!isSliding.value) {
+        isSliding.value = true;
+      }
+      sliderMonthRange.value = value;
+    }
+  }
+
+  // 새 메서드: 슬라이더 이동 종료 처리
+  void onSlideEnd(double value) {
+    final newRange = value.toInt();
+    sliderMonthRange.value = newRange.toDouble();
+
+    // 약간의 지연 후 슬라이딩 상태 종료 (애니메이션 완료 보장)
+    Future.delayed(const Duration(milliseconds: 50), () {
+      isSliding.value = false;
+      setMonthRange(newRange);
+    });
+  }
+
+  String getMonthRangeString() {
+    final expenses = filteredMonthlyExpenses;
+    if (expenses.isEmpty) return "";
+
+    final firstMonth = expenses.first.date;
+    final lastMonth = expenses.last.date;
+
+    final firstMonthText = DateFormat('yyyy년 M월').format(firstMonth);
+    final lastMonthText = DateFormat('yyyy년 M월').format(lastMonth);
+
+    return "$firstMonthText ~ $lastMonthText (${expenses.length}개월)";
   }
 
   // 새로 추가: 중복 월 데이터 압축 메서드
@@ -169,8 +230,13 @@ class DashboardController extends GetxController {
     // 선택된 월이 데이터에 없는 경우
     if (selectedMonthIndex == -1) return [];
 
+    // 변경: 슬라이더 이동 중에는 sliderMonthRange 사용, 그렇지 않으면 monthRange 사용
+    final effectiveRange = isSliding.value
+        ? sliderMonthRange.value.toInt()
+        : monthRange.value;
+
     // 선택된 월을 끝으로 하는 범위 계산
-    int startIndex = selectedMonthIndex - monthRange.value + 1;
+    int startIndex = selectedMonthIndex - effectiveRange + 1;
     if (startIndex < 0) startIndex = 0;
 
     // 선택된 월이 마지막이 되도록 데이터 추출
