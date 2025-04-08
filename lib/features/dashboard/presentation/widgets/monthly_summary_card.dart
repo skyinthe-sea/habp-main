@@ -5,9 +5,13 @@ import '../presentation/dashboard_controller.dart';
 
 class MonthlySummaryCard extends StatelessWidget {
   final DashboardController controller;
+  final bool excludeMonthSelector;
 
-  const MonthlySummaryCard({Key? key, required this.controller})
-      : super(key: key);
+  const MonthlySummaryCard({
+    Key? key,
+    required this.controller,
+    this.excludeMonthSelector = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +30,11 @@ class MonthlySummaryCard extends StatelessWidget {
 
       return Column(
         children: [
-          // 월 선택 컨트롤
-          _buildMonthSelector(),
-          const SizedBox(height: 10),
+          // 월 선택 컨트롤은 옵션에 따라 표시
+          if (!excludeMonthSelector) ...[
+            _buildMonthSelector(),
+            const SizedBox(height: 10),
+          ],
 
           // First row: Income and Expense
           Row(
