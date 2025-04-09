@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/services/event_bus_service.dart';
+import '../../../../core/database/db_helper.dart';
 import '../../data/datasources/fixed_transaction_local_data_source.dart';
 import '../../domain/repositories/fixed_transaction_repository.dart';
 import '../../domain/usecases/get_fixed_categories_by_type.dart';
@@ -84,13 +85,17 @@ class SettingsController extends GetxController {
     }
   }
 
-  // 고정 거래 설정 추가/업데이트
+  // 고정 거래 설정 추가/업데이트 - 수정된 버전
   Future<bool> updateFixedTransactionSetting({
     required int categoryId,
     required double amount,
     required DateTime effectiveFrom,
   }) async {
     try {
+      final dbHelper = DBHelper();
+      final db = await dbHelper.database;
+
+      // 1. fixed_transaction_setting 테이블에 새 설정 추가
       final setting = FixedTransactionSetting(
         categoryId: categoryId,
         amount: amount,
@@ -101,22 +106,86 @@ class SettingsController extends GetxController {
 
       final result = await addFixedTransactionSetting.execute(setting);
 
-      if (result) {
-        // 관련 모든 데이터 다시 로드
-        await loadFixedIncomeCategories();
-        await loadFixedExpenseCategories();
-        await loadFixedFinanceCategories();
+      // 2. transaction_record2 테이블에 데이터가 있는지 확인
+      final List<Map<String, dynamic>> existingTransactions = await db.query(
+        'transaction_record2',
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
 
-        // 이벤트 발행하여 다른 컨트롤러에게 알림
-        _eventBusService.emitTransactionChanged();
+      // 3. 해당 카테고리의 정보 가져오기
+      final List<Map<String, dynamic>> categoryData = await db.query(
+        'category',
+        where: 'id = ?',
+        whereArgs: [categoryId],
+      );
 
-        return true;
+      if (categoryData.isEmpty) {
+        debugPrint('카테고리 정보를 찾을 수 없음: $categoryId');
+        return false;
       }
 
-      return false;
+      final categoryType = categoryData.first['type'] as String;
+
+      // 4. transaction_record2 데이터가 없으면 새로 생성
+      if (existingTransactions.isEmpty) {
+        debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 없어 생성합니다.');
+
+        // 현재 날짜 및 시간
+        final now = DateTime.now().toIso8601String();
+
+        // 설명 생성 (매월 고정 거래로 설정)
+        final description = '매월 ${_getCategoryDescription(categoryType)}';
+
+        // transaction_num에 일자 저장 (매월 고정 거래 표시용)
+        final transactionNum = '${effectiveFrom.day}';
+
+        // 사용자 ID (기본값 1로 설정, 필요시 변경)
+        const userId = 1;
+
+        // transaction_record2 테이블에 데이터 삽입
+        await db.insert('transaction_record2', {
+          'user_id': userId,
+          'category_id': categoryId,
+          'amount': categoryType == 'EXPENSE' || categoryType == 'FINANCE' ? -amount : amount, // 지출/재테크는 음수, 소득은 양수
+          'description': description,
+          'transaction_date': DateTime(effectiveFrom.year, effectiveFrom.month, effectiveFrom.day).toIso8601String(),
+          'transaction_num': transactionNum,
+          'created_at': now,
+          'updated_at': now,
+        });
+
+        debugPrint('새로운 고정 거래 생성 완료: 카테고리 $categoryId, 금액 $amount, 날짜 ${effectiveFrom.day}일');
+      } else {
+        debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 이미 존재합니다. 새 설정만 적용됩니다.');
+      }
+
+      // 관련 모든 데이터 다시 로드
+      await loadFixedIncomeCategories();
+      await loadFixedExpenseCategories();
+      await loadFixedFinanceCategories();
+
+      // 이벤트 발행하여 다른 컨트롤러에게 알림
+      _eventBusService.emitTransactionChanged();
+
+      return true;
     } catch (e) {
       debugPrint('고정 거래 설정 업데이트 오류: $e');
       return false;
+    }
+  }
+
+  // 카테고리 타입에 따른 설명 생성 도우미 함수
+  String _getCategoryDescription(String categoryType) {
+    switch (categoryType) {
+      case 'INCOME':
+        return '소득';
+      case 'EXPENSE':
+        return '지출';
+      case 'FINANCE':
+        return '재테크';
+      default:
+        return '거래';
     }
   }
 
@@ -131,7 +200,6 @@ class SettingsController extends GetxController {
         }
       }
     }
-
     return null;
   }
 
@@ -145,7 +213,6 @@ class SettingsController extends GetxController {
         }
       }
     }
-
     return null;
   }
 
@@ -159,7 +226,6 @@ class SettingsController extends GetxController {
         }
       }
     }
-
     return null;
   }
 }

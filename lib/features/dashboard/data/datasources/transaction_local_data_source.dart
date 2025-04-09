@@ -316,23 +316,23 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
       // 변동 거래 내역
       final List<Map<String, dynamic>> variableResults = await db.rawQuery('''
-        SELECT tr.*, c.name as category_name, c.type as category_type 
-        FROM transaction_record tr
-        JOIN category c ON tr.category_id = c.id
-        WHERE date(substr(tr.transaction_date, 1, 10)) <= date(?)
-        ORDER BY transaction_date DESC
-        LIMIT ?
-      ''', [todayDateStr, limit]);
+      SELECT tr.*, c.name as category_name, c.type as category_type 
+      FROM transaction_record tr
+      JOIN category c ON tr.category_id = c.id
+      WHERE date(substr(tr.transaction_date, 1, 10)) <= date(?)
+      ORDER BY transaction_date DESC
+      LIMIT ?
+    ''', [todayDateStr, limit]);
 
       // 고정 거래 내역
       final List<Map<String, dynamic>> fixedResults = await db.rawQuery('''
-        SELECT tr2.*, c.name as category_name, c.type as category_type 
-        FROM transaction_record2 tr2
-        JOIN category c ON tr2.category_id = c.id
-        WHERE date(substr(tr2.transaction_date, 1, 10)) <= date(?)
-        ORDER BY transaction_date DESC
-        LIMIT ?
-      ''', [todayDateStr, limit]);
+      SELECT tr2.*, c.name as category_name, c.type as category_type 
+      FROM transaction_record2 tr2
+      JOIN category c ON tr2.category_id = c.id
+      WHERE c.is_fixed = 1
+      ORDER BY transaction_date DESC
+      LIMIT ?
+    ''', [limit]);
 
       // 변동 거래 처리
       List<TransactionWithCategory> variableTransactions = variableResults.map((row) =>
@@ -351,40 +351,146 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
           )
       ).toList();
 
-      // 고정 거래 처리 (fixed_transaction_setting 테이블 활용)
+      // 고정 거래 처리 - 날짜 정보도 업데이트하도록 수정
       List<TransactionWithCategory> fixedTransactions = [];
 
       for (var row in fixedResults) {
-        final transactionDate = DateTime.parse(row['transaction_date']);
         final categoryId = row['category_id'] as int;
+        final description = row['description'] as String;
 
-        // 해당 거래 날짜에 유효한 설정 찾기
-        final List<Map<String, dynamic>> settings = await db.rawQuery('''
+        // 매월 고정 거래 처리 (날짜와 금액 모두 업데이트)
+        if (description.contains('매월')) {
+          // 기본 날짜 정보 (transaction_num에서 가져옴)
+          final defaultDay = int.parse(row['transaction_num'].toString());
+          final originalDate = DateTime.parse(row['transaction_date']);
+
+          // 카테고리에 대한 모든 설정 내역 가져오기 (시간순 정렬)
+          final List<Map<String, dynamic>> allSettings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ?
+          ORDER BY effective_from ASC
+        ''', [categoryId]);
+
+          // 현재 월에 적용해야 할 day 값 결정
+          int dayToUse = defaultDay;
+          DateTime currentDate = now;
+
+          // 효력 발생일 검사
+          for (var setting in allSettings) {
+            final effectiveFrom = DateTime.parse(setting['effective_from']);
+
+            // 현재 시점보다 이전 날짜의 설정 또는 현재 달의 설정 적용
+            if (effectiveFrom.isBefore(DateTime(currentDate.year, currentDate.month, 1)) ||
+                (effectiveFrom.year == currentDate.year &&
+                    effectiveFrom.month == currentDate.month)) {
+              dayToUse = effectiveFrom.day;
+            } else {
+              // 미래 날짜의 설정은 무시
+              break;
+            }
+          }
+
+          // 유효한 날짜 생성 (해당 월에 없는 날짜는 말일로 조정)
+          DateTime adjustedDate;
+          try {
+            adjustedDate = DateTime(now.year, now.month, dayToUse);
+          } catch (e) {
+            // 해당 월에 없는 날짜인 경우 말일로 조정
+            adjustedDate = DateTime(now.year, now.month + 1, 0);
+          }
+
+          // 최신 설정 금액 가져오기
+          final List<Map<String, dynamic>> latestSetting = await db.rawQuery('''
           SELECT * FROM fixed_transaction_setting
           WHERE category_id = ? AND date(effective_from) <= date(?)
           ORDER BY effective_from DESC
           LIMIT 1
-        ''', [categoryId, row['transaction_date']]);
+        ''', [categoryId, now.toIso8601String()]);
 
-        // 설정이 있으면 금액 업데이트, 없으면 원래 금액 사용
-        double amount = row['amount'] as double;
-        if (settings.isNotEmpty) {
-          amount = settings.first['amount'] as double;
+          // 설정에서 금액 가져오기, 없으면 원래 금액 사용
+          double amount = row['amount'] as double;
+          if (latestSetting.isNotEmpty) {
+            amount = latestSetting.first['amount'] as double;
+          }
+
+          // 이번 달에 해당하는 고정 거래만 추가
+          // (현재 날짜가 고정된 날짜 이후인 경우만)
+          if (now.day >= adjustedDate.day) {
+            fixedTransactions.add(TransactionWithCategory(
+              id: row['id'] as int,
+              userId: row['user_id'] as int,
+              categoryId: categoryId,
+              categoryName: row['category_name'] as String,
+              categoryType: row['category_type'] as String,
+              amount: amount,
+              description: row['description'] as String,
+              transactionDate: adjustedDate, // 조정된 날짜 사용
+              transactionNum: row['transaction_num'].toString(),
+              createdAt: DateTime.parse(row['created_at']),
+              updatedAt: DateTime.parse(row['updated_at']),
+            ));
+          }
         }
+        // 매주 또는 매일 고정 거래 처리 (금액만 업데이트)
+        else if (description.contains('매주') || description.contains('매일')) {
+          // 원래 날짜 정보
+          final originalDate = DateTime.parse(row['transaction_date']);
 
-        fixedTransactions.add(TransactionWithCategory(
-          id: row['id'] as int,
-          userId: row['user_id'] as int,
-          categoryId: categoryId,
-          categoryName: row['category_name'] as String,
-          categoryType: row['category_type'] as String,
-          amount: amount,
-          description: row['description'] as String,
-          transactionDate: transactionDate,
-          transactionNum: row['transaction_num'].toString(),
-          createdAt: DateTime.parse(row['created_at']),
-          updatedAt: DateTime.parse(row['updated_at']),
-        ));
+          // 최신 금액 설정 가져오기
+          final List<Map<String, dynamic>> settings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ? AND date(effective_from) <= date(?)
+          ORDER BY effective_from DESC
+          LIMIT 1
+        ''', [categoryId, now.toIso8601String()]);
+
+          // 설정이 있으면 금액 업데이트, 없으면 원래 금액 사용
+          double amount = row['amount'] as double;
+          if (settings.isNotEmpty) {
+            amount = settings.first['amount'] as double;
+          }
+
+          // 매주/매일 거래는 날짜 계산이 복잡하므로 현재 달의 거래만 표시
+          // 보다 정확한 표시를 위해서는 추가 로직이 필요
+          if (description.contains('매주')) {
+            final weekday = int.parse(row['transaction_num'].toString());
+
+            // 이번 달의 가장 최근 해당 요일 찾기
+            DateTime latestWeekday = _findLatestWeekdayInCurrentMonth(weekday);
+
+            if (latestWeekday.isBefore(now) || latestWeekday.isAtSameMomentAs(now)) {
+              fixedTransactions.add(TransactionWithCategory(
+                id: row['id'] as int,
+                userId: row['user_id'] as int,
+                categoryId: categoryId,
+                categoryName: row['category_name'] as String,
+                categoryType: row['category_type'] as String,
+                amount: amount,
+                description: row['description'] as String,
+                transactionDate: latestWeekday,
+                transactionNum: row['transaction_num'].toString(),
+                createdAt: DateTime.parse(row['created_at']),
+                updatedAt: DateTime.parse(row['updated_at']),
+              ));
+            }
+          }
+          else if (description.contains('매일')) {
+            // 오늘 날짜 사용
+            fixedTransactions.add(TransactionWithCategory(
+              id: row['id'] as int,
+              userId: row['user_id'] as int,
+              categoryId: categoryId,
+              categoryName: row['category_name'] as String,
+              categoryType: row['category_type'] as String,
+              amount: amount,
+              description: row['description'] as String,
+              transactionDate: DateTime(now.year, now.month, now.day),
+              transactionNum: row['transaction_num'].toString(),
+              createdAt: DateTime.parse(row['created_at']),
+              updatedAt: DateTime.parse(row['updated_at']),
+            ));
+          }
+        }
       }
 
       // 두 리스트 병합 및 날짜순 정렬
@@ -401,6 +507,31 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     } catch (e) {
       debugPrint('최근 거래 내역 가져오기 오류: $e');
       return [];
+    }
+  }
+
+// 이번 달에서 가장 최근의 특정 요일 찾기
+  DateTime _findLatestWeekdayInCurrentMonth(int weekday) {
+    final now = DateTime.now();
+
+    // 오늘부터 역순으로 계산
+    int daysToSubtract = 0;
+    while (true) {
+      final checkDate = now.subtract(Duration(days: daysToSubtract));
+
+      // 이번 달을 벗어나면 중단
+      if (checkDate.month != now.month) {
+        // 이번 달에 해당 요일이 없는 경우 (드문 케이스)
+        // 오늘 날짜 반환
+        return now;
+      }
+
+      // 원하는 요일을 찾으면 반환
+      if (checkDate.weekday == weekday) {
+        return checkDate;
+      }
+
+      daysToSubtract++;
     }
   }
 
@@ -644,12 +775,12 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
         }
       }
 
-      // 3. 선택된 달 고정 거래의 수입/지출 계산
+      // 3. 선택된 달 고정 거래의 수입/지출 계산 (수정된 메서드 사용)
       final currentMonthFixed = await _calculateFixedTransactions(selectedYear, selectedMonth);
       currentMonthIncome += currentMonthFixed['income'] ?? 0;
       currentMonthExpense += currentMonthFixed['expense'] ?? 0;
 
-      // 4. 지난 달 고정 거래의 수입/지출 계산
+      // 4. 지난 달 고정 거래의 수입/지출 계산 (수정된 메서드 사용)
       final lastMonthFixed = await _calculateFixedTransactions(lastMonthYear, lastMonthMonth);
       lastMonthIncome += lastMonthFixed['income'] ?? 0;
       lastMonthExpense += lastMonthFixed['expense'] ?? 0;
@@ -709,6 +840,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
 
 // 고정 거래 계산 (기존 _calculateFixedTransactions 메서드 활용)
   Future<Map<String, double>> _calculateFixedTransactions(int year, int month) async {
+    final db = await dbHelper.database;
     final transactions = await getTransactions();
     final categories = await getCategories();
     final categoryMap = {for (var c in categories) c.id: c};
@@ -716,37 +848,123 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     double monthlyIncome = 0;
     double monthlyExpense = 0;
 
+    // 처리하는 달의 시작일과 마지막 날
+    final firstDayOfMonth = DateTime(year, month, 1);
+    final lastDayOfMonth = DateTime(year, month + 1, 0);
+
     for (var transaction in transactions) {
       final category = categoryMap[transaction.categoryId];
       if (category == null) continue;
 
       // 고정 거래만 처리
       if (_isFixedTransaction(transaction.description)) {
-        double amount = 0;
-
-        // 매월 거래
         if (transaction.description.contains('매월')) {
-          amount = transaction.amount;
-        }
-        // 매주 거래
-        else if (transaction.description.contains('매주')) {
-          // 해당 월에 요일이 몇 번 등장하는지 계산
-          int weekdayCount = _countWeekdaysInMonth(
-              year, month, int.parse(transaction.transactionNum));
-          amount = transaction.amount * weekdayCount;
-        }
-        // 매일 거래
-        else if (transaction.description.contains('매일')) {
-          // 해당 월의 일수
-          int daysInMonth = DateTime(year, month + 1, 0).day;
-          amount = transaction.amount * daysInMonth;
-        }
+          // 매월 거래를 처리하기 위한 새로운 로직
 
-        // 수입/지출 분류
-        if (category.type == 'INCOME') {
-          monthlyIncome += amount;
-        } else if (category.type == 'EXPENSE') {
-          monthlyExpense += amount.abs();
+          // 기본 날짜는 transaction_num에서 가져옴
+          final defaultDay = int.parse(transaction.transactionNum);
+
+          // 카테고리에 대한 모든 설정 가져오기
+          final List<Map<String, dynamic>> allSettings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ?
+          ORDER BY effective_from ASC
+        ''', [transaction.categoryId]);
+
+          // 현재 처리 중인 달에 적용할 설정의 날짜 결정
+          int dayToUse = defaultDay;
+
+          // 모든 설정을 확인하여 처리 중인 달에 적용할 날짜 찾기
+          for (var setting in allSettings) {
+            final effectiveFrom = DateTime.parse(setting['effective_from']);
+
+            // 효력 시작일이 현재 처리 중인 달 이전이거나 같은 달인 경우
+            if (effectiveFrom.isBefore(firstDayOfMonth) ||
+                (effectiveFrom.year == year && effectiveFrom.month == month)) {
+              dayToUse = effectiveFrom.day;
+            } else {
+              // 효력 시작일이 현재 처리 중인 달보다 후라면 루프 종료
+              break;
+            }
+          }
+
+          // 해당 월에 적용할 설정(금액) 찾기
+          final List<Map<String, dynamic>> settings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ? AND date(effective_from) <= date(?)
+          ORDER BY effective_from DESC
+          LIMIT 1
+        ''', [transaction.categoryId, lastDayOfMonth.toIso8601String()]);
+
+          // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+          double amount = transaction.amount;
+          if (settings.isNotEmpty) {
+            amount = settings.first['amount'] as double;
+          }
+
+          // 해당 월에 유효한 날짜인지 확인 (예: 30일까지 있는 달에 31일 거래 처리)
+          final adjustedDate = DateTime(year, month, 1).add(Duration(days: dayToUse - 1));
+          final isValidDate = adjustedDate.month == month;
+
+          if (isValidDate) {
+            // 수입/지출 분류
+            if (category.type == 'INCOME') {
+              monthlyIncome += amount;
+            } else if (category.type == 'EXPENSE') {
+              monthlyExpense += amount.abs();
+            }
+          }
+        }
+        else if (transaction.description.contains('매주')) {
+          // 매주 거래는 해당 월의 요일 수에 맞게 계산
+          int weekday = int.parse(transaction.transactionNum);
+          int occurrences = _countWeekdaysInMonth(year, month, weekday);
+
+          // 해당 월에 적용할 설정(금액) 찾기
+          final List<Map<String, dynamic>> settings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ? AND date(effective_from) <= date(?)
+          ORDER BY effective_from DESC
+          LIMIT 1
+        ''', [transaction.categoryId, lastDayOfMonth.toIso8601String()]);
+
+          // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+          double amount = transaction.amount;
+          if (settings.isNotEmpty) {
+            amount = settings.first['amount'] as double;
+          }
+
+          // 수입/지출 분류
+          if (category.type == 'INCOME') {
+            monthlyIncome += amount * occurrences;
+          } else if (category.type == 'EXPENSE') {
+            monthlyExpense += amount.abs() * occurrences;
+          }
+        }
+        else if (transaction.description.contains('매일')) {
+          // 매일 거래는 해당 월의 일수만큼 더함
+          int daysInMonth = lastDayOfMonth.day;
+
+          // 해당 월에 적용할 설정(금액) 찾기
+          final List<Map<String, dynamic>> settings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ? AND date(effective_from) <= date(?)
+          ORDER BY effective_from DESC
+          LIMIT 1
+        ''', [transaction.categoryId, lastDayOfMonth.toIso8601String()]);
+
+          // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+          double amount = transaction.amount;
+          if (settings.isNotEmpty) {
+            amount = settings.first['amount'] as double;
+          }
+
+          // 수입/지출 분류
+          if (category.type == 'INCOME') {
+            monthlyIncome += amount * daysInMonth;
+          } else if (category.type == 'EXPENSE') {
+            monthlyExpense += amount.abs() * daysInMonth;
+          }
         }
       }
     }
@@ -754,7 +972,7 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     return {'income': monthlyIncome, 'expense': monthlyExpense};
   }
 
-// 고정 거래 여부 확인 헬퍼 함수
+  // 고정 거래 여부 확인 헬퍼 함수
   bool _isFixedTransaction(String description) {
     return description.contains('매월') ||
         description.contains('매주') ||

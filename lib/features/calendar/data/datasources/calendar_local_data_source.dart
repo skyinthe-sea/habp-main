@@ -66,22 +66,52 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
         final categoryId = transaction['category_id'] as int;
 
         if (description.contains('매월')) {
-          // 매월 고정 거래는 해당 월의 특정 날짜에 추가
-          final day = int.parse(transactionNum);
-          final adjustedDate = DateTime(month.year, month.month, day);
+          // 매월 거래를 처리하기 위한 새로운 로직
 
-          // 해당 월에 유효한 날짜인지 확인 (예: 30일까지 있는 달에 31일 거래 처리)
-          final validDate = adjustedDate.month == month.month
-              ? adjustedDate
-              : DateTime(month.year, month.month + 1, 0);
+          // 기본 날짜는 transaction_num에서 가져옴
+          int defaultDay = int.parse(transactionNum);
 
           // 해당 날짜에 유효한 설정 찾기
+          final List<Map<String, dynamic>> allSettings = await db.rawQuery('''
+            SELECT * FROM fixed_transaction_setting
+            WHERE category_id = ?
+            ORDER BY effective_from ASC
+          ''', [categoryId]);
+
+          // 선택된 달에 적용해야 할 설정의 날짜(day)를 결정
+          int dayToUse = defaultDay;
+          DateTime selectedMonthDate = DateTime(month.year, month.month, 1);
+
+          // 달력에 표시할 거래 날짜를 결정하기 위한 로직
+          // 모든 설정을 확인하고 해당 월에 적용될 설정 찾기
+          for (var setting in allSettings) {
+            final effectiveFrom = DateTime.parse(setting['effective_from']);
+
+            // 효력 시작일이 선택된 월 이전이거나 같은 달인 경우
+            if (effectiveFrom.isBefore(selectedMonthDate) ||
+                (effectiveFrom.year == selectedMonthDate.year &&
+                    effectiveFrom.month == selectedMonthDate.month)) {
+              // 이 설정의 날짜 사용
+              dayToUse = effectiveFrom.day;
+            } else {
+              // 효력 시작일이 선택된 월보다 나중이면 이전 설정 사용
+              break;
+            }
+          }
+
+          // 가장 최신 설정을 찾아 해당 월에 적용 (효력 날짜가 해당 월 이전인 설정 중 가장 최신)
           final List<Map<String, dynamic>> settings = await db.rawQuery('''
             SELECT * FROM fixed_transaction_setting
             WHERE category_id = ? AND date(effective_from) <= date(?)
             ORDER BY effective_from DESC
             LIMIT 1
-          ''', [categoryId, validDate.toIso8601String()]);
+          ''', [categoryId, lastDayOfMonth.toIso8601String()]);
+
+          // 결정된 날짜가 해당 월에 유효한지 확인 (예: 31일이 없는 달 처리)
+          final dayInMonth = DateTime(month.year, month.month, 1).add(Duration(days: dayToUse - 1));
+          final validDate = dayInMonth.month == month.month
+              ? dayInMonth
+              : DateTime(month.year, month.month + 1, 0); // 해당 월의 마지막 날
 
           // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
           double amount = transaction['amount'] as double;
@@ -267,77 +297,192 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
         }
       }
 
-      // 고정 거래 처리
+      // 고정 거래 처리 (업데이트된 로직)
       for (var transaction in fixedTransactions) {
         final description = transaction['description'] as String;
         final transactionNum = transaction['transaction_num'].toString();
         final categoryId = transaction['category_id'] as int;
         final type = transaction['category_type'] as String;
 
-        bool shouldInclude = false;
-
         if (description.contains('매월')) {
-          // 매월 고정 거래
-          final day = int.parse(transactionNum);
-          shouldInclude = targetDate.day == day;
+          // 카테고리에 적용된 모든 설정 가져오기
+          final List<Map<String, dynamic>> allSettings = await db.rawQuery('''
+            SELECT * FROM fixed_transaction_setting
+            WHERE category_id = ?
+            ORDER BY effective_from ASC
+          ''', [categoryId]);
+
+          // 기본 날짜는 transaction_num에서 가져오기
+          int defaultDay = int.parse(transactionNum);
+
+          // 현재 선택된 날짜에 적용해야할 설정 날짜 찾기
+          int dayToUse = defaultDay;
+          DateTime currentDate = targetDate;
+
+          // 설정 날짜를 결정하는 로직
+          for (var setting in allSettings) {
+            final effectiveFrom = DateTime.parse(setting['effective_from']);
+
+            // 효력 시작일이 현재 날짜보다 이전이거나 같은 달인 경우
+            if (effectiveFrom.isBefore(DateTime(currentDate.year, currentDate.month, 1)) ||
+                (effectiveFrom.year == currentDate.year &&
+                    effectiveFrom.month == currentDate.month)) {
+              dayToUse = effectiveFrom.day;
+            } else {
+              // 효력 시작일이 현재 날짜의 달보다 후라면 loop 종료
+              break;
+            }
+          }
+
+          // 선택된 날짜가 설정된 날짜와 일치하는지 확인
+          final shouldInclude = targetDate.day == dayToUse;
+
+          if (shouldInclude) {
+            // 해당 날짜에 유효한 설정 찾기
+            final List<Map<String, dynamic>> settings = await db.rawQuery('''
+              SELECT * FROM fixed_transaction_setting
+              WHERE category_id = ? AND date(effective_from) <= date(?)
+              ORDER BY effective_from DESC
+              LIMIT 1
+            ''', [categoryId, targetDate.toIso8601String()]);
+
+            // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+            double amount = transaction['amount'] as double;
+            if (settings.isNotEmpty) {
+              amount = settings.first['amount'] as double;
+            }
+
+            if (type == 'INCOME') {
+              income += amount;
+            } else if (type == 'EXPENSE') {
+              expense += amount.abs();
+            } else if (type == 'FINANCE') {
+              if (amount >= 0) {
+                income += amount;
+              } else {
+                expense += amount.abs();
+              }
+            }
+
+            // 거래 시간 추출 (고정 거래의 경우 임의로 시간 설정)
+            final String timeStr = "${dayToUse.toString().padLeft(2, '0')}:00:00"; // 설정된 날짜:00시로 설정
+
+            final DateTime transactionDateTime = DateTime.parse(
+                "${targetDate.toIso8601String().split('T')[0]}T$timeStr"
+            );
+
+            dayTransactions.add(CalendarTransaction(
+              id: transaction['id'],
+              categoryId: transaction['category_id'],
+              categoryName: transaction['category_name'],
+              categoryType: transaction['category_type'],
+              amount: amount,
+              description: transaction['description'],
+              transactionDate: transactionDateTime,
+              isFixed: true,
+            ));
+          }
         }
         else if (description.contains('매주')) {
           // 매주 고정 거래
           final weekday = int.parse(transactionNum);
-          shouldInclude = targetDate.weekday == weekday;
+          final shouldInclude = targetDate.weekday == weekday;
+
+          if (shouldInclude) {
+            // 해당 날짜에 유효한 설정 찾기
+            final List<Map<String, dynamic>> settings = await db.rawQuery('''
+              SELECT * FROM fixed_transaction_setting
+              WHERE category_id = ? AND date(effective_from) <= date(?)
+              ORDER BY effective_from DESC
+              LIMIT 1
+            ''', [categoryId, targetDate.toIso8601String()]);
+
+            // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+            double amount = transaction['amount'] as double;
+            if (settings.isNotEmpty) {
+              amount = settings.first['amount'] as double;
+            }
+
+            if (type == 'INCOME') {
+              income += amount;
+            } else if (type == 'EXPENSE') {
+              expense += amount.abs();
+            } else if (type == 'FINANCE') {
+              if (amount >= 0) {
+                income += amount;
+              } else {
+                expense += amount.abs();
+              }
+            }
+
+            // 거래 시간 설정
+            final String timeStr = "12:00:00"; // 매주는 12시로 설정
+
+            final DateTime transactionDateTime = DateTime.parse(
+                "${targetDate.toIso8601String().split('T')[0]}T$timeStr"
+            );
+
+            dayTransactions.add(CalendarTransaction(
+              id: transaction['id'],
+              categoryId: transaction['category_id'],
+              categoryName: transaction['category_name'],
+              categoryType: transaction['category_type'],
+              amount: amount,
+              description: transaction['description'],
+              transactionDate: transactionDateTime,
+              isFixed: true,
+            ));
+          }
         }
         else if (description.contains('매일')) {
-          // 매일 고정 거래
-          shouldInclude = true;
-        }
+          // 매일 고정 거래는 항상 포함
+          final shouldInclude = true;
 
-        // 고정 거래 처리 부분을 업데이트
-        if (shouldInclude) {
-          // 해당 날짜에 유효한 설정 찾기
-          final List<Map<String, dynamic>> settings = await db.rawQuery('''
-            SELECT * FROM fixed_transaction_setting
-            WHERE category_id = ? AND date(effective_from) <= date(?)
-            ORDER BY effective_from DESC
-            LIMIT 1
-          ''', [categoryId, targetDate.toIso8601String()]);
+          if (shouldInclude) {
+            // 해당 날짜에 유효한 설정 찾기
+            final List<Map<String, dynamic>> settings = await db.rawQuery('''
+              SELECT * FROM fixed_transaction_setting
+              WHERE category_id = ? AND date(effective_from) <= date(?)
+              ORDER BY effective_from DESC
+              LIMIT 1
+            ''', [categoryId, targetDate.toIso8601String()]);
 
-          // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
-          double amount = transaction['amount'] as double;
-          if (settings.isNotEmpty) {
-            amount = settings.first['amount'] as double;
-          }
-
-          if (type == 'INCOME') {
-            income += amount;
-          } else if (type == 'EXPENSE') {
-            expense += amount.abs();
-          } else if (type == 'FINANCE') {
-            if (amount >= 0) {
-              income += amount;
-            } else {
-              expense += amount.abs();
+            // 설정이 있으면 그 금액 사용, 없으면 기존 금액 사용
+            double amount = transaction['amount'] as double;
+            if (settings.isNotEmpty) {
+              amount = settings.first['amount'] as double;
             }
+
+            if (type == 'INCOME') {
+              income += amount;
+            } else if (type == 'EXPENSE') {
+              expense += amount.abs();
+            } else if (type == 'FINANCE') {
+              if (amount >= 0) {
+                income += amount;
+              } else {
+                expense += amount.abs();
+              }
+            }
+
+            // 거래 시간 설정
+            final String timeStr = "00:00:00"; // 매일은 00시로 설정
+
+            final DateTime transactionDateTime = DateTime.parse(
+                "${targetDate.toIso8601String().split('T')[0]}T$timeStr"
+            );
+
+            dayTransactions.add(CalendarTransaction(
+              id: transaction['id'],
+              categoryId: transaction['category_id'],
+              categoryName: transaction['category_name'],
+              categoryType: transaction['category_type'],
+              amount: amount,
+              description: transaction['description'],
+              transactionDate: transactionDateTime,
+              isFixed: true,
+            ));
           }
-
-          // 거래 시간 추출 (고정 거래의 경우 임의로 시간 설정)
-          final String timeStr = description.contains('매월') ?
-          "${transactionNum.toString().padLeft(2, '0')}:00:00" : // 매월 거래는 날짜:00시로 설정
-          (description.contains('매주') ? "12:00:00" : "00:00:00"); // 매주는 12시, 매일은 00시로 설정
-
-          final DateTime transactionDateTime = DateTime.parse(
-              "${targetDate.toIso8601String().split('T')[0]}T$timeStr"
-          );
-
-          dayTransactions.add(CalendarTransaction(
-            id: transaction['id'],
-            categoryId: transaction['category_id'],
-            categoryName: transaction['category_name'],
-            categoryType: transaction['category_type'],
-            amount: amount,
-            description: transaction['description'],
-            transactionDate: transactionDateTime,
-            isFixed: true,
-          ));
         }
       }
 

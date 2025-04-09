@@ -99,7 +99,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  '매월 반복되는 고정 지출을 설정합니다. 금액 변경 시 적용 시작 월을 선택할 수 있습니다.',
+                  '매월 반복되는 고정 지출을 설정합니다. 금액 변경 시 적용 시작 월과 일자를 선택할 수 있습니다.',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey,
@@ -194,9 +194,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
   void _showUpdateDialog(CategoryWithSettings category) {
     final TextEditingController amountController = TextEditingController();
 
+    // 기존 트랜잭션 날짜와 금액 정보 가져오기
+    int initialDay = 1;
+
     // 기존 금액이 있으면 입력 필드에 설정
     if (category.settings.isNotEmpty) {
       amountController.text = category.settings.first.amount.toStringAsFixed(0);
+      // 기존 설정의 날짜 추출
+      initialDay = category.settings.first.effectiveFrom.day;
     } else {
       // 거래 내역에서 금액 가져오기
       final latestTransaction = _latestTransactions[category.id];
@@ -205,12 +210,20 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
         if (amount is num) {
           amountController.text = amount.abs().toStringAsFixed(0);
         }
+
+        // transaction_num에서 일자 추출 (매월 고정 거래인 경우)
+        final description = latestTransaction['description'] as String;
+        final transactionNum = latestTransaction['transaction_num'].toString();
+
+        if (description.contains('매월')) {
+          initialDay = int.tryParse(transactionNum) ?? 1;
+        }
       }
     }
 
     // 적용 시작 월 선택 (기본값은 현재 월)
     final now = DateTime.now();
-    DateTime selectedMonth = DateTime(now.year, now.month, 1);
+    DateTime selectedDate = DateTime(now.year, now.month, initialDay);
 
     showDialog(
       context: context,
@@ -218,7 +231,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('${category.name} 금액 수정'),
+              title: Text('${category.name} 설정 수정'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -234,29 +247,26 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 적용 시작 월 선택
+                  // 적용 시작 날짜 선택
                   Row(
                     children: [
-                      const Text('적용 시작 월:'),
+                      const Text('적용 시작일:'),
                       const SizedBox(width: 8),
                       Expanded(
                         child: GestureDetector(
                           onTap: () async {
                             final DateTime? picked = await showDatePicker(
                               context: context,
-                              initialDate: selectedMonth,
+                              initialDate: selectedDate,
                               firstDate: DateTime(2020),
                               lastDate: DateTime(2030),
-                              initialDatePickerMode: DatePickerMode.year,
-                              selectableDayPredicate: (DateTime date) {
-                                // 월의 첫 날만 선택 가능하도록
-                                return date.day == 1;
-                              },
+                              initialDatePickerMode: DatePickerMode.day,
+                              // 날짜 제한 제거 - 모든 날짜 선택 가능
                             );
 
                             if (picked != null) {
                               setState(() {
-                                selectedMonth = picked;
+                                selectedDate = picked;
                               });
                             }
                           },
@@ -270,7 +280,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              DateFormat('yyyy년 M월').format(selectedMonth),
+                              DateFormat('yyyy년 M월 d일').format(selectedDate),
                               style: const TextStyle(fontSize: 16),
                             ),
                           ),
@@ -303,11 +313,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
                       return;
                     }
 
-                    // 설정 업데이트
+                    // 설정 업데이트 (전체 날짜 정보 전달)
                     final success = await _controller.updateFixedTransactionSetting(
                       categoryId: category.id,
                       amount: amount,
-                      effectiveFrom: selectedMonth,
+                      effectiveFrom: selectedDate, // 일자 정보 포함된 전체 날짜
                     );
 
                     // 대화상자 닫기
@@ -317,7 +327,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
                     if (success) {
                       Get.snackbar(
                         '성공',
-                        '${category.name}의 금액이 ${DateFormat('yyyy년 M월').format(selectedMonth)}부터 ${_formatCurrency(amount)}원으로 수정되었습니다.',
+                        '${category.name}의 금액이 ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 ${_formatCurrency(amount)}원으로 수정되었습니다.',
                         backgroundColor: Colors.green[100],
                       );
                     } else {
@@ -343,7 +353,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
   }
 
   String _formatDate(DateTime date) {
-    return DateFormat('yyyy년 M월').format(date);
+    return DateFormat('yyyy년 M월 d일').format(date);
   }
 }
 

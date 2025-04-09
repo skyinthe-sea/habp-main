@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/database/db_helper.dart';
 import '../../../../core/services/event_bus_service.dart';
 import '../../data/entities/category_expense.dart';
 import '../../data/entities/monthly_expense.dart';
@@ -294,6 +295,8 @@ class DashboardController extends GetxController {
     fetchAssets();
   }
 
+  // RecentTransactionsList 위젯에서 사용하는 getAllCurrentMonthTransactions 메서드도 수정
+
   Future<List<TransactionWithCategory>> getAllCurrentMonthTransactions() async {
     try {
       // Set loading state
@@ -302,16 +305,202 @@ class DashboardController extends GetxController {
       // Get selected month date range
       final firstDayOfMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month, 1);
       final lastDayOfMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month + 1, 0);
+      final db = await DBHelper().database;
 
-      // Get all transactions with a large limit
-      final allTransactions = await getRecentTransactions.execute(1000); // Using a large limit
+      // 변동 거래 내역
+      final List<Map<String, dynamic>> variableResults = await db.rawQuery('''
+      SELECT tr.*, c.name as category_name, c.type as category_type 
+      FROM transaction_record tr
+      JOIN category c ON tr.category_id = c.id
+      WHERE date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ORDER BY tr.transaction_date DESC
+    ''', [
+        firstDayOfMonth.toIso8601String().substring(0, 10),
+        lastDayOfMonth.toIso8601String().substring(0, 10)
+      ]);
 
-      // Filter for selected month only
-      final selectedMonthTransactions = allTransactions
-          .where((tx) =>
-      tx.transactionDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) &&
-          tx.transactionDate.isBefore(lastDayOfMonth.add(const Duration(days: 1))))
-          .toList();
+      // 고정 거래 내역
+      final List<Map<String, dynamic>> fixedResults = await db.rawQuery('''
+      SELECT tr2.*, c.name as category_name, c.type as category_type, c.is_fixed
+      FROM transaction_record2 tr2
+      JOIN category c ON tr2.category_id = c.id
+      WHERE c.is_fixed = 1
+    ''');
+
+      // 변동 거래 처리
+      List<TransactionWithCategory> variableTransactions = variableResults.map((row) =>
+          TransactionWithCategory(
+            id: row['id'] as int,
+            userId: row['user_id'] as int,
+            categoryId: row['category_id'] as int,
+            categoryName: row['category_name'] as String,
+            categoryType: row['category_type'] as String,
+            amount: row['amount'] as double,
+            description: row['description'] as String,
+            transactionDate: DateTime.parse(row['transaction_date']),
+            transactionNum: row['transaction_num'].toString(),
+            createdAt: DateTime.parse(row['created_at']),
+            updatedAt: DateTime.parse(row['updated_at']),
+          )
+      ).toList();
+
+      // 고정 거래 처리 (날짜 정보 업데이트)
+      List<TransactionWithCategory> fixedTransactions = [];
+
+      for (var row in fixedResults) {
+        final categoryId = row['category_id'] as int;
+        final description = row['description'] as String;
+
+        if (description.contains('매월')) {
+          // 기본 날짜는 transaction_num에서 가져옴
+          final defaultDay = int.parse(row['transaction_num'].toString());
+
+          // 카테고리에 대한 모든 설정 가져오기
+          final List<Map<String, dynamic>> allSettings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ?
+          ORDER BY effective_from ASC
+        ''', [categoryId]);
+
+          // 선택된 달에 적용할 날짜 결정
+          int dayToUse = defaultDay;
+
+          // 모든 설정을 확인하고 선택된 달에 적용할 설정 찾기
+          for (var setting in allSettings) {
+            final effectiveFrom = DateTime.parse(setting['effective_from']);
+
+            // 효력 시작일이 선택된 달보다 이전이거나 같은 달인 경우
+            if (effectiveFrom.isBefore(firstDayOfMonth) ||
+                (effectiveFrom.year == firstDayOfMonth.year &&
+                    effectiveFrom.month == firstDayOfMonth.month)) {
+              dayToUse = effectiveFrom.day;
+            } else {
+              // 효력 시작일이 선택된 달보다 후라면 이전 설정 사용
+              break;
+            }
+          }
+
+          // 유효한 날짜 확인 (해당 월에 없는 날짜 처리)
+          DateTime transactionDate;
+          try {
+            transactionDate = DateTime(selectedMonth.value.year, selectedMonth.value.month, dayToUse);
+          } catch (e) {
+            // 해당 월에 없는 날짜인 경우 마지막 날로 조정
+            transactionDate = DateTime(selectedMonth.value.year, selectedMonth.value.month + 1, 0);
+          }
+
+          // 금액 가져오기
+          final List<Map<String, dynamic>> settings = await db.rawQuery('''
+          SELECT * FROM fixed_transaction_setting
+          WHERE category_id = ? AND date(effective_from) <= date(?)
+          ORDER BY effective_from DESC
+          LIMIT 1
+        ''', [categoryId, lastDayOfMonth.toIso8601String()]);
+
+          double amount = row['amount'] as double;
+          if (settings.isNotEmpty) {
+            amount = settings.first['amount'] as double;
+          }
+
+          fixedTransactions.add(TransactionWithCategory(
+            id: row['id'] as int,
+            userId: row['user_id'] as int,
+            categoryId: categoryId,
+            categoryName: row['category_name'] as String,
+            categoryType: row['category_type'] as String,
+            amount: amount,
+            description: row['description'] as String,
+            transactionDate: transactionDate, // 조정된 날짜 사용
+            transactionNum: row['transaction_num'].toString(),
+            createdAt: DateTime.parse(row['created_at']),
+            updatedAt: DateTime.parse(row['updated_at']),
+          ));
+        }
+        else if (description.contains('매주')) {
+          // 매주 반복 거래
+          int weekday = int.parse(row['transaction_num'].toString());
+          List<DateTime> weekdaysInMonth = [];
+
+          // 선택한 달의 모든 해당 요일 찾기
+          int daysInMonth = lastDayOfMonth.day;
+          for (int day = 1; day <= daysInMonth; day++) {
+            final date = DateTime(selectedMonth.value.year, selectedMonth.value.month, day);
+            if (date.weekday == weekday) {
+              weekdaysInMonth.add(date);
+            }
+          }
+
+          // 각 날짜에 대한 트랜잭션 생성
+          for (final date in weekdaysInMonth) {
+            // 금액 가져오기
+            final List<Map<String, dynamic>> settings = await db.rawQuery('''
+            SELECT * FROM fixed_transaction_setting
+            WHERE category_id = ? AND date(effective_from) <= date(?)
+            ORDER BY effective_from DESC
+            LIMIT 1
+          ''', [categoryId, date.toIso8601String()]);
+
+            double amount = row['amount'] as double;
+            if (settings.isNotEmpty) {
+              amount = settings.first['amount'] as double;
+            }
+
+            fixedTransactions.add(TransactionWithCategory(
+              id: row['id'] as int,
+              userId: row['user_id'] as int,
+              categoryId: categoryId,
+              categoryName: row['category_name'] as String,
+              categoryType: row['category_type'] as String,
+              amount: amount,
+              description: row['description'] as String,
+              transactionDate: date,
+              transactionNum: row['transaction_num'].toString(),
+              createdAt: DateTime.parse(row['created_at']),
+              updatedAt: DateTime.parse(row['updated_at']),
+            ));
+          }
+        }
+        else if (description.contains('매일')) {
+          // 매일 반복 거래
+          int daysInMonth = lastDayOfMonth.day;
+
+          // 선택한 달의 매일에 대한 트랜잭션 생성
+          for (int day = 1; day <= daysInMonth; day++) {
+            final date = DateTime(selectedMonth.value.year, selectedMonth.value.month, day);
+
+            // 금액 가져오기
+            final List<Map<String, dynamic>> settings = await db.rawQuery('''
+            SELECT * FROM fixed_transaction_setting
+            WHERE category_id = ? AND date(effective_from) <= date(?)
+            ORDER BY effective_from DESC
+            LIMIT 1
+          ''', [categoryId, date.toIso8601String()]);
+
+            double amount = row['amount'] as double;
+            if (settings.isNotEmpty) {
+              amount = settings.first['amount'] as double;
+            }
+
+            fixedTransactions.add(TransactionWithCategory(
+              id: row['id'] as int,
+              userId: row['user_id'] as int,
+              categoryId: categoryId,
+              categoryName: row['category_name'] as String,
+              categoryType: row['category_type'] as String,
+              amount: amount,
+              description: row['description'] as String,
+              transactionDate: date,
+              transactionNum: row['transaction_num'].toString(),
+              createdAt: DateTime.parse(row['created_at']),
+              updatedAt: DateTime.parse(row['updated_at']),
+            ));
+          }
+        }
+      }
+
+      // 모든 거래 통합하고 날짜순 정렬
+      final selectedMonthTransactions = [...variableTransactions, ...fixedTransactions]
+        ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
 
       debugPrint('선택된 달 전체 거래 내역 개수: ${selectedMonthTransactions.length}');
       return selectedMonthTransactions;
