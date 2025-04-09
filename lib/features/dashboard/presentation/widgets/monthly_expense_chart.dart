@@ -173,7 +173,15 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             ),
           ),
 
-          // 개월 수 조절 슬라이더 (수정)
+          // 차트 영역
+          SizedBox(
+            height: 220,
+            child: _showLineChart.value
+                ? _buildLineChart(chartData)
+                : _buildColumnChart(chartData),
+          ),
+
+          // 개월 수 조절 슬라이더 (차트 아래로 이동)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -208,14 +216,6 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
               ],
             ),
           ),
-
-          // 차트 영역
-          SizedBox(
-            height: 220,
-            child: _showLineChart.value
-                ? _buildLineChart(chartData)
-                : _buildColumnChart(chartData),
-          ),
         ],
       );
     });
@@ -242,30 +242,30 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
         rangePadding: ChartRangePadding.none, // Changed from 'round' to 'none' for exact alignment
         desiredIntervals: chartData.length > 6 ? 6 : chartData.length, // Limit interval count
-        // 다년간 데이터를 구분하기 위해 레이블 포맷터 추가
+        // 년도는 1월에만 표시하도록 수정
         axisLabelFormatter: (AxisLabelRenderDetails details) {
-          // X축 레이블이 DateTime 타입인지 확인
           if (details.value is num) {
-            // DateTime으로 변환하기 위해 안전하게 int로 변환
             final DateTime date = DateTime.fromMillisecondsSinceEpoch(details.value.floor());
 
-            // 데이터 포인트의 실제 날짜와 일치하는지 확인하기 위한 처리
-            for (var data in chartData) {
-              // 같은 월의 날짜인지 확인 (년도와 월이 일치하는지)
-              if (data.date.year == date.year && data.date.month == date.month) {
+            // 데이터 포인트와 일치하는 날짜인지 확인
+            bool isDataPoint = chartData.any((data) =>
+            data.date.year == date.year && data.date.month == date.month);
+
+            if (isDataPoint) {
+              // 1월인 경우에만 연도 표시
+              if (date.month == 1) {
                 return ChartAxisLabel(
-                  '${date.year}년 ${date.month}월',
+                  '${date.year}년\n${date.month}월',
                   details.textStyle,
                 );
               }
-            }
-
-            // 해당 월이 1월인 경우 연도도 같이 표시
-            if (date.month == 1) {
-              return ChartAxisLabel(
-                '${date.year}년\n${date.month}월',
-                details.textStyle,
-              );
+              // 다른 월은 월만 표시
+              else {
+                return ChartAxisLabel(
+                  '${date.month}월',
+                  details.textStyle,
+                );
+              }
             }
           }
           return ChartAxisLabel(details.text, details.textStyle);
@@ -390,28 +390,30 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
         rangePadding: ChartRangePadding.none, // Changed from 'round' to 'none' for exact alignment
         desiredIntervals: chartData.length > 6 ? 6 : chartData.length, // Limit interval count
-        // 다년간 데이터를 구분하기 위한 레이블 포맷터 추가
+        // 년도는 1월에만 표시하도록 수정
         axisLabelFormatter: (AxisLabelRenderDetails details) {
           if (details.value is num) {
-            // DateTime으로 변환하기 위해 안전하게 int로 변환
             final DateTime date = DateTime.fromMillisecondsSinceEpoch(details.value.floor());
 
-            // 데이터 포인트의 실제 날짜와 일치하는지 확인하기 위한 처리
-            for (var data in chartData) {
-              // 같은 월의 날짜인지 확인 (년도와 월이 일치하는지)
-              if (data.date.year == date.year && data.date.month == date.month) {
+            // 데이터 포인트와 일치하는 날짜인지 확인
+            bool isDataPoint = chartData.any((data) =>
+            data.date.year == date.year && data.date.month == date.month);
+
+            if (isDataPoint) {
+              // 1월인 경우에만 연도 표시
+              if (date.month == 1) {
                 return ChartAxisLabel(
-                  '${date.year}년 ${date.month}월',
+                  '${date.year}년\n${date.month}월',
                   details.textStyle,
                 );
               }
-            }
-
-            if (date.month == 1) {
-              return ChartAxisLabel(
-                '${date.year}년\n${date.month}월',
-                details.textStyle,
-              );
+              // 다른 월은 월만 표시
+              else {
+                return ChartAxisLabel(
+                  '${date.month}월',
+                  details.textStyle,
+                );
+              }
             }
           }
           return ChartAxisLabel(details.text, details.textStyle);
