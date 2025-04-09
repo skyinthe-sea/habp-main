@@ -24,6 +24,10 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   // 차트 표시 모드
   final RxBool _showLineChart = true.obs;
 
+  // 포맷터 정의
+  final DateFormat _monthYearFormat = DateFormat('yyyy년 M월');
+  final DateFormat _monthFormat = DateFormat('M월');
+
   @override
   void initState() {
     super.initState();
@@ -87,14 +91,18 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           ExpenseData(
             date: expense.date,
             amount: expense.amount,
-            formattedMonth: DateFormat('M월').format(expense.date),
-            formattedMonthYear: DateFormat('yyyy년 M월').format(expense.date),
+            // 일관된 포맷팅 적용
+            formattedMonth: _monthFormat.format(expense.date),
+            formattedMonthYear: _monthYearFormat.format(expense.date),
           )
       ).toList();
 
+      // 날짜 정렬 (오래된 날짜부터)
+      chartData.sort((a, b) => a.date.compareTo(b.date));
+
       // 선택된 월 (마지막 데이터)
       final selectedMonth = expenses.last.date;
-      final selectedMonthText = DateFormat('yyyy년 M월').format(selectedMonth);
+      final selectedMonthText = _monthYearFormat.format(selectedMonth);
 
       // 현재 slider 값 가져오기 (sliding 중이면 sliderMonthRange, 아니면 monthRange)
       final currentRangeValue = widget.controller.isSliding.value
@@ -215,22 +223,43 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
 
   // 라인 차트 구현 - 수정됨
   Widget _buildLineChart(List<ExpenseData> chartData) {
+    // 데이터 포인트 디버깅 로그
+    // 디버깅을 위해 다음 코드를 활성화하면 콘솔에서 실제 데이터 포인트 확인 가능
+    // for (var data in chartData) {
+    //   print('${data.date} (${data.formattedMonthYear}): ${data.amount}');
+    // }
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
       primaryXAxis: DateTimeAxis(
-        dateFormat: DateFormat('M월'),
+        name: 'primaryXAxis',
+        minimum: chartData.isNotEmpty ? chartData.first.date : null,
+        maximum: chartData.isNotEmpty ? chartData.last.date : null,
+        dateFormat: _monthFormat, // 기본 x축은 월만 표시
         intervalType: DateTimeIntervalType.months,
         majorGridLines: const MajorGridLines(width: 0),
         axisLine: const AxisLine(width: 1, color: Colors.grey),
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
-        rangePadding: ChartRangePadding.round,
+        rangePadding: ChartRangePadding.none, // Changed from 'round' to 'none' for exact alignment
+        desiredIntervals: chartData.length > 6 ? 6 : chartData.length, // Limit interval count
         // 다년간 데이터를 구분하기 위해 레이블 포맷터 추가
         axisLabelFormatter: (AxisLabelRenderDetails details) {
           // X축 레이블이 DateTime 타입인지 확인
           if (details.value is num) {
             // DateTime으로 변환하기 위해 안전하게 int로 변환
             final DateTime date = DateTime.fromMillisecondsSinceEpoch(details.value.floor());
+
+            // 데이터 포인트의 실제 날짜와 일치하는지 확인하기 위한 처리
+            for (var data in chartData) {
+              // 같은 월의 날짜인지 확인 (년도와 월이 일치하는지)
+              if (data.date.year == date.year && data.date.month == date.month) {
+                return ChartAxisLabel(
+                  '${date.year}년 ${date.month}월',
+                  details.textStyle,
+                );
+              }
+            }
+
             // 해당 월이 1월인 경우 연도도 같이 표시
             if (date.month == 1) {
               return ChartAxisLabel(
@@ -249,13 +278,11 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         labelFormat: '{value}원',
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
       ),
-      // 툴팁 수정 - 각 데이터 포인트의 정확한 날짜 표시
+      // 툴팁 설정 수정 - 데이터와 동기화되도록 포맷 개선
       tooltipBehavior: TooltipBehavior(
         enable: true,
-        // 툴팁 빌더 대신 기본 툴팁을 활용하고 따로 포맷 지정
         format: 'point.x\n₩point.y',
         shared: false,
-        // 커스텀 툴팁을 사용하지 않고 직접 데이터에서 날짜 포맷팅
         builder: null,
       ),
       series: <CartesianSeries<ExpenseData, DateTime>>[
@@ -264,6 +291,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           dataSource: chartData,
           xValueMapper: (ExpenseData data, _) => data.date,
           yValueMapper: (ExpenseData data, _) => data.amount,
+          xAxisName: 'primaryXAxis', // 명시적으로 X축 이름 지정
           color: AppColors.primary.withOpacity(0.2),
           borderColor: AppColors.primary,
           borderWidth: 3,
@@ -299,6 +327,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           // 각 데이터 포인트의 정확한 날짜를 X축에 맞추기 위한 설정
           sortingOrder: SortingOrder.ascending,
           sortFieldValueMapper: (ExpenseData data, _) => data.date,
+          // 시리즈 이름 설정
+          name: 'Series 0',
         ),
         // 마지막 데이터 포인트 강조를 위한 별도 시리즈
         ScatterSeries<ExpenseData, DateTime>(
@@ -334,7 +364,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           final pointIndex = args.pointIndex?.toInt(); // num을 int로 변환
           if (pointIndex != null && pointIndex >= 0 && pointIndex < chartData.length) {
             final data = chartData[pointIndex];
-            // 정확한 날짜 정보로 툴팁 텍스트 교체
+            // 정확한 날짜 정보로 툴팁 텍스트 교체 (연월 포함)
             args.text = '${data.formattedMonthYear}\n₩${_formatAmount(data.amount)}';
           }
         }
@@ -344,21 +374,39 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
 
   // 컬럼(막대) 차트 구현 - 수정됨
   Widget _buildColumnChart(List<ExpenseData> chartData) {
+    // 데이터 포인트 디버깅 로그
+    // 디버깅을 위해 다음 코드를 활성화하면 콘솔에서 실제 데이터 포인트 확인 가능
+    // for (var data in chartData) {
+    //   print('${data.date} (${data.formattedMonthYear}): ${data.amount}');
+    // }
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
       primaryXAxis: DateTimeAxis(
-        dateFormat: DateFormat('M월'),
+        dateFormat: _monthFormat, // 기본 x축은 월만 표시
         intervalType: DateTimeIntervalType.months,
         majorGridLines: const MajorGridLines(width: 0),
         axisLine: const AxisLine(width: 1, color: Colors.grey),
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
-        rangePadding: ChartRangePadding.round,
+        rangePadding: ChartRangePadding.none, // Changed from 'round' to 'none' for exact alignment
+        desiredIntervals: chartData.length > 6 ? 6 : chartData.length, // Limit interval count
         // 다년간 데이터를 구분하기 위한 레이블 포맷터 추가
         axisLabelFormatter: (AxisLabelRenderDetails details) {
           if (details.value is num) {
             // DateTime으로 변환하기 위해 안전하게 int로 변환
             final DateTime date = DateTime.fromMillisecondsSinceEpoch(details.value.floor());
+
+            // 데이터 포인트의 실제 날짜와 일치하는지 확인하기 위한 처리
+            for (var data in chartData) {
+              // 같은 월의 날짜인지 확인 (년도와 월이 일치하는지)
+              if (data.date.year == date.year && data.date.month == date.month) {
+                return ChartAxisLabel(
+                  '${date.year}년 ${date.month}월',
+                  details.textStyle,
+                );
+              }
+            }
+
             if (date.month == 1) {
               return ChartAxisLabel(
                 '${date.year}년\n${date.month}월',
@@ -385,6 +433,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           dataSource: chartData,
           xValueMapper: (ExpenseData data, _) => data.date,
           yValueMapper: (ExpenseData data, _) => data.amount,
+          xAxisName: 'primaryXAxis', // 명시적으로 X축 이름 지정
           borderRadius: BorderRadius.circular(4),
           width: 0.6,
           // 변경: 슬라이딩 중 애니메이션 최적화
@@ -408,6 +457,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           // 데이터 정렬 추가
           sortingOrder: SortingOrder.ascending,
           sortFieldValueMapper: (ExpenseData data, _) => data.date,
+          // 시리즈 이름 설정
+          name: 'Series 0',
         ),
       ],
       // 툴팁 커스터마이징을 위한 이벤트 처리 추가
@@ -415,7 +466,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         final pointIndex = args.pointIndex?.toInt(); // num을 int로 변환
         if (pointIndex != null && pointIndex >= 0 && pointIndex < chartData.length) {
           final data = chartData[pointIndex];
-          // 정확한 날짜 정보로 툴팁 텍스트 교체
+          // 정확한 날짜 정보로 툴팁 텍스트 교체 (연월 포함)
           args.text = '${data.formattedMonthYear}\n₩${_formatAmount(data.amount)}';
         }
       },
