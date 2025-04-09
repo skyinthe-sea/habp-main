@@ -118,7 +118,7 @@ class _ExpensePageState extends State<ExpensePage>
               backgroundColor: Colors.white,
               elevation: 1,
               title: const Text(
-                '정편가계부',
+                '수기가계부',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,

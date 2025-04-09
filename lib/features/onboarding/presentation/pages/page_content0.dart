@@ -1,3 +1,5 @@
+// lib/features/onboarding/presentation/pages/page_content0.dart
+
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/wave_background.dart';
@@ -27,17 +29,16 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
   void initState() {
     super.initState();
 
-    // 전체 애니메이션을 위한 컨트롤러
+    // Faster animation
     _controller = AnimationController(
-      duration: const Duration(seconds: 3),
+      duration: const Duration(milliseconds: 2000), // Reduced from 3 seconds
       vsync: this,
     );
 
-    // 각 단어별 애니메이션 생성
+    // Each word appears with a slight delay
     _wordAnimations = List.generate(_words.length, (index) {
-      // 각 단어는 이전 단어보다 약간 늦게 나타남
-      final start = index * 0.1; // 단어 간 10% 지연
-      final end = start + 0.3;   // 각 단어는 전체 애니메이션 시간의 30%를 차지
+      final start = index * 0.08; // Faster timing (0.08 instead of 0.1)
+      final end = start + 0.25;   // Faster completion (0.25 instead of 0.3)
 
       return Tween<double>(
         begin: 0.0,
@@ -54,7 +55,7 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
       );
     });
 
-    // 애니메이션 시작
+    // Start animation
     _controller.forward();
   }
 
@@ -67,23 +68,24 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    // Standard text size for all pages
+    final standardFontSize = size.width * 0.07;
 
     return Center(
       child: AnimatedOpacity(
         opacity: 1.0,
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 400), // Faster fade in
         child: Stack(children: [
           const WaveBackground(
             primaryColor: AppColors.grey,
-            secondaryColor: AppColors.primary, // 민트빛 블렌딩
+            secondaryColor: AppColors.primary,
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(top: 80.0, bottom: 80.0), // 인디케이터와 버튼을 위한 공간
+              padding: const EdgeInsets.only(top: 80.0, bottom: 80.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 환영 텍스트 영역
                   Flexible(
                     child: AnimatedBuilder(
                       animation: _controller,
@@ -94,19 +96,19 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
                             Wrap(
                               alignment: WrapAlignment.center,
                               spacing: 10,
-                              runSpacing: 20, // 줄 간격
+                              runSpacing: 20,
                               children: List.generate(_words.length, (index) {
                                 return AnimatedOpacity(
                                   opacity: _wordAnimations[index].value,
-                                  duration: const Duration(milliseconds: 300),
+                                  duration: const Duration(milliseconds: 200), // Faster animation
                                   child: AnimatedSlide(
                                     offset: Offset(0, 1 - _wordAnimations[index].value),
-                                    duration: const Duration(milliseconds: 300),
+                                    duration: const Duration(milliseconds: 200), // Faster animation
                                     child: Text(
                                       _words[index],
                                       style: TextStyle(
                                         color: AppColors.white,
-                                        fontSize: size.width * 0.07,
+                                        fontSize: standardFontSize,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'Noto Sans JP',
                                       ),

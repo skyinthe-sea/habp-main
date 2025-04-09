@@ -1,3 +1,5 @@
+// lib/features/onboarding/presentation/widgets/wave_background.dart
+
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -26,14 +28,15 @@ class _WaveBackgroundState extends State<WaveBackground> with TickerProviderStat
   void initState() {
     super.initState();
 
+    // Speed up animations
     _controller1 = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 7), // Reduced from 10s
     )..repeat();
 
     _controller2 = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15),
+      duration: const Duration(seconds: 10), // Reduced from 15s
     )..repeat();
 
     _animation1 = CurvedAnimation(
@@ -58,21 +61,22 @@ class _WaveBackgroundState extends State<WaveBackground> with TickerProviderStat
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 기본 배경 레이어
+        // Base background gradient
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                widget.primaryColor.withOpacity(0.4),
-                widget.secondaryColor.withOpacity(0.4),
+                widget.primaryColor,
+                widget.secondaryColor,
               ],
+              stops: const [0.3, 1.0],
             ),
           ),
         ),
 
-        // 오로라 효과 레이어 1
+        // Aurora effect layer 1
         AnimatedBuilder(
           animation: _animation1,
           builder: (context, child) {
@@ -80,18 +84,18 @@ class _WaveBackgroundState extends State<WaveBackground> with TickerProviderStat
               decoration: BoxDecoration(
                 gradient: SweepGradient(
                   center: Alignment(
-                    math.cos(_animation1.value * math.pi) * 0.6,
-                    math.sin(_animation1.value * math.pi) * 0.6,
+                    math.cos(_animation1.value * math.pi * 2) * 0.5,
+                    math.sin(_animation1.value * math.pi * 2) * 0.5,
                   ),
                   colors: [
                     widget.primaryColor.withOpacity(0.0),
-                    widget.secondaryColor.withOpacity(0.2),
-                    widget.primaryColor.withOpacity(0.1),
-                    widget.secondaryColor.withOpacity(0.2),
+                    widget.secondaryColor.withOpacity(0.3),
+                    widget.primaryColor.withOpacity(0.2),
+                    widget.secondaryColor.withOpacity(0.3),
                     widget.primaryColor.withOpacity(0.0),
                   ],
                   stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-                  transform: GradientRotation(_animation1.value * math.pi),
+                  transform: GradientRotation(_animation1.value * math.pi * 2),
                 ),
                 backgroundBlendMode: BlendMode.overlay,
               ),
@@ -99,7 +103,7 @@ class _WaveBackgroundState extends State<WaveBackground> with TickerProviderStat
           },
         ),
 
-        // 오로라 효과 레이어 2
+        // Aurora effect layer 2
         AnimatedBuilder(
           animation: _animation2,
           builder: (context, child) {
@@ -107,16 +111,17 @@ class _WaveBackgroundState extends State<WaveBackground> with TickerProviderStat
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   center: Alignment(
-                    math.sin(_animation2.value * math.pi) * 0.8,
-                    math.cos(_animation2.value * math.pi) * 0.8,
+                    math.sin(_animation2.value * math.pi * 2) * 0.8,
+                    math.cos(_animation2.value * math.pi * 2) * 0.8,
                   ),
                   radius: 1.2,
                   colors: [
+                    Colors.white.withOpacity(0.1),
                     widget.secondaryColor.withOpacity(0.1),
                     widget.primaryColor.withOpacity(0.2),
-                    widget.secondaryColor.withOpacity(0.0),
+                    Colors.transparent,
                   ],
-                  stops: const [0.0, 0.4, 1.0],
+                  stops: const [0.0, 0.3, 0.6, 1.0],
                 ),
                 backgroundBlendMode: BlendMode.softLight,
               ),
@@ -124,20 +129,32 @@ class _WaveBackgroundState extends State<WaveBackground> with TickerProviderStat
           },
         ),
 
-        // 블러 효과 레이어
+        // Modern pattern overlay
+        CustomPaint(
+          painter: ModernPatternPainter(
+            color: Colors.white.withOpacity(0.05),
+            animationValue: _animation1.value,
+          ),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+          ),
+        ),
+
+        // Blur effect layer
         BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: 50.0,
-            sigmaY: 50.0,
+            sigmaX: 30.0, // Reduced blur for better performance
+            sigmaY: 30.0,
           ),
           child: Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
-                radius: 1.5,
+                radius: 1.8,
                 colors: [
                   Colors.white.withOpacity(0.0),
-                  Colors.white.withOpacity(0.1),
+                  Colors.white.withOpacity(0.05),
                   Colors.white.withOpacity(0.0),
                 ],
                 stops: const [0.0, 0.5, 1.0],
@@ -147,5 +164,67 @@ class _WaveBackgroundState extends State<WaveBackground> with TickerProviderStat
         ),
       ],
     );
+  }
+}
+
+// Modern pattern painter for decorative elements
+class ModernPatternPainter extends CustomPainter {
+  final Color color;
+  final double animationValue;
+
+  ModernPatternPainter({
+    required this.color,
+    required this.animationValue,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    // Draw modern decorative elements that move subtly with animation
+    final offset = 20.0 * animationValue;
+
+    // Draw subtle grid pattern
+    for (var i = 0; i < size.width; i += 40) {
+      // Horizontal lines
+      canvas.drawLine(
+        Offset(0, i + offset),
+        Offset(size.width, i + offset),
+        paint,
+      );
+
+      // Vertical lines
+      canvas.drawLine(
+        Offset(i + offset, 0),
+        Offset(i + offset, size.height),
+        paint,
+      );
+    }
+
+    // Draw some circles
+    final circlePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawCircle(
+      Offset(size.width * 0.2 + (offset * 2), size.height * 0.3),
+      50 + (10 * math.sin(animationValue * math.pi * 2)),
+      circlePaint,
+    );
+
+    canvas.drawCircle(
+      Offset(size.width * 0.8 - (offset * 2), size.height * 0.7),
+      70 + (15 * math.cos(animationValue * math.pi * 2)),
+      circlePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true; // Always repaint with animation
   }
 }

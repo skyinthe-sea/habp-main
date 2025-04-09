@@ -221,7 +221,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '정편가계부',
+                                    '수기가계부',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,

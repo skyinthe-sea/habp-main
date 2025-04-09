@@ -1,62 +1,75 @@
+// lib/features/onboarding/presentation/pages/onboarding_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:habp/features/onboarding/presentation/pages/page_content0.dart'; // 새 페이지 추가
+import 'package:habp/features/onboarding/presentation/pages/page_content0.dart';
 import 'package:habp/features/onboarding/presentation/pages/page_content1.dart';
 import 'package:habp/features/onboarding/presentation/pages/page_content2.dart';
 import 'package:habp/features/onboarding/presentation/pages/page_content3.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../controllers/onboarding_controller.dart';
-import '../widgets/dot_indicators.dart';
+import '../widgets/blinking_text_button.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // 컨트롤러 초기화
+    // Initialize controller
     final controller = Get.put(OnboardingController());
 
-    // 페이지 콘텐츠 리스트 - 새로운 환영 페이지 추가
+    // Page content list - including welcome page
     final pageContents = [
-      const PageContent0(), // 새로운 환영 페이지 추가
-      const PageContent1(),
-      const PageContent2(),
-      const PageContent3(),
+      const PageContent0(), // Welcome page
+      const PageContent1(), // Income information
+      const PageContent2(), // Expense information
+      const PageContent3(), // Finance/Investment information
     ];
 
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Stack(
         children: [
-          // 페이지 내용 - 현재 인덱스에 따라 변경됨
+          // Page content - changes based on current index
           Obx(() => AnimatedSwitcher(
-            duration: const Duration(milliseconds: 800),
+            duration: const Duration(milliseconds: 500), // Faster transition
             transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(opacity: animation, child: child);
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.1, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
             },
             child: pageContents[controller.currentPageIndex.value],
           )),
 
-          // 상단 페이지 인디케이터
+          // Modern dot indicator
           Positioned(
             top: 110,
             left: 0,
             right: 0,
-            child: Obx(() => DotIndicators(
+            child: Obx(() => _buildModernIndicator(
               currentIndex: controller.currentPageIndex.value,
-              pageCount: controller.totalPages, // 페이지 수를 컨트롤러에서 가져옴
+              pageCount: controller.totalPages,
             )),
           ),
 
-          // 건너뛰기 버튼 - 마지막 페이지에서는 숨김
+          // Skip button - hidden on last page
           Positioned(
             top: 90,
             right: 16,
-            child: Obx(() => Visibility(
-              visible: controller.currentPageIndex.value < controller.totalPages - 1,
+            child: Obx(() => AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: controller.currentPageIndex.value < controller.totalPages - 1 ? 1.0 : 0.0,
               child: TextButton(
-                onPressed: () {
-                  // 알럿 다이얼로그 표시
+                onPressed: controller.currentPageIndex.value < controller.totalPages - 1
+                    ? () {
+                  // Alert dialog
                   Get.dialog(
                     AlertDialog(
                       backgroundColor: AppColors.white,
@@ -79,7 +92,7 @@ class OnboardingPage extends StatelessWidget {
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () => Get.back(), // 다이얼로그 닫기
+                          onPressed: () => Get.back(), // Close dialog
                           child: const Text(
                             '취소',
                             style: TextStyle(color: Colors.grey),
@@ -87,8 +100,8 @@ class OnboardingPage extends StatelessWidget {
                         ),
                         TextButton(
                           onPressed: () {
-                            Get.back(); // 다이얼로그 닫기
-                            controller.skipOnboarding(); // 온보딩 건너뛰기 함수 호출
+                            Get.back(); // Close dialog
+                            controller.skipOnboarding(); // Skip onboarding
                           },
                           child: const Text(
                             '확인',
@@ -102,111 +115,155 @@ class OnboardingPage extends StatelessWidget {
                       ],
                     ),
                   );
-                },
+                }
+                    : null,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.white, // 글자 색 변경
+                  foregroundColor: AppColors.white,
                 ),
                 child: const Text(
                   'skip',
                   style: TextStyle(
-                    fontSize: 20.0, // 글자 크기 변경
+                    fontSize: 20.0,
                   ),
                 ),
               ),
             )),
           ),
 
-          // 하단 버튼 영역
+          // Bottom navigation buttons
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: Obx(() => Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0, vertical: 32.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // 왼쪽 화살표 버튼 (첫 페이지에서는 숨김)
-                  controller.currentPageIndex.value > 0
-                      ? IconButton(
-                    onPressed: controller.previousPage,
-                    icon: const Icon(Icons.arrow_back_ios),
-                    color: AppColors.white,
-                  )
-                      : const SizedBox(width: 48),
-
-                  // 중앙 버튼 (마지막 페이지에서는 숨김)
-                  const SizedBox(),
-
-                  // 오른쪽 버튼 (마지막 페이지에서는 완료 버튼)
-                  controller.currentPageIndex.value < controller.totalPages - 1
-                      ? IconButton(
-                    onPressed: controller.nextPage,
-                    icon: const Icon(Icons.arrow_forward_ios),
-                    color: AppColors.white,
-                  )
-                      : IconButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius.circular(20.0),
-                            ),
-                            title: const Text(
-                              '설정완료',
-                              style: TextStyle(
-                                color: AppColors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            content: const Text(
-                              '최고의 재무관리를 받으러 가시겠습니까?',
-                              style: TextStyle(
-                                color: AppColors.black,
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .pop(); // 알럿 닫기
-                                },
-                                child: const Text('취소',
-                                    style: TextStyle(
-                                        color: Colors.grey)),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .pop(); // 알럿 닫기
-                                  controller
-                                      .completeOnboarding(); // 완료 함수 호출
-                                },
-                                child: const Text(
-                                  '확인',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    icon: const Icon(Icons.check_sharp),
-                    color: AppColors.white,
-                  )
-                ],
-              ),
-            )),
+            child: Obx(() => _buildNavigationButtons(context, controller)),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Modern dot indicator
+  Widget _buildModernIndicator({required int currentIndex, required int pageCount}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        pageCount,
+            (index) => Container(
+          width: index == currentIndex ? 24 : 8,
+          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            color: index == currentIndex ? AppColors.white : AppColors.white.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Navigation buttons
+  Widget _buildNavigationButtons(BuildContext context, OnboardingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Back button (hidden on first page)
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: controller.currentPageIndex.value > 0 ? 1.0 : 0.0,
+            child: controller.currentPageIndex.value > 0
+                ? IconButton(
+              onPressed: controller.previousPage,
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.arrow_back_ios, size: 16),
+              ),
+              color: AppColors.white,
+            )
+                : const SizedBox(width: 48),
+          ),
+
+          // Center placeholder
+          const SizedBox(),
+
+          // Forward/Done button
+          controller.currentPageIndex.value < controller.totalPages - 1
+              ? IconButton(
+            onPressed: controller.nextPage,
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_forward_ios, size: 16),
+            ),
+            color: AppColors.white,
+          )
+              : IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    title: const Text(
+                      '설정완료',
+                      style: TextStyle(
+                        color: AppColors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    content: const Text(
+                      '수기가계부를 시작 하시겠습니까?',
+                      style: TextStyle(
+                        color: AppColors.black,
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Close alert
+                        },
+                        child: const Text('취소',
+                            style: TextStyle(color: Colors.grey)),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Close alert
+                          controller.completeOnboarding(); // Complete
+                        },
+                        child: const Text(
+                          '확인',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check, size: 16, color: AppColors.primary),
+            ),
+            color: AppColors.white,
+          )
         ],
       ),
     );

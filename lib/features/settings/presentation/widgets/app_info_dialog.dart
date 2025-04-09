@@ -180,7 +180,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
 
               // 앱 이름
               const Text(
-                '정편가계부',
+                '수기가계부',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -240,7 +240,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           ),
           const SizedBox(height: 12),
           Text(
-            '정편가계부는 개인 자산과 지출을 쉽고 효과적으로 관리할 수 있는 앱입니다. '
+            '수기가계부는 개인 자산과 지출을 쉽고 효과적으로 관리할 수 있는 앱입니다. '
                 '다양한 자산 유형을 관리하고, 지출을 추적하며, 예산을 설정하여 재정 목표를 달성하세요.',
             style: TextStyle(
               fontSize: 15,
@@ -323,7 +323,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           ),
           const SizedBox(height: 16),
           Text(
-            '정편가계부는 개인 재정 관리의 어려움을 해결하기 위해 만들어진 앱입니다. '
+            '수기가계부는 개인 재정 관리의 어려움을 해결하기 위해 만들어진 앱입니다. '
                 '저희 팀은 사용자의 재정 건강을 개선하고 재정 목표 달성을 돕기 위해 노력하고 있습니다.',
             style: TextStyle(
               fontSize: 15,

@@ -1,9 +1,11 @@
+// lib/features/onboarding/presentation/pages/page_content3.dart
+
 import 'package:flutter/material.dart';
 import 'package:gif_view/gif_view.dart';
 import 'package:habp/features/onboarding/presentation/widgets/page_content3_alert.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../widgets/underline_button.dart';
+import '../widgets/blinking_text_button.dart'; // Using our new component
 import '../widgets/wave_background.dart';
 
 class PageContent3 extends StatefulWidget {
@@ -18,23 +20,23 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
   late List<Animation<double>> _textAnimations;
   bool _showGif = false;
 
-  // 텍스트 라인 수
+  // Number of text elements
   final int _numTextElements = 3;
 
   @override
   void initState() {
     super.initState();
 
-    // 애니메이션 컨트롤러 초기화
+    // Initialize animation controller - faster animation
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1500), // Reduced from 2 seconds
       vsync: this,
     );
 
-    // 각 텍스트 요소에 대한 애니메이션 생성
+    // Create animations for each text element
     _textAnimations = List.generate(_numTextElements, (index) {
-      final start = index * 0.2; // 각 요소 사이에 20% 지연
-      final end = start + 0.4;   // 각 요소는 전체 애니메이션의 40% 차지
+      final start = index * 0.15; // Faster timing
+      final end = start + 0.3;    // Faster completion
 
       return Tween<double>(
         begin: 0.0,
@@ -51,17 +53,17 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
       );
     });
 
-    // 애니메이션 상태 리스너 추가
+    // Add animation status listener
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        // 애니메이션이 완료되면 GIF 표시
+        // Show GIF when animation completes
         setState(() {
           _showGif = true;
         });
       }
     });
 
-    // 애니메이션 시작
+    // Start animation
     _controller.forward();
   }
 
@@ -74,58 +76,60 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    // Standardized text size
+    final standardFontSize = size.width * 0.07;
 
     return Center(
       child: AnimatedOpacity(
         opacity: 1.0,
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 400), // Faster fade in
         child: Stack(children: [
           const WaveBackground(
             primaryColor: AppColors.grey,
-            secondaryColor: AppColors.primary, // 민트빛 블렌딩
+            secondaryColor: AppColors.primary,
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(top: 80.0, bottom: 80.0), // Leave space for indicators and buttons
+              padding: const EdgeInsets.only(top: 80.0, bottom: 80.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // GIF 영역 (GIF area) - 애니메이션 완료 후 표시
+                  // GIF area - smaller size and shows after animation completes
                   Flexible(
                     child: AnimatedOpacity(
                       opacity: _showGif ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 500),
+                      duration: const Duration(milliseconds: 400), // Faster fade
                       child: GifView.asset(
                         'assets/images/money-18548.gif',
-                        height: size.height * 0.4, // Responsive height
-                        width: size.width * 0.7, // Responsive width
+                        height: size.height * 0.20, // Reduced size
+                        width: size.width * 0.6,   // Reduced size
                         fit: BoxFit.contain,
                       ),
                     ),
                   ),
 
-                  // 상단 텍스트 영역 (Text section)
+                  // Text content area
                   Flexible(
                     child: AnimatedBuilder(
                       animation: _controller,
                       builder: (context, child) {
                         return Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // 첫 번째 텍스트
+                            // First text
                             AnimatedOpacity(
                               opacity: _textAnimations[0].value,
-                              duration: const Duration(milliseconds: 300),
+                              duration: const Duration(milliseconds: 200), // Faster animation
                               child: AnimatedSlide(
                                 offset: Offset(0, 1 - _textAnimations[0].value),
-                                duration: const Duration(milliseconds: 300),
+                                duration: const Duration(milliseconds: 200), // Faster animation
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
                                     '재테크관련',
                                     style: TextStyle(
                                       color: AppColors.white,
-                                      fontSize: size.width * 0.12,
+                                      fontSize: standardFontSize,
                                       fontFamily: 'Noto Sans JP',
                                     ),
                                   ),
@@ -135,20 +139,20 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
 
                             const SizedBox(height: 8),
 
-                            // 두 번째 텍스트 (Row)
+                            // Second text (Row)
                             AnimatedOpacity(
                               opacity: _textAnimations[1].value,
-                              duration: const Duration(milliseconds: 300),
+                              duration: const Duration(milliseconds: 200), // Faster animation
                               child: AnimatedSlide(
                                 offset: Offset(0, 1 - _textAnimations[1].value),
-                                duration: const Duration(milliseconds: 300),
+                                duration: const Duration(milliseconds: 200), // Faster animation
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    // UnderlineButton은 원래 기능 유지
-                                    UnderlineButton(
+                                    // Using new BlinkingTextButton instead of UnderlineButton
+                                    BlinkingTextButton(
                                       text: '종류와 액수',
-                                      width: size.width * 0.43,
+                                      fontSize: standardFontSize,
                                       onTap: () {
                                         showDialog(
                                           context: context,
@@ -162,7 +166,7 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
                                         '를',
                                         style: TextStyle(
                                           color: AppColors.white,
-                                          fontSize: size.width * 0.12,
+                                          fontSize: standardFontSize,
                                           fontFamily: 'Noto Sans JP',
                                         ),
                                       ),
@@ -174,20 +178,20 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
 
                             const SizedBox(height: 8),
 
-                            // 세 번째 텍스트
+                            // Third text
                             AnimatedOpacity(
                               opacity: _textAnimations[2].value,
-                              duration: const Duration(milliseconds: 300),
+                              duration: const Duration(milliseconds: 200), // Faster animation
                               child: AnimatedSlide(
                                 offset: Offset(0, 1 - _textAnimations[2].value),
-                                duration: const Duration(milliseconds: 300),
+                                duration: const Duration(milliseconds: 200), // Faster animation
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
                                     '입력해주세요',
                                     style: TextStyle(
                                       color: AppColors.white,
-                                      fontSize: size.width * 0.12,
+                                      fontSize: standardFontSize,
                                       fontFamily: 'Noto Sans JP',
                                     ),
                                   ),
