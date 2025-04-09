@@ -43,6 +43,50 @@ class FixedTransactionSetting {
   }
 }
 
+class Category {
+  final int id;
+  final String name;
+  final String type;
+  final int isFixed;
+  final int isDeleted;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  Category({
+    this.id = 0,
+    required this.name,
+    required this.type,
+    required this.isFixed,
+    this.isDeleted = 0,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory Category.fromMap(Map<String, dynamic> map) {
+    return Category(
+      id: map['id'],
+      name: map['name'],
+      type: map['type'],
+      isFixed: map['is_fixed'],
+      isDeleted: map['is_deleted'] ?? 0,
+      createdAt: DateTime.parse(map['created_at']),
+      updatedAt: DateTime.parse(map['updated_at']),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+      'is_fixed': isFixed,
+      'is_deleted': isDeleted,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+}
+
 class CategoryWithSettings {
   final int id;
   final String name;
@@ -59,11 +103,16 @@ class CategoryWithSettings {
 
 abstract class FixedTransactionLocalDataSource {
   Future<List<CategoryWithSettings>> getFixedCategories();
+  Future<List<CategoryWithSettings>> getFixedCategoriesByType(String type);
   Future<List<FixedTransactionSetting>> getSettingsForCategory(int categoryId);
   Future<FixedTransactionSetting?> getLatestSettingForCategory(int categoryId);
   Future<FixedTransactionSetting?> getSettingForCategoryAndDate(int categoryId, DateTime date);
   Future<int> addSetting(FixedTransactionSetting setting);
-  Future<List<CategoryWithSettings>> getFixedCategoriesByType(String type);
+
+  // New methods
+  Future<int> addCategory(Category category);
+  Future<bool> deleteFixedTransaction(int categoryId);
+  Future<bool> categoryExists(String name, String type);
 }
 
 class FixedTransactionLocalDataSourceImpl implements FixedTransactionLocalDataSource {
@@ -227,6 +276,87 @@ class FixedTransactionLocalDataSourceImpl implements FixedTransactionLocalDataSo
     } catch (e) {
       debugPrint('설정 추가 오류: $e');
       return -1;
+    }
+  }
+
+  @override
+  Future<int> addCategory(Category category) async {
+    try {
+      final db = await dbHelper.database;
+
+      // 현재 시간 설정
+      final now = DateTime.now();
+      final Map<String, dynamic> categoryMap = category.toMap();
+
+      // id는 자동 생성되므로 제거
+      if (categoryMap.containsKey('id') && categoryMap['id'] == 0) {
+        categoryMap.remove('id');
+      }
+
+      // 생성/수정 시간 업데이트
+      categoryMap['created_at'] = now.toIso8601String();
+      categoryMap['updated_at'] = now.toIso8601String();
+
+      final categoryId = await db.insert('category', categoryMap);
+      debugPrint('새 카테고리 추가: $categoryId');
+      return categoryId;
+
+    } catch (e) {
+      debugPrint('카테고리 추가 오류: $e');
+      return -1;
+    }
+  }
+
+  @override
+  Future<bool> deleteFixedTransaction(int categoryId) async {
+    try {
+      final db = await dbHelper.database;
+
+      // 1. 고정 거래 설정 삭제
+      await db.delete(
+        'fixed_transaction_setting',
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
+
+      // 2. 관련 거래 내역 삭제
+      await db.delete(
+        'transaction_record2',
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
+
+      // 3. 카테고리 소프트 삭제 (is_deleted = 1로 설정)
+      await db.update(
+        'category',
+        {'is_deleted': 1, 'updated_at': DateTime.now().toIso8601String()},
+        where: 'id = ?',
+        whereArgs: [categoryId],
+      );
+
+      debugPrint('고정 거래 삭제 완료: 카테고리 ID $categoryId');
+      return true;
+    } catch (e) {
+      debugPrint('고정 거래 삭제 오류: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> categoryExists(String name, String type) async {
+    try {
+      final db = await dbHelper.database;
+
+      final List<Map<String, dynamic>> result = await db.query(
+        'category',
+        where: 'name = ? AND type = ? AND is_deleted = ?',
+        whereArgs: [name, type, 0],
+      );
+
+      return result.isNotEmpty;
+    } catch (e) {
+      debugPrint('카테고리 중복 확인 오류: $e');
+      return false;
     }
   }
 }

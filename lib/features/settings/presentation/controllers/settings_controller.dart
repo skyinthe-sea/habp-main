@@ -8,14 +8,20 @@ import '../../data/datasources/fixed_transaction_local_data_source.dart';
 import '../../domain/repositories/fixed_transaction_repository.dart';
 import '../../domain/usecases/get_fixed_categories_by_type.dart';
 import '../../domain/usecases/add_fixed_transaction_setting.dart';
+import '../../domain/usecases/create_fixed_transaction.dart';
+import '../../domain/usecases/delete_fixed_transaction.dart';
 
 class SettingsController extends GetxController {
   final GetFixedCategoriesByType getFixedCategoriesByType;
   final AddFixedTransactionSetting addFixedTransactionSetting;
+  final CreateFixedTransaction createFixedTransaction;
+  final DeleteFixedTransaction deleteFixedTransaction;
 
   SettingsController({
     required this.getFixedCategoriesByType,
     required this.addFixedTransactionSetting,
+    required this.createFixedTransaction,
+    required this.deleteFixedTransaction,
   });
 
   // 상태 변수
@@ -82,6 +88,105 @@ class SettingsController extends GetxController {
       debugPrint('고정 재테크 카테고리 로드 오류: $e');
     } finally {
       isLoadingFinance.value = false;
+    }
+  }
+
+  // 새 고정 거래 생성
+  Future<bool> createNewFixedTransaction({
+    required String name,
+    required String type,
+    required double amount,
+    required DateTime effectiveFrom,
+  }) async {
+    try {
+      // 1. CreateFixedTransaction 유스케이스 실행
+      final success = await createFixedTransaction.execute(
+        name: name,
+        type: type,
+        amount: amount,
+        effectiveFrom: effectiveFrom,
+      );
+
+      if (!success) {
+        debugPrint('카테고리 생성 실패');
+        return false;
+      }
+
+      // 2. 데이터베이스에서 해당 카테고리 ID 조회
+      final dbHelper = DBHelper();
+      final db = await dbHelper.database;
+      final List<Map<String, dynamic>> categories = await db.query(
+        'category',
+        where: 'name = ? AND type = ? AND is_deleted = ?',
+        whereArgs: [name, type, 0],
+      );
+
+      if (categories.isEmpty) {
+        debugPrint('생성된 카테고리를 찾을 수 없음');
+        return false;
+      }
+
+      final categoryId = categories.first['id'] as int;
+
+      // 3. transaction_record2 테이블에 데이터 생성
+      final now = DateTime.now().toIso8601String();
+
+      // 설명 생성 (매월 고정 거래로 설정)
+      final description = '매월 ${_getCategoryDescription(type)}';
+
+      // transaction_num에 일자 저장 (매월 고정 거래 표시용)
+      final transactionNum = '${effectiveFrom.day}';
+
+      // 사용자 ID (기본값 1로 설정, 필요시 변경)
+      const userId = 1;
+
+      // transaction_record2 테이블에 데이터 삽입
+      await db.insert('transaction_record2', {
+        'user_id': userId,
+        'category_id': categoryId,
+        'amount': type == 'EXPENSE' || type == 'FINANCE' ? -amount : amount, // 지출/재테크는 음수, 소득은 양수
+        'description': description,
+        'transaction_date': DateTime(effectiveFrom.year, effectiveFrom.month, effectiveFrom.day).toIso8601String(),
+        'transaction_num': transactionNum,
+        'created_at': now,
+        'updated_at': now,
+      });
+
+      // 4. 관련 모든 데이터 다시 로드
+      await loadFixedIncomeCategories();
+      await loadFixedExpenseCategories();
+      await loadFixedFinanceCategories();
+
+      // 5. 이벤트 발행하여 다른 컨트롤러에게 알림
+      _eventBusService.emitTransactionChanged();
+
+      return true;
+    } catch (e) {
+      debugPrint('고정 거래 생성 오류: $e');
+      return false;
+    }
+  }
+
+  // 고정 거래 삭제
+  Future<bool> deleteFixedTransactionCategory(int categoryId) async {
+    try {
+      // DeleteFixedTransaction 유스케이스 실행
+      final success = await deleteFixedTransaction.execute(categoryId);
+
+      if (success) {
+        // 관련 모든 데이터 다시 로드
+        await loadFixedIncomeCategories();
+        await loadFixedExpenseCategories();
+        await loadFixedFinanceCategories();
+
+        // 이벤트 발행하여 다른 컨트롤러에게 알림
+        _eventBusService.emitTransactionChanged();
+      }
+
+      return success;
+    } catch (e) {
+      debugPrint('고정 거래 삭제 오류: $e');
+      return false;
     }
   }
 

@@ -194,16 +194,15 @@ class DBHelper {
       // 지출 카테고리
       final expenseCategories = [
         {'name': '통신비', 'type': 'EXPENSE', 'is_fixed': 1},
-        {'name': '유튜브', 'type': 'EXPENSE', 'is_fixed': 1},
-        {'name': '월세', 'type': 'EXPENSE', 'is_fixed': 1},
         {'name': '보험', 'type': 'EXPENSE', 'is_fixed': 1},
+        {'name': '월세', 'type': 'EXPENSE', 'is_fixed': 1},
       ];
 
       // 금융 카테고리
       final financeCategories = [
-        {'name': '저축', 'type': 'FINANCE', 'is_fixed': 1},
+        {'name': '적금', 'type': 'FINANCE', 'is_fixed': 1},
         {'name': '투자', 'type': 'FINANCE', 'is_fixed': 1},
-        {'name': '대출', 'type': 'FINANCE', 'is_fixed': 1},
+        {'name': '대출이자', 'type': 'FINANCE', 'is_fixed': 1},
       ];
 
       // 자산 카테고리 추가

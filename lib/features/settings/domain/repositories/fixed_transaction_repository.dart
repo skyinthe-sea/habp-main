@@ -7,6 +7,17 @@ abstract class FixedTransactionRepository {
   Future<FixedTransactionSetting?> getLatestSettingForCategory(int categoryId);
   Future<FixedTransactionSetting?> getSettingForCategoryAndDate(int categoryId, DateTime date);
   Future<bool> addSetting(FixedTransactionSetting setting);
+
+  // New methods
+  Future<int> addCategory(Category category);
+  Future<bool> deleteFixedTransaction(int categoryId);
+  Future<bool> categoryExists(String name, String type);
+  Future<bool> createFixedTransaction({
+    required String name,
+    required String type,
+    required double amount,
+    required DateTime effectiveFrom,
+  });
 }
 
 class FixedTransactionRepositoryImpl implements FixedTransactionRepository {
@@ -43,5 +54,66 @@ class FixedTransactionRepositoryImpl implements FixedTransactionRepository {
   Future<bool> addSetting(FixedTransactionSetting setting) async {
     final result = await localDataSource.addSetting(setting);
     return result > 0;
+  }
+
+  @override
+  Future<int> addCategory(Category category) async {
+    return await localDataSource.addCategory(category);
+  }
+
+  @override
+  Future<bool> deleteFixedTransaction(int categoryId) async {
+    return await localDataSource.deleteFixedTransaction(categoryId);
+  }
+
+  @override
+  Future<bool> categoryExists(String name, String type) async {
+    return await localDataSource.categoryExists(name, type);
+  }
+
+  @override
+  Future<bool> createFixedTransaction({
+    required String name,
+    required String type,
+    required double amount,
+    required DateTime effectiveFrom,
+  }) async {
+    try {
+      // 1. Check if category already exists
+      final exists = await categoryExists(name, type);
+      if (exists) {
+        return false;
+      }
+
+      // 2. Create category
+      final now = DateTime.now();
+      final category = Category(
+        name: name,
+        type: type,
+        isFixed: 1,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      final categoryId = await addCategory(category);
+      if (categoryId <= 0) {
+        return false;
+      }
+
+      // 3. Create fixed transaction setting
+      final setting = FixedTransactionSetting(
+        categoryId: categoryId,
+        amount: amount,
+        effectiveFrom: effectiveFrom,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      final settingResult = await addSetting(setting);
+
+      return settingResult;
+    } catch (e) {
+      return false;
+    }
   }
 }

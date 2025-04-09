@@ -12,6 +12,8 @@ import '../../data/datasources/fixed_transaction_local_data_source.dart';
 import '../../domain/repositories/fixed_transaction_repository.dart';
 import '../../domain/usecases/get_fixed_categories_by_type.dart';
 import '../../domain/usecases/add_fixed_transaction_setting.dart';
+import '../../domain/usecases/create_fixed_transaction.dart';
+import '../../domain/usecases/delete_fixed_transaction.dart';
 import '../controllers/settings_controller.dart';
 import 'fixed_income_dialog.dart';
 import 'fixed_expense_dialog.dart';
@@ -95,11 +97,15 @@ class _SettingsDialogState extends State<SettingsDialog>
 
       final getFixedCategoriesByType = GetFixedCategoriesByType(repository);
       final addFixedTransactionSetting = AddFixedTransactionSetting(repository);
+      final createFixedTransaction = CreateFixedTransaction(repository);
+      final deleteFixedTransaction = DeleteFixedTransaction(repository);
 
       // 컨트롤러 생성 및 등록
       _settingsController = SettingsController(
         getFixedCategoriesByType: getFixedCategoriesByType,
         addFixedTransactionSetting: addFixedTransactionSetting,
+        createFixedTransaction: createFixedTransaction,
+        deleteFixedTransaction: deleteFixedTransaction,
       );
 
       Get.put(_settingsController);
@@ -259,18 +265,21 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 icon: Icons.attach_money,
                                 title: '고정 소득',
                                 subtitle: '매월 반복되는 소득 항목을 관리합니다',
+                                color: AppColors.cate1,
                                 onTap: () => Get.showFixedIncomeDialog(),
                               ),
                               _buildSettingItem(
                                 icon: Icons.money_off,
                                 title: '고정 지출',
                                 subtitle: '매월 반복되는 지출 항목을 관리합니다',
+                                color: AppColors.cate4,
                                 onTap: () => Get.showFixedExpenseDialog(),
                               ),
                               _buildSettingItem(
                                 icon: Icons.account_balance,
                                 title: '고정 재테크',
                                 subtitle: '매월 반복되는 재테크 항목을 관리합니다',
+                                color: AppColors.cate9,
                                 onTap: () => Get.showFixedFinanceDialog(),
                               ),
 
@@ -422,18 +431,21 @@ class _SettingsDialogState extends State<SettingsDialog>
     required String subtitle,
     required VoidCallback onTap,
     Color? textColor,
+    Color? color,
   }) {
+    final itemColor = color ?? (textColor ?? AppColors.primary);
+
     return ListTile(
       leading: Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: (textColor ?? AppColors.primary).withOpacity(0.1),
+          color: itemColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
-          color: textColor ?? AppColors.primary,
+          color: itemColor,
           size: 20,
         ),
       ),

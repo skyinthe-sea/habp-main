@@ -13,18 +13,48 @@ class FixedExpenseDialog extends StatefulWidget {
   State<FixedExpenseDialog> createState() => _FixedExpenseDialogState();
 }
 
-class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
+class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTickerProviderStateMixin {
   late final SettingsController _controller;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
 
   // Map to cache latest transactions for categories without settings
   final Map<int, Map<String, dynamic>?> _latestTransactions = {};
   bool _isLoadingTransactions = true;
+
+  // Create mode
+  bool _isCreateMode = false;
+
+  // Form controllers
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _controller = Get.find<SettingsController>();
     _loadLatestTransactions();
+
+    // Setup animations
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutBack,
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _nameController.dispose();
+    _amountController.dispose();
+    super.dispose();
   }
 
   // Load latest transactions for categories that don't have settings
@@ -61,134 +91,471 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      if (_controller.isLoadingExpense.value || _isLoadingTransactions) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
-      return Dialog(
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 헤더
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    '고정 지출 설정',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+        contentPadding: EdgeInsets.zero,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+        content: Obx(() {
+          if (_controller.isLoadingExpense.value || _isLoadingTransactions) {
+            return SizedBox(
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: 300,
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          return Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with gradient
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.cate4.withOpacity(0.8),
+                        AppColors.cate4,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Get.back(),
-                  ),
-                ],
-              ),
-              const Divider(),
-
-              // 설명 텍스트
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  '매월 반복되는 고정 지출을 설정합니다. 금액 변경 시 적용 시작 월과 일자를 선택할 수 있습니다.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '고정 지출 관리',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Get.back(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
                 ),
-              ),
 
-              // 고정 지출 목록
-              if (_controller.expenseCategories.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Center(
-                    child: Text('고정 지출 카테고리가 없습니다.'),
+                // Description
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Text(
+                    '매월 반복되는 고정 지출을 관리합니다.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
                   ),
-                )
-              else
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: _controller.expenseCategories.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final category = _controller.expenseCategories[index];
-                      final latestSetting = category.settings.isNotEmpty
-                          ? category.settings.first
-                          : null;
-                      final latestTransaction = _latestTransactions[category.id];
+                ),
 
-                      return ListTile(
-                        title: Text(
-                          category.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: latestSetting != null
-                            ? Text(
-                          '현재 금액: ${_formatCurrency(latestSetting.amount)}원\n'
-                              '마지막 수정: ${_formatDate(latestSetting.effectiveFrom)}부터 적용',
-                          style: const TextStyle(fontSize: 12),
-                        )
-                            : latestTransaction != null
-                            ? Text(
-                          '현재 금액: ${_formatCurrency(latestTransaction['amount'].abs())}원\n'
-                              '마지막 거래: ${_formatDate(DateTime.parse(latestTransaction['transaction_date']))}',
-                          style: const TextStyle(fontSize: 12),
-                        )
-                            : const Text('설정된 금액 없음'),
-                        trailing: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () => _showUpdateDialog(category),
-                          child: const Text('수정'),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                // Create form or list
+                if (_isCreateMode)
+                  _buildCreateForm()
+                else
+                  _buildCategoryList(),
+
+                // Bottom actions
+                _buildBottomActions(),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildCreateForm() {
+    // Initial date selection (today by default)
+    final now = DateTime.now();
+    final selectedDate = DateTime(now.year, now.month, now.day);
+
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            '새 고정 지출 추가',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Name field
+          TextField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              labelText: '지출 이름',
+              hintText: '예: 월세, 통신비, 구독료 등',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              prefixIcon: const Icon(Icons.payment),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Amount field
+          TextField(
+            controller: _amountController,
+            decoration: InputDecoration(
+              labelText: '금액',
+              hintText: '숫자만 입력',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              prefixIcon: const Icon(Icons.money_off),
+              prefixText: '₩ ',
+            ),
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16),
+
+          // Date selection field
+          StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '매월 지출 날짜',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
                       );
+                      if (picked != null) {
+                        setState(() {});
+                      }
                     },
-                  ),
-                ),
-
-              // 닫기 버튼
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Center(
-                  child: TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text(
-                      '닫기',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 18),
+                          const SizedBox(width: 12),
+                          Text(
+                            '매월 ${selectedDate.day}일',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
                       ),
                     ),
                   ),
+                ],
+              );
+            },
+          ),
+
+          // Form action buttons
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isCreateMode = false;
+                    _nameController.clear();
+                    _amountController.clear();
+                  });
+                },
+                child: const Text('취소'),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cate4,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () async {
+                  // Validate form
+                  if (_nameController.text.isEmpty) {
+                    Get.snackbar('오류', '지출 이름을 입력해주세요');
+                    return;
+                  }
+
+                  if (_amountController.text.isEmpty) {
+                    Get.snackbar('오류', '금액을 입력해주세요');
+                    return;
+                  }
+
+                  final amount = double.tryParse(_amountController.text);
+                  if (amount == null || amount <= 0) {
+                    Get.snackbar('오류', '유효한 금액을 입력해주세요');
+                    return;
+                  }
+
+                  // Create the fixed transaction
+                  final success = await _controller.createNewFixedTransaction(
+                    name: _nameController.text,
+                    type: 'EXPENSE',
+                    amount: amount,
+                    effectiveFrom: selectedDate,
+                  );
+
+                  if (success) {
+                    setState(() {
+                      _isCreateMode = false;
+                      _nameController.clear();
+                      _amountController.clear();
+                    });
+                    Get.snackbar(
+                      '성공',
+                      '고정 지출이 추가되었습니다',
+                      backgroundColor: Colors.green[100],
+                    );
+                  } else {
+                    Get.snackbar(
+                      '오류',
+                      '이미 존재하는 이름이거나 추가 중 오류가 발생했습니다',
+                      backgroundColor: Colors.red[100],
+                    );
+                  }
+                },
+                child: const Text('추가하기'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryList() {
+    if (_controller.expenseCategories.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.money_off_outlined,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '등록된 고정 지출이 없습니다',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '새로운 고정 지출을 추가해보세요',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
                 ),
               ),
             ],
           ),
         ),
       );
-    });
+    }
+
+    return Flexible(
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shrinkWrap: true,
+        itemCount: _controller.expenseCategories.length,
+        separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+        itemBuilder: (context, index) {
+          final category = _controller.expenseCategories[index];
+          final latestSetting = category.settings.isNotEmpty
+              ? category.settings.first
+              : null;
+          final latestTransaction = _latestTransactions[category.id];
+
+          return Dismissible(
+            key: Key('expense-${category.id}'),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 24),
+              color: Colors.red,
+              child: const Icon(
+                Icons.delete,
+                color: Colors.white,
+              ),
+            ),
+            confirmDismiss: (direction) async {
+              return await showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('삭제 확인'),
+                  content: Text('${category.name} 고정 지출을 삭제하시겠습니까?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('취소'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('삭제', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+            },
+            onDismissed: (direction) async {
+              final success = await _controller.deleteFixedTransactionCategory(category.id);
+              if (success) {
+                Get.snackbar(
+                  '삭제 완료',
+                  '${category.name} 고정 지출이 삭제되었습니다.',
+                  backgroundColor: Colors.green[100],
+                );
+              } else {
+                Get.snackbar(
+                  '오류',
+                  '삭제 중 문제가 발생했습니다.',
+                  backgroundColor: Colors.red[100],
+                );
+
+                // 데이터 다시 로드
+                await _controller.loadFixedExpenseCategories();
+              }
+            },
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.cate4.withOpacity(0.2),
+                child: Icon(
+                  Icons.money_off,
+                  color: AppColors.cate4,
+                ),
+              ),
+              title: Text(
+                category.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: latestSetting != null
+                  ? Text(
+                '현재 금액: ${_formatCurrency(latestSetting.amount)}원\n'
+                    '매월 ${latestSetting.effectiveFrom.day}일',
+                style: const TextStyle(fontSize: 12),
+              )
+                  : latestTransaction != null
+                  ? Text(
+                '현재 금액: ${_formatCurrency(latestTransaction['amount'].abs())}원\n'
+                    '매월 ${latestTransaction['transaction_num']}일',
+                style: const TextStyle(fontSize: 12),
+              )
+                  : const Text('설정된 금액 없음'),
+              trailing: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.cate4.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.edit,
+                    color: AppColors.cate4,
+                    size: 20,
+                  ),
+                ),
+                onPressed: () => _showUpdateDialog(category),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBottomActions() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        border: Border(
+          top: BorderSide(color: Colors.grey[200]!),
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (_isCreateMode)
+            const SizedBox.shrink()
+          else
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('새 고정 지출 추가'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cate4,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                setState(() {
+                  _isCreateMode = true;
+                });
+              },
+            ),
+
+          if (_isCreateMode)
+            const SizedBox.shrink()
+          else
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('닫기'),
+            ),
+        ],
+      ),
+    );
   }
 
   void _showUpdateDialog(CategoryWithSettings category) {
@@ -231,16 +598,35 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('${category.name} 설정 수정'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${category.name} 설정 수정',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Divider(color: Colors.grey[300]),
+                ],
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // 금액 입력 필드
                   TextField(
                     controller: amountController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: '금액',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.money_off),
                       prefixText: '₩ ',
                     ),
                     keyboardType: TextInputType.number,
@@ -248,41 +634,47 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
                   const SizedBox(height: 16),
 
                   // 적용 시작 날짜 선택
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('적용 시작일:'),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            final DateTime? picked = await showDatePicker(
-                              context: context,
-                              initialDate: selectedDate,
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2030),
-                              initialDatePickerMode: DatePickerMode.day,
-                              // 날짜 제한 제거 - 모든 날짜 선택 가능
-                            );
-
-                            if (picked != null) {
-                              setState(() {
-                                selectedDate = picked;
-                              });
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              DateFormat('yyyy년 M월 d일').format(selectedDate),
-                              style: const TextStyle(fontSize: 16),
-                            ),
+                      const Text(
+                        '매월 지출 날짜',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              selectedDate = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today, size: 18),
+                              const SizedBox(width: 12),
+                              Text(
+                                '매월 ${selectedDate.day}일',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -297,8 +689,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.cate4,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () async {
                     // 입력값 검증
@@ -327,7 +722,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> {
                     if (success) {
                       Get.snackbar(
                         '성공',
-                        '${category.name}의 금액이 ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 ${_formatCurrency(amount)}원으로 수정되었습니다.',
+                        '${category.name}의 금액이 ${_formatDate(selectedDate)}부터 ${_formatCurrency(amount)}원으로 수정되었습니다.',
                         backgroundColor: Colors.green[100],
                       );
                     } else {
