@@ -146,15 +146,18 @@ class DashboardController extends GetxController {
     }
   }
 
-  // 새 메서드: 슬라이더 이동 종료 처리
+  // 새 메서드: 슬라이더 이동 종료 처리 (수정됨)
   void onSlideEnd(double value) {
     final newRange = value.toInt();
+
+    // 두 값을 동시에 업데이트하여 슬라이딩 종료 시 리드로우 방지
+    monthRange.value = newRange;
     sliderMonthRange.value = newRange.toDouble();
 
-    // 약간의 지연 후 슬라이딩 상태 종료 (애니메이션 완료 보장)
-    Future.delayed(const Duration(milliseconds: 50), () {
+    // isSliding 상태를 잠시 유지하여 애니메이션 상태 유지
+    // 그 후 애니메이션이 완료되면 상태 변경
+    Future.delayed(const Duration(milliseconds: 100), () {
       isSliding.value = false;
-      setMonthRange(newRange);
     });
   }
 

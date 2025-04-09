@@ -197,7 +197,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                     activeColor: AppColors.primary,
                     inactiveColor: AppColors.primary.withOpacity(0.2),
                     onChangeStart: (_) {
-                      // 새로 추가: 슬라이더 드래그 시작 시 컨트롤러에 알림
+                      // 슬라이더 드래그 시작 시 컨트롤러에 알림
                       widget.controller.onSlideStart();
                     },
                     onChanged: (value) {
@@ -205,7 +205,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                       widget.controller.updateSliderValue(value);
                     },
                     onChangeEnd: (value) {
-                      // 슬라이더 드래그 종료 처리
+                      // 슬라이더 드래그 종료 처리 - 개선된 메서드 호출
                       widget.controller.onSlideEnd(value);
                     },
                     // 단발성 터치에서도 부드럽게 동작하도록 추가 속성 설정
@@ -223,11 +223,6 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
 
   // 라인 차트 구현 - 수정됨
   Widget _buildLineChart(List<ExpenseData> chartData) {
-    // 데이터 포인트 디버깅 로그
-    // 디버깅을 위해 다음 코드를 활성화하면 콘솔에서 실제 데이터 포인트 확인 가능
-    // for (var data in chartData) {
-    //   print('${data.date} (${data.formattedMonthYear}): ${data.amount}');
-    // }
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
@@ -295,8 +290,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           color: AppColors.primary.withOpacity(0.2),
           borderColor: AppColors.primary,
           borderWidth: 3,
-          // 변경: 슬라이딩 중에도 미세한 애니메이션 제공 (단발성 터치에서 더 자연스럽게)
-          animationDuration: widget.controller.isSliding.value ? 100 : 800,
+          // 애니메이션 지속 시간 조정 - 더 일관된 경험 제공
+          animationDuration: widget.controller.isSliding.value ? 200 : 300,
           markerSettings: const MarkerSettings(
             isVisible: true,
             height: 8,
@@ -344,8 +339,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             color: AppColors.primary.withOpacity(0.3),
             shape: DataMarkerType.circle,
           ),
-          // 변경: 슬라이딩 중에도 미세한 애니메이션 제공 (단발성 터치에서 더 자연스럽게)
-          animationDuration: widget.controller.isSliding.value ? 100 : 800,
+          // 애니메이션 지속 시간 조정 - 라인 차트와 일치시킴
+          animationDuration: widget.controller.isSliding.value ? 200 : 300,
           // 마지막 포인트에 대한 툴팁 정보 설정
           enableTooltip: true,
         ),
@@ -374,11 +369,6 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
 
   // 컬럼(막대) 차트 구현 - 수정됨
   Widget _buildColumnChart(List<ExpenseData> chartData) {
-    // 데이터 포인트 디버깅 로그
-    // 디버깅을 위해 다음 코드를 활성화하면 콘솔에서 실제 데이터 포인트 확인 가능
-    // for (var data in chartData) {
-    //   print('${data.date} (${data.formattedMonthYear}): ${data.amount}');
-    // }
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
@@ -438,8 +428,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           xAxisName: 'primaryXAxis', // 명시적으로 X축 이름 지정
           borderRadius: BorderRadius.circular(4),
           width: 0.6,
-          // 변경: 슬라이딩 중 애니메이션 최적화
-          animationDuration: widget.controller.isSliding.value ? 0 : 800,
+          // 애니메이션 지속 시간 - 슬라이딩 중 최적화
+          animationDuration: widget.controller.isSliding.value ? 200 : 300,
           // 막대 색상 설정 - 마지막 항목만 강조
           pointColorMapper: (ExpenseData data, index) {
             return index == chartData.length - 1
