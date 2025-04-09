@@ -130,6 +130,8 @@ class _AppInfoDialogState extends State<AppInfoDialog>
   }
 
   // 앱 로고 및 정보 헤더
+  // Replace the _buildHeader method in app_info_dialog.dart with this:
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -147,65 +149,69 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           topRight: Radius.circular(24),
         ),
       ),
-      child: Column(
+      child: Stack(
         children: [
-          // 앱 로고
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+          Column(
+            children: [
+              // 앱 로고
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Center(
-              child: Icon(
-                Icons.account_balance_wallet,
-                size: 40,
-                color: AppColors.primary,
+                child: Center(
+                  child: Icon(
+                    Icons.account_balance_wallet,
+                    size: 40,
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-          // 앱 이름
-          const Text(
-            '정편가계부',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // 앱 버전
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              '버전 1.0.0',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+              // 앱 이름
+              const Text(
+                '정편가계부',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+              const SizedBox(height: 8),
+
+              // 앱 버전
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '버전 1.0.0',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
 
-          // 닫기 버튼
+          // 닫기 버튼 - Now properly positioned in a Stack
           Positioned(
-            top: 16,
-            right: 16,
+            top: 0,
+            right: 0,
             child: IconButton(
               icon: const Icon(Icons.close, color: Colors.white),
               onPressed: () => Navigator.of(context).pop(),
