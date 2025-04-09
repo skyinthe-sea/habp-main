@@ -129,8 +129,8 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.cate9.withOpacity(0.8),
-                        AppColors.cate9,
+                        Colors.blue.shade700.withOpacity(0.8),
+                        Colors.blue.shade700,
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -305,7 +305,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
               const SizedBox(width: 16),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cate9,
+                  backgroundColor: Colors.blue.shade700,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -468,10 +468,10 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               leading: CircleAvatar(
-                backgroundColor: AppColors.cate9.withOpacity(0.2),
+                backgroundColor: Colors.blue.shade700.withOpacity(0.2),
                 child: Icon(
                   Icons.trending_up,
-                  color: AppColors.cate9,
+                  color: Colors.blue.shade700,
                 ),
               ),
               title: Text(
@@ -497,12 +497,12 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                 icon: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppColors.cate9.withOpacity(0.1),
+                    color: Colors.blue.shade700.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.edit,
-                    color: AppColors.cate9,
+                    color: Colors.blue.shade700,
                     size: 20,
                   ),
                 ),
@@ -538,7 +538,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
               icon: const Icon(Icons.add, size: 18),
               label: const Text('새 고정 재테크 추가'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cate9,
+                backgroundColor: Colors.blue.shade700,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -694,7 +694,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cate9,
+                    backgroundColor: Colors.blue.shade700,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

@@ -265,7 +265,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 icon: Icons.attach_money,
                                 title: '고정 소득',
                                 subtitle: '매월 반복되는 소득 항목을 관리합니다',
-                                color: AppColors.cate1,
+                                color: Colors.green.shade700,
                                 onTap: () => Get.showFixedIncomeDialog(),
                               ),
                               _buildSettingItem(
@@ -279,7 +279,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 icon: Icons.account_balance,
                                 title: '고정 재테크',
                                 subtitle: '매월 반복되는 재테크 항목을 관리합니다',
-                                color: AppColors.cate9,
+                                color: Colors.blue.shade700,
                                 onTap: () => Get.showFixedFinanceDialog(),
                               ),
 

@@ -129,8 +129,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.primary.withOpacity(0.8),
-                        AppColors.primary,
+                        Colors.green.shade700.withOpacity(0.8),
+                        Colors.green.shade700,
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -306,7 +306,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               const SizedBox(width: 16),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: Colors.green.shade700,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -469,10 +469,10 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               leading: CircleAvatar(
-                backgroundColor: AppColors.cate1.withOpacity(0.2),
+                backgroundColor: Colors.green.shade700.withOpacity(0.2),
                 child: Icon(
                   Icons.attach_money,
-                  color: AppColors.cate1,
+                  color: Colors.green.shade700,
                 ),
               ),
               title: Text(
@@ -498,12 +498,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 icon: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: Colors.green.shade700.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.edit,
-                    color: AppColors.primary,
+                    color: Colors.green,
                     size: 20,
                   ),
                 ),
@@ -539,7 +539,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               icon: const Icon(Icons.add, size: 18),
               label: const Text('새 고정 소득 추가'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: Colors.green.shade700,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -695,7 +695,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Colors.green.shade700,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
