@@ -29,11 +29,17 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
 
+  late DateTime _selectedDate;
+
   @override
   void initState() {
     super.initState();
     _controller = Get.find<SettingsController>();
     _loadLatestTransactions();
+
+    // Initialize the selected date
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
 
     // Setup animations
     _animationController = AnimationController(
@@ -184,9 +190,6 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
   }
 
   Widget _buildCreateForm() {
-    // Initial date selection (today by default)
-    final now = DateTime.now();
-    final selectedDate = DateTime(now.year, now.month, now.day);
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -251,12 +254,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     onTap: () async {
                       final DateTime? picked = await showDatePicker(
                         context: context,
-                        initialDate: selectedDate,
+                        initialDate: _selectedDate,
                         firstDate: DateTime(2020),
                         lastDate: DateTime(2030),
                       );
                       if (picked != null) {
-                        setState(() {});
+                        setState(() {
+                          _selectedDate = picked;
+                        });
                       }
                     },
                     child: Container(
@@ -270,7 +275,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                           const Icon(Icons.calendar_today, size: 18),
                           const SizedBox(width: 12),
                           Text(
-                            '매월 ${selectedDate.day}일',
+                            '매월 ${_selectedDate.day}일',
                             style: const TextStyle(fontSize: 16),
                           ),
                         ],
@@ -330,7 +335,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     name: _nameController.text,
                     type: 'EXPENSE',
                     amount: amount,
-                    effectiveFrom: selectedDate,
+                    effectiveFrom: _selectedDate,
                   );
 
                   if (success) {

@@ -29,11 +29,17 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
 
+  late DateTime _selectedDate;
+
   @override
   void initState() {
     super.initState();
     _controller = Get.find<SettingsController>();
     _loadLatestTransactions();
+
+    // Initialize the selected date
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
 
     // Setup animations
     _animationController = AnimationController(
@@ -184,9 +190,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
   }
 
   Widget _buildCreateForm() {
-    // Initial date selection (today by default)
-    final now = DateTime.now();
-    final selectedDate = DateTime(now.year, now.month, now.day);
+
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -251,12 +255,14 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     onTap: () async {
                       final DateTime? picked = await showDatePicker(
                         context: context,
-                        initialDate: selectedDate,
+                        initialDate: _selectedDate,
                         firstDate: DateTime(2020),
                         lastDate: DateTime(2030),
                       );
                       if (picked != null) {
-                        setState(() {});
+                        setState(() {
+                          _selectedDate = picked;
+                        });
                       }
                     },
                     child: Container(
@@ -270,7 +276,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                           const Icon(Icons.calendar_today, size: 18),
                           const SizedBox(width: 12),
                           Text(
-                            '매월 ${selectedDate.day}일',
+                            '매월 ${_selectedDate.day}일',
                             style: const TextStyle(fontSize: 16),
                           ),
                         ],
@@ -330,7 +336,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     name: _nameController.text,
                     type: 'INCOME',
                     amount: amount,
-                    effectiveFrom: selectedDate,
+                    effectiveFrom: _selectedDate,
                   );
 
                   if (success) {
