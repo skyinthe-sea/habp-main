@@ -273,12 +273,24 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         labelFormat: '{value}원',
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
       ),
-      // 툴팁 설정 수정 - 데이터와 동기화되도록 포맷 개선
+      // 툴팁 설정 수정 - 간결하고 현대적인 디자인
       tooltipBehavior: TooltipBehavior(
         enable: true,
-        format: 'point.x\n₩point.y',
-        shared: false,
-        builder: null,
+        color: Colors.white,
+        borderColor: AppColors.primary.withOpacity(0.5),
+        borderWidth: 1,
+        elevation: 5,
+        duration: 2000,
+        format: '', // 기본 포맷 제거
+        header: '', // 헤더 제거
+        canShowMarker: false, // 마커 표시 제거
+        shadowColor: Colors.black26,
+        textStyle: const TextStyle(
+          color: Colors.black87,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        // 커스텀 빌더는 제거하고 onTooltipRender 이벤트로 처리
       ),
       series: <CartesianSeries<ExpenseData, DateTime>>[
         // 스플라인 시리즈
@@ -290,6 +302,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           color: AppColors.primary.withOpacity(0.2),
           borderColor: AppColors.primary,
           borderWidth: 3,
+          name: '', // 빈 이름으로 설정하여 'Series 0' 제거
           // 애니메이션 지속 시간 조정 - 더 일관된 경험 제공
           animationDuration: widget.controller.isSliding.value ? 200 : 300,
           markerSettings: const MarkerSettings(
@@ -322,14 +335,14 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           // 각 데이터 포인트의 정확한 날짜를 X축에 맞추기 위한 설정
           sortingOrder: SortingOrder.ascending,
           sortFieldValueMapper: (ExpenseData data, _) => data.date,
-          // 시리즈 이름 설정
-          name: 'Series 0',
+          // 'Series 0' 네이밍 제거
         ),
         // 마지막 데이터 포인트 강조를 위한 별도 시리즈
         ScatterSeries<ExpenseData, DateTime>(
           dataSource: [chartData.last],
           xValueMapper: (ExpenseData data, _) => data.date,
           yValueMapper: (ExpenseData data, _) => data.amount,
+          name: '', // 빈 이름으로 설정하여 'Series 0' 제거
           markerSettings: MarkerSettings(
             isVisible: true,
             height: 14,
@@ -353,14 +366,23 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           args.color = AppColors.primary;
         }
       },
-      // 툴팁 커스터마이징을 위한 이벤트 처리 추가
+      // 툴팁 렌더링 이벤트 - 더 간단하고 안정적인 방식으로 구현
       onTooltipRender: (TooltipArgs args) {
-        if (args.seriesIndex == 0) { // SplineAreaSeries 시리즈의 경우
-          final pointIndex = args.pointIndex?.toInt(); // num을 int로 변환
-          if (pointIndex != null && pointIndex >= 0 && pointIndex < chartData.length) {
-            final data = chartData[pointIndex];
-            // 정확한 날짜 정보로 툴팁 텍스트 교체 (연월 포함)
-            args.text = '${data.formattedMonthYear}\n₩${_formatAmount(data.amount)}';
+        if (args.pointIndex != null) {
+          final pointIndex = args.pointIndex!.toInt();
+
+          // 시리즈 인덱스를 확인하여 올바른 차트 데이터 접근
+          if (args.seriesIndex != null) {
+            // 라인 차트의 경우 시리즈 인덱스가 0 (첫 번째 시리즈)
+            if (args.seriesIndex == 0 && pointIndex >= 0 && pointIndex < chartData.length) {
+              final data = chartData[pointIndex];
+              args.text = '${data.formattedMonthYear}\n₩ ${_formatAmount(data.amount)}';
+            }
+            // 마지막 데이터 포인트 강조용 시리즈 (점)의 경우 시리즈 인덱스가 1
+            else if (args.seriesIndex == 1) {
+              final data = chartData.last; // 항상 마지막 데이터 사용
+              args.text = '${data.formattedMonthYear}\n₩ ${_formatAmount(data.amount)}';
+            }
           }
         }
       },
@@ -416,9 +438,20 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         labelFormat: '{value}원',
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
       ),
-      // 수정된 툴팁 형식
+      // 툴팁 설정 수정 - 간결하고 현대적인 디자인
       tooltipBehavior: TooltipBehavior(
         enable: true,
+        color: Colors.white,
+        borderColor: AppColors.primary.withOpacity(0.5),
+        borderWidth: 1,
+        elevation: 5,
+        duration: 2000,
+        shadowColor: Colors.black26,
+        textStyle: const TextStyle(
+          color: Colors.black87,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       series: <CartesianSeries<ExpenseData, DateTime>>[
         ColumnSeries<ExpenseData, DateTime>(
@@ -426,6 +459,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           xValueMapper: (ExpenseData data, _) => data.date,
           yValueMapper: (ExpenseData data, _) => data.amount,
           xAxisName: 'primaryXAxis', // 명시적으로 X축 이름 지정
+          name: '', // 빈 이름으로 설정하여 'Series 0' 제거
           borderRadius: BorderRadius.circular(4),
           width: 0.6,
           // 애니메이션 지속 시간 - 슬라이딩 중 최적화
@@ -449,26 +483,42 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           // 데이터 정렬 추가
           sortingOrder: SortingOrder.ascending,
           sortFieldValueMapper: (ExpenseData data, _) => data.date,
-          // 시리즈 이름 설정
-          name: 'Series 0',
+          // 'Series 0' 네이밍 제거
         ),
       ],
-      // 툴팁 커스터마이징을 위한 이벤트 처리 추가
+      // 막대 차트에도 동일한 툴팁 렌더링 로직 적용
       onTooltipRender: (TooltipArgs args) {
-        final pointIndex = args.pointIndex?.toInt(); // num을 int로 변환
-        if (pointIndex != null && pointIndex >= 0 && pointIndex < chartData.length) {
-          final data = chartData[pointIndex];
-          // 정확한 날짜 정보로 툴팁 텍스트 교체 (연월 포함)
-          args.text = '${data.formattedMonthYear}\n₩${_formatAmount(data.amount)}';
+        if (args.pointIndex != null) {
+          final pointIndex = args.pointIndex!.toInt();
+
+          // 시리즈 인덱스를 확인하여 올바른 차트 데이터 접근
+          if (pointIndex >= 0 && pointIndex < chartData.length) {
+            final data = chartData[pointIndex];
+            args.text = '${data.formattedMonthYear}\n₩ ${_formatAmount(data.amount)}';
+          }
         }
       },
     );
   }
 
-  // 금액 포맷팅
+  // 금액 포맷팅 - 대규모 금액 처리 로직 추가
   String _formatAmount(double amount) {
-    final formatter = NumberFormat('#,###', 'ko');
-    return formatter.format(amount);
+    // 100만원 이상인 경우 간단한 단위 표시 추가
+    if (amount >= 1000000) {
+      // 100만 단위로 나누어 소수점 한 자리까지 표시 (ex: 1.5백만)
+      final millionAmount = amount / 1000000;
+      final formatter = NumberFormat('#,##0.0', 'ko');
+      return '${formatter.format(millionAmount)}백만';
+    } else if (amount >= 10000) {
+      // 1만원 이상인 경우 만 단위로 표시
+      final tenThousandAmount = amount / 10000;
+      final formatter = NumberFormat('#,##0.0', 'ko');
+      return '${formatter.format(tenThousandAmount)}만';
+    } else {
+      // 일반 금액은 기존 방식대로 콤마 포맷팅
+      final formatter = NumberFormat('#,###', 'ko');
+      return formatter.format(amount);
+    }
   }
 }
 
