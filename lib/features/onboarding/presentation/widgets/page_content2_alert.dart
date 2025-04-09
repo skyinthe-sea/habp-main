@@ -40,7 +40,7 @@ class _PageContent1AlertState extends State<PageContent2Alert>
   int _selectedDay = 5;
 
   // 드롭다운 옵션들
-  final List<String> _incomeTypes = ['통신비', '유튜브', '월세', '보험', '기타'];
+  final List<String> _incomeTypes = ['통신비', '보험', '월세', '기타'];
   final List<String> _frequencies = ['매월', '매주', '매일'];
   final List<int> _days = List.generate(31, (index) => index + 1);
   final List<String> _weekdays = ['월', '화', '수', '목', '금', '토', '일'];
