@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:habp/features/expense/presentation/pages/expense_page.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../constants/app_colors.dart';
+import '../../services/ad_service.dart';
 import '../controllers/main_controller.dart';
 import '../../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../../features/quick_add/presentation/widgets/quick_add_button.dart';
@@ -42,7 +43,6 @@ class _MainPageState extends State<MainPage> {
             ),
           ),
           actions: [
-            // 설정 버튼만 남김
             IconButton(
               icon: const Icon(Icons.menu, color: AppColors.primary),
               onPressed: () => Get.showSettingsDialog(),
@@ -52,16 +52,24 @@ class _MainPageState extends State<MainPage> {
         ),
         body: Column(
           children: [
-            // 나머지 콘텐츠 (Expanded로 감싸서 남은 공간을 모두 차지하도록 함)
+            // 애드몹 배너 광고 - 좌우 패딩 제거
+            Container(
+              width: MediaQuery.of(context).size.width, // 화면 너비 전체 사용
+              padding: EdgeInsets.zero, // 패딩 제거
+              margin: EdgeInsets.zero, // 마진 제거
+              child: Get.find<AdService>().getBannerAdWidget(),
+            ),
+
+            // 나머지 콘텐츠
             Expanded(
               child: IndexedStack(
                 index: controller.selectedIndex.value,
                 children: const [
-                  DashboardPage(), // 대시보드 페이지
-                  CalendarPage(), // 캘린더 페이지
-                  SizedBox(), // 추가 버튼은 페이지가 없음
-                  ExpensePage(), // 지출 페이지
-                  AssetPage(), // 자산 페이지 - 연결
+                  DashboardPage(),
+                  CalendarPage(),
+                  SizedBox(),
+                  ExpensePage(),
+                  AssetPage(),
                 ],
               ),
             ),
@@ -69,7 +77,6 @@ class _MainPageState extends State<MainPage> {
         ),
         bottomNavigationBar: _buildBottomNavigationBar(),
         floatingActionButton: const QuickAddButton(),
-        // 새로운 QuickAddButton 사용
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       );
     });

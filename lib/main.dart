@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/presentation/pages/main_page.dart';
+import 'core/services/ad_service.dart';
 import 'core/services/event_bus_service.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 
@@ -12,11 +14,13 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final bool isFirstTimeUser = prefs.getBool('isFirstTimeUser') ?? true;
 
-  // AdMob 초기화
-  // await MobileAds.instance.initialize();
+  // Google 모바일 광고 SDK 초기화
+  await MobileAds.instance.initialize();
 
-  // 이벤트 버스 서비스 초기화
+  // 서비스 초기화 및 등록
   await Get.putAsync(() => EventBusService().init());
+  await Get.putAsync(() => AdService().init());
+
   await initializeDateFormatting('ko_KR');
 
   runApp(MyApp(isFirstTimeUser: isFirstTimeUser));
