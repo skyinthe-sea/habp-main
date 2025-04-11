@@ -53,6 +53,7 @@ class _ExpensePageState extends State<ExpensePage>
     if (!_controller.isLoading.value) {
       debugPrint('ExpensePage: 데이터 새로고침');
       _controller.fetchBudgetStatus();
+      _controller.fetchVariableCategories();
     }
   }
 

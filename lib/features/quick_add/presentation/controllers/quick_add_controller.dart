@@ -27,6 +27,16 @@ class QuickAddController extends GetxController {
   // User ID - in a real app, this would come from auth
   final int userId = 1;
 
+  late final EventBusService _eventBusService;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    // EventBusService 가져오기
+    _eventBusService = Get.find<EventBusService>();
+  }
+
   /// Reset the transaction to default values
   void resetTransaction() {
     transaction.value = QuickAddTransaction();
@@ -126,6 +136,7 @@ class QuickAddController extends GetxController {
       isSuccess.value = true;
       Get.find<EventBusService>().emitTransactionChanged();
 
+      _eventBusService.emitTransactionChanged();
       return true;
     } catch (e) {
       debugPrint('Error saving transaction: $e');
@@ -182,6 +193,7 @@ class QuickAddController extends GetxController {
 
       // 카테고리 목록 갱신
       await loadCategoriesForType(type);
+      _eventBusService.emitTransactionChanged();
 
       return CategoryModel(
         id: id,
@@ -242,6 +254,7 @@ class QuickAddController extends GetxController {
 
       // 카테고리 목록 갱신
       await loadCategoriesForType(transaction.value.categoryType);
+      _eventBusService.emitTransactionChanged();
       return true;
     } catch (e) {
       debugPrint('카테고리 삭제 중 오류: $e');
