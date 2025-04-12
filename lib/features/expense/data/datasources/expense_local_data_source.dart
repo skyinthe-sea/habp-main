@@ -66,7 +66,7 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
           AND t.transaction_date >= ? 
           AND t.transaction_date <= ?
         WHERE 
-          c.type = 'EXPENSE' AND c.is_fixed = 0
+          c.type = 'EXPENSE' AND c.is_fixed = 0 AND c.is_deleted = 0
         GROUP BY 
           c.id
         ORDER BY 
@@ -87,8 +87,8 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
     try {
       final result = await db.query(
         'category',
-        where: 'type = ? AND is_fixed = ?',
-        whereArgs: ['EXPENSE', 0],
+        where: 'type = ? AND is_fixed = ? AND is_deleted = ?',
+        whereArgs: ['EXPENSE', 0, 0],
         orderBy: 'name',
       );
 

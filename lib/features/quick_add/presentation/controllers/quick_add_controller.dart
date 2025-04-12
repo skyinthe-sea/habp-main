@@ -87,10 +87,10 @@ class QuickAddController extends GetxController {
     try {
       final db = await _dbHelper.database;
 
-      // Get categories where is_fixed is 0 (variable categories)
+      // Get categories where is_fixed is 0 (variable categories) AND is_deleted is 0
       final result = await db.query('category',
-          where: 'type = ? AND is_fixed = ?',
-          whereArgs: [type, 0],
+          where: 'type = ? AND is_fixed = ? AND is_deleted = ?',
+          whereArgs: [type, 0, 0],
           orderBy: 'name ASC');
 
       categories.value = result;
