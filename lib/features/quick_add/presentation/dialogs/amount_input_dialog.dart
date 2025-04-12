@@ -333,7 +333,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
             const SizedBox(height: 20),
 
-            // Amount input field
+            // Amount input field with dial on the right
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -346,43 +346,168 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                 ),
                 const SizedBox(height: 12),
 
-                TextField(
-                  controller: _amountController,
-                  focusNode: _amountFocusNode,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.end,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '0',
-                    suffixText: '원',
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                // Row with amount input and circular dial
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Amount input field - takes up most of the width
+                    Expanded(
+                      child: TextField(
+                        controller: _amountController,
+                        focusNode: _amountFocusNode,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '0',
+                          suffixText: '원',
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.primary),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 16),
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (value) {
+                          // Format with commas
+                          final formatted = _formatAmount(value);
+                          if (formatted != value) {
+                            _amountController.value = TextEditingValue(
+                              text: formatted,
+                              selection:
+                              TextSelection.collapsed(offset: formatted.length),
+                            );
+                          }
+                        },
+                      ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
+
+                    const SizedBox(width: 12),
+
+                    // Circular Dial - moved to the right of amount input
+                    Container(
+                      key: _sliderKey,
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withOpacity(0.1),
+                        border: Border.all(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onPanStart: (details) {
+                          _startAngle = _calculateAngle(details.globalPosition);
+                          _currentAngle = _startAngle;
+                          _lastUpdateTime = DateTime.now().millisecondsSinceEpoch;
+                          _cumulativeAngleChange = 0.0; // 새로운 제스처 시작 시 누적 각도 초기화
+                        },
+                        onPanUpdate: (details) {
+                          final newAngle = _calculateAngle(details.globalPosition);
+
+                          // Calculate the delta with careful handling of the 360-degree wrap-around
+                          double angleDelta = newAngle - _currentAngle;
+
+                          // Adjust for wrap-around at 0/360 degrees
+                          if (angleDelta > 180) {
+                            angleDelta -= 360;
+                          } else if (angleDelta < -180) {
+                            angleDelta += 360;
+                          }
+
+                          // Update current angle for next calculation
+                          _currentAngle = newAngle;
+
+                          // 회전 애니메이션을 위한 각도 업데이트
+                          setState(() {
+                            _rotationAngle += angleDelta;
+                          });
+
+                          // Update the amount based on the angle change
+                          _updateAmountFromAngleChange(angleDelta);
+                        },
+                        onPanEnd: (details) {
+                          _rotationSpeed = 0;
+                        },
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // 회전하는 다이얼
+                            Transform.rotate(
+                              angle: _rotationAngle * math.pi / 180, // 각도를 라디안으로 변환
+                              child: CustomPaint(
+                                painter: RotatingDialPainter(AppColors.primary),
+                                size: const Size(70, 70),
+                              ),
+                            ),
+
+                            // 고정된 배경 다이얼 (눈금)
+                            CustomPaint(
+                              painter: DialPainter(),
+                              size: const Size(70, 70),
+                            ),
+
+                            // Center text
+                            const Text(
+                              '금액설정',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+
+                            // Indicator arrow (fixed)
+                            Positioned(
+                              top: 8,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
                   ],
-                  onChanged: (value) {
-                    // Format with commas
-                    final formatted = _formatAmount(value);
-                    if (formatted != value) {
-                      _amountController.value = TextEditingValue(
-                        text: formatted,
-                        selection:
-                        TextSelection.collapsed(offset: formatted.length),
-                      );
-                    }
-                  },
+                ),
+
+                // Hint text for dial usage - moved directly under the amount row
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, left: 4, right: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 14, color: Colors.grey.shade600),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '원형 다이얼을 천천히 돌려 금액을 정밀하게 조정할 수 있습니다',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -420,205 +545,87 @@ class _AmountInputDialogState extends State<AmountInputDialog>
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
 
-            // Hint text
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline,
-                      size: 14, color: Colors.grey.shade600),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '원형 다이얼을 천천히 돌려 금액을 정밀하게 조정할 수 있습니다',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
+            // Save button - improved styling and positioning
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              child: Obx(() => ElevatedButton(
+                onPressed: !_saveEnabled || controller.isLoading.value
+                    ? null
+                    : () async {
+                  // Parse amount
+                  final amount = double.parse(
+                      _amountController.text.replaceAll(',', ''));
+                  controller.setAmount(amount);
+
+                  // Set description if provided
+                  if (_descriptionController.text.isNotEmpty) {
+                    controller
+                        .setDescription(_descriptionController.text);
+                  }
+
+                  // Save transaction
+                  final success = await controller.saveTransaction();
+
+                  // Close dialog and show success message if successful
+                  if (success) {
+                    Navigator.of(context).pop();
+
+                    // Show success snackbar
+                    Get.snackbar(
+                      '성공',
+                      '거래가 추가되었습니다',
+                      snackPosition: SnackPosition.TOP,
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(16),
+                      duration: const Duration(seconds: 2),
+                    );
+                  } else {
+                    // Show error message
+                    Get.snackbar(
+                      '오류',
+                      '거래 추가에 실패했습니다',
+                      snackPosition: SnackPosition.TOP,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(16),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  minimumSize: const Size(double.infinity, 52), // 더 큰 버튼 크기
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Save button and circular slider
-            Row(
-              children: [
-                // Save button
-                Expanded(
-                  child: Obx(() => ElevatedButton(
-                    onPressed: !_saveEnabled || controller.isLoading.value
-                        ? null
-                        : () async {
-                      // Parse amount
-                      final amount = double.parse(
-                          _amountController.text.replaceAll(',', ''));
-                      controller.setAmount(amount);
-
-                      // Set description if provided
-                      if (_descriptionController.text.isNotEmpty) {
-                        controller
-                            .setDescription(_descriptionController.text);
-                      }
-
-                      // Save transaction
-                      final success = await controller.saveTransaction();
-
-                      // Close dialog and show success message if successful
-                      if (success) {
-                        Navigator.of(context).pop();
-
-                        // Show success snackbar
-                        Get.snackbar(
-                          '성공',
-                          '거래가 추가되었습니다',
-                          snackPosition: SnackPosition.TOP,
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                          margin: const EdgeInsets.all(16),
-                          duration: const Duration(seconds: 2),
-                        );
-                      } else {
-                        // Show error message
-                        Get.snackbar(
-                          '오류',
-                          '거래 추가에 실패했습니다',
-                          snackPosition: SnackPosition.TOP,
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                          margin: const EdgeInsets.all(16),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      disabledBackgroundColor:
-                      AppColors.primary.withOpacity(0.3),
-                    ),
-                    child: controller.isLoading.value
-                        ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                        : const Text(
-                      '저장하기',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )),
+                  disabledBackgroundColor:
+                  AppColors.primary.withOpacity(0.3),
+                  elevation: 0, // 그림자 제거
                 ),
-
-                const SizedBox(width: 16),
-
-                // Improved Circular Slider
-                Container(
-                  key: _sliderKey,
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.primary.withOpacity(0.1),
-                    border: Border.all(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
+                child: controller.isLoading.value
+                    ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
                   ),
-                  child: GestureDetector(
-                    onPanStart: (details) {
-                      _startAngle = _calculateAngle(details.globalPosition);
-                      _currentAngle = _startAngle;
-                      _lastUpdateTime = DateTime.now().millisecondsSinceEpoch;
-                      _cumulativeAngleChange = 0.0; // 새로운 제스처 시작 시 누적 각도 초기화
-                    },
-                    onPanUpdate: (details) {
-                      final newAngle = _calculateAngle(details.globalPosition);
-
-                      // Calculate the delta with careful handling of the 360-degree wrap-around
-                      double angleDelta = newAngle - _currentAngle;
-
-                      // Adjust for wrap-around at 0/360 degrees
-                      if (angleDelta > 180) {
-                        angleDelta -= 360;
-                      } else if (angleDelta < -180) {
-                        angleDelta += 360;
-                      }
-
-                      // Update current angle for next calculation
-                      _currentAngle = newAngle;
-
-                      // 회전 애니메이션을 위한 각도 업데이트
-                      setState(() {
-                        _rotationAngle += angleDelta;
-                      });
-
-                      // Update the amount based on the angle change
-                      _updateAmountFromAngleChange(angleDelta);
-                    },
-                    onPanEnd: (details) {
-                      _rotationSpeed = 0;
-                    },
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // 회전하는 다이얼
-                        Transform.rotate(
-                          angle: _rotationAngle * math.pi / 180, // 각도를 라디안으로 변환
-                          child: CustomPaint(
-                            painter: RotatingDialPainter(AppColors.primary),
-                            size: const Size(80, 80),
-                          ),
-                        ),
-
-                        // 고정된 배경 다이얼 (눈금)
-                        CustomPaint(
-                          painter: DialPainter(),
-                          size: const Size(80, 80),
-                        ),
-
-                        // Center text
-                        const Text(
-                          '금액설정',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-
-                        // Indicator arrow (fixed)
-                        Positioned(
-                          top: 10,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                )
+                    : const Text(
+                  '저장하기',
+                  style: TextStyle(
+                    fontSize: 17, // 글자 크기 증가
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
+              )),
             ),
+
+            const SizedBox(height: 8), // 하단 여백 추가
           ],
         ),
       ),
@@ -697,15 +704,6 @@ class RotatingDialPainter extends CustomPainter {
     final markerPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-
-    // 위쪽 방향에 더 큰 표시기 추가
-    // final markerAngle = 0; // 0도는 12시 방향
-    // final markerPoint = Offset(
-    //   center.dx + (radius - 20) * math.cos(markerAngle),
-    //   center.dy + (radius - 20) * math.sin(markerAngle),
-    // );
-
-    // canvas.drawCircle(markerPoint, 4, markerPaint);
 
     // 원형 경로 그리기 (회전 경로)
     final pathPaint = Paint()
