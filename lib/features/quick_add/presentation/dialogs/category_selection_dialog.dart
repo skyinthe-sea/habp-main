@@ -261,7 +261,7 @@ class CategorySelectionDialog extends StatelessWidget {
             builder: (BuildContext dialogContext) {
               return AlertDialog(
                 title: const Text('카테고리 삭제'),
-                content: Text('\'$categoryName\' 예산 정보를 삭제하시겠습니까?'),
+                content: Text('\'$categoryName\' 카테고리를 삭제하시겠습니까?'),
                 actions: [
                   TextButton(
                     child: const Text('취소'),
