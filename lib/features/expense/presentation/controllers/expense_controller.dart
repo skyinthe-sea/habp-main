@@ -335,12 +335,12 @@ class ExpenseController extends GetxController {
       }
 
       // UI에서 즉시 카테고리 제거 (애니메이션 효과를 위해)
-      final tempCategories = variableCategories.toList();
-      final categoryIndex = tempCategories.indexWhere((c) => c.id == categoryId);
-      if (categoryIndex != -1) {
-        tempCategories.removeAt(categoryIndex);
-        variableCategories.value = tempCategories;
-      }
+      // final tempCategories = variableCategories.toList();
+      // final categoryIndex = tempCategories.indexWhere((c) => c.id == categoryId);
+      // if (categoryIndex != -1) {
+      //   tempCategories.removeAt(categoryIndex);
+      //   variableCategories.value = tempCategories;
+      // }
 
       // DB에서 카테고리 삭제
       final result = await deleteCategoryUseCase(categoryId);

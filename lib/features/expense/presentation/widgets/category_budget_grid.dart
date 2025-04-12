@@ -98,6 +98,10 @@ class CategoryBudgetGrid extends StatelessWidget {
           ),
         );
       },
+      onLongPress: () {
+        // 카테고리 삭제 다이얼로그 표시
+        _showDeleteCategoryDialog(context, budgetStatus);
+      },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -236,6 +240,102 @@ class CategoryBudgetGrid extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // 카테고리 삭제 다이얼로그
+  void _showDeleteCategoryDialog(BuildContext context, BudgetStatus budgetStatus) {
+    bool isDeleting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          '카테고리 삭제',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '\'${budgetStatus.categoryName}\' 예산 정보를 삭제하시겠습니까?',
+              style: const TextStyle(
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              '취소',
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          StatefulBuilder(
+            builder: (context, setDialogState) {
+              return TextButton(
+                onPressed: isDeleting
+                    ? null
+                    : () async {
+                  setDialogState(() {
+                    isDeleting = true;
+                  });
+
+                  // 카테고리 삭제
+                  final success = await controller.deleteCategory(budgetStatus.categoryId);
+
+                  Navigator.of(context).pop();
+
+                  // 결과 알림
+                  if (success) {
+                    Get.snackbar(
+                      '성공',
+                      '카테고리가 삭제되었습니다.',
+                      snackPosition: SnackPosition.TOP,
+                    );
+                  } else {
+                    Get.snackbar(
+                      '오류',
+                      '카테고리 삭제에 실패했습니다.',
+                      snackPosition: SnackPosition.TOP,
+                    );
+                  }
+                },
+                child: isDeleting
+                    ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  ),
+                )
+                    : Text(
+                  '삭제',
+                  style: TextStyle(
+                    color: Colors.red.shade700,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

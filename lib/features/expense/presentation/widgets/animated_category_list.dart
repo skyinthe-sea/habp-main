@@ -193,19 +193,12 @@ class _AnimatedCategoryListState extends State<AnimatedCategoryList> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '\'${category.name}\' 카테고리를 삭제하시겠습니까?',
+              '\'${category.name}\' 예산 정보를 삭제하시겠습니까?',
               style: const TextStyle(
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              '이 카테고리에 연결된 모든 예산 정보도 함께 삭제됩니다.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-              ),
-            ),
           ],
         ),
         actions: [

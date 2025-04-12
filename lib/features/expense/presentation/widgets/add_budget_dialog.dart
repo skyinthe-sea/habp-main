@@ -21,19 +21,31 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
   bool isLoading = false;
   List<int> _previousCategoryIds = [];
   bool _isSaveButtonEnabled = false;
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     // 텍스트 변경 시 저장 버튼 활성화 상태 업데이트를 위한 리스너
     amountController.addListener(_updateSaveButtonState);
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
     amountController.removeListener(_updateSaveButtonState);
     amountController.dispose();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+    });
   }
 
   void _updateSaveButtonState() {
@@ -82,19 +94,12 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '\'${category.name}\' 카테고리를 삭제하시겠습니까?',
+              '\'${category.name}\' 예산 정보를 삭제하시겠습니까?',
               style: const TextStyle(
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              '이 카테고리에 연결된 모든 예산 정보도 함께 삭제됩니다.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-              ),
-            ),
           ],
         ),
         actions: [
@@ -198,301 +203,41 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // 헤더
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    '예산 추가하기',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '예산 추가하기',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.grey.shade400),
+                    onPressed: () => Get.back(),
+                    splashRadius: 20,
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
-              // 카테고리 선택
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16, top: 12, right: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '카테고리(길게눌러 삭제)',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              // 카테고리 추가 다이얼로그 표시
-                              showDialog(
-                                context: context,
-                                builder: (context) => AddCategoryDialog(
-                                  controller: widget.controller,
-                                  onCategoryAdded: (categoryId) {
-                                    setState(() {
-                                      selectedCategoryId = categoryId;
-                                      _updateSaveButtonState();
-                                    });
-                                  },
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.add,
-                                    size: 14,
-                                    color: AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '카테고리 추가',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Obx(() {
-                      final categories = widget.controller.variableCategories;
+              // 금액 입력 섹션
+              _buildBudgetAmountSection(),
+              const SizedBox(height: 24),
 
-                      // 이전 카테고리 ID 목록 저장 (애니메이션 효과용)
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (_previousCategoryIds.isEmpty ||
-                            categories.length != _previousCategoryIds.length) {
-                          setState(() {
-                            _previousCategoryIds = categories.map((c) => c.id).toList();
-                          });
-                        }
-                      });
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: categories.isEmpty
-                            ? Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              const Text(
-                                '지출 카테고리가 없습니다.',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // ElevatedButton.icon(
-                              //   icon: const Icon(Icons.add, size: 16),
-                              //   label: const Text('카테고리 추가하기'),
-                              //   style: ElevatedButton.styleFrom(
-                              //     backgroundColor: AppColors.primary,
-                              //     foregroundColor: Colors.white,
-                              //     padding: const EdgeInsets.symmetric(
-                              //         horizontal: 16,
-                              //         vertical: 8
-                              //     ),
-                              //     shape: RoundedRectangleBorder(
-                              //       borderRadius: BorderRadius.circular(8),
-                              //     ),
-                              //   ),
-                              //   onPressed: () {
-                              //     showDialog(
-                              //       context: context,
-                              //       builder: (context) => AddCategoryDialog(
-                              //         controller: widget.controller,
-                              //         onCategoryAdded: (categoryId) {
-                              //           setState(() {
-                              //             selectedCategoryId = categoryId;
-                              //             _updateSaveButtonState();
-                              //           });
-                              //         },
-                              //       ),
-                              //     );
-                              //   },
-                              // ),
-                            ],
-                          ),
-                        )
-                            : Padding(
-                          padding: const EdgeInsets.only(left: 12, right: 12),
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: List.generate(categories.length, (index) {
-                              final category = categories[index];
-                              final isSelected = selectedCategoryId == category.id;
-                              final isNewlyAdded = isSelected &&
-                                  !_previousCategoryIds.contains(category.id);
-
-                              return AnimatedOpacity(
-                                duration: const Duration(milliseconds: 300),
-                                opacity: 1.0,
-                                child: Hero(
-                                  tag: 'category-${category.id}',
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          selectedCategoryId = category.id;
-                                          _updateSaveButtonState();
-                                        });
-                                      },
-                                      onLongPress: () {
-                                        _showDeleteCategoryDialog(context, category);
-                                      },
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 300),
-                                        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? AppColors.primary
-                                              : Colors.grey.shade200,
-                                          borderRadius: BorderRadius.circular(20),
-                                          boxShadow: isNewlyAdded
-                                              ? [
-                                            BoxShadow(
-                                              color: AppColors.primary.withOpacity(0.3),
-                                              blurRadius: 8,
-                                              spreadRadius: 2,
-                                            )
-                                          ]
-                                              : null,
-                                        ),
-                                        child: Text(
-                                          category.name,
-                                          style: TextStyle(
-                                            color: isSelected
-                                                ? Colors.white
-                                                : Colors.black87,
-                                            fontWeight: isSelected
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // 예산 금액 입력
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16, top: 12),
-                      child: Text(
-                        '예산 금액',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: TextFormField(
-                        controller: amountController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        onChanged: (value) {
-                          if (value.isNotEmpty) {
-                            final formatted = _formatCurrency(value);
-                            if (formatted != value) {
-                              amountController.value = TextEditingValue(
-                                text: formatted,
-                                selection: TextSelection.collapsed(
-                                  offset: formatted.length,
-                                ),
-                              );
-                            }
-                          }
-                          _updateSaveButtonState();
-                        },
-                        decoration: InputDecoration(
-                          hintText: '금액을 입력하세요',
-                          suffixText: '원',
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: AppColors.primary),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // 카테고리 선택 섹션
+              _buildCategorySelectionSection(),
               const SizedBox(height: 24),
 
               // 기간 선택 안내
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
@@ -527,6 +272,7 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        elevation: 0,
                       ),
                       child: const Text(
                         '취소',
@@ -616,6 +362,269 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
           ),
         ),
       ),
+    );
+  }
+
+  // 예산 금액 입력 섹션
+  Widget _buildBudgetAmountSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '예산 금액',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextFormField(
+            controller: amountController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            onChanged: (value) {
+              if (value.isNotEmpty) {
+                final formatted = _formatCurrency(value);
+                if (formatted != value) {
+                  amountController.value = TextEditingValue(
+                    text: formatted,
+                    selection: TextSelection.collapsed(
+                      offset: formatted.length,
+                    ),
+                  );
+                }
+              }
+              _updateSaveButtonState();
+            },
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+            decoration: InputDecoration(
+              hintText: '금액을 입력하세요',
+              hintStyle: TextStyle(
+                color: Colors.grey.shade400,
+                fontSize: 16,
+              ),
+              suffixText: '원',
+              suffixStyle: TextStyle(
+                color: Colors.grey.shade700,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              border: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              enabledBorder: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 카테고리 선택 섹션
+  Widget _buildCategorySelectionSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '카테고리',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AddCategoryDialog(
+                    controller: widget.controller,
+                    onCategoryAdded: (categoryId) {
+                      setState(() {
+                        selectedCategoryId = categoryId;
+                        _updateSaveButtonState();
+                      });
+                    },
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('추가'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                foregroundColor: AppColors.primary,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // 검색 필드
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: '카테고리 검색',
+              prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value.toLowerCase();
+              });
+            },
+          ),
+        ),
+
+        // 카테고리 목록
+        Obx(() {
+          final categories = widget.controller.variableCategories;
+
+          // 검색 필터링
+          List<CategoryModel> filteredCategories = categories;
+          if (_searchQuery.isNotEmpty) {
+            filteredCategories = categories.where(
+                    (c) => c.name.toLowerCase().contains(_searchQuery)
+            ).toList();
+          }
+
+          // 이전 카테고리 ID 목록 저장 (애니메이션 효과용)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_previousCategoryIds.isEmpty ||
+                categories.length != _previousCategoryIds.length) {
+              setState(() {
+                _previousCategoryIds = categories.map((c) => c.id).toList();
+              });
+            }
+          });
+
+          if (filteredCategories.isEmpty) {
+            return Container(
+              height: 100,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _searchQuery.isNotEmpty
+                    ? '검색 결과가 없습니다'
+                    : '등록된 카테고리가 없습니다',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+            );
+          }
+
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.3,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shrinkWrap: true,
+              itemCount: filteredCategories.length,
+              separatorBuilder: (context, index) => Divider(
+                height: 1,
+                color: Colors.grey.shade200,
+                indent: 16,
+                endIndent: 16,
+              ),
+              itemBuilder: (context, index) {
+                final category = filteredCategories[index];
+                final isSelected = selectedCategoryId == category.id;
+                final isNewlyAdded = isSelected &&
+                    !_previousCategoryIds.contains(category.id);
+
+                return ListTile(
+                  onTap: () {
+                    setState(() {
+                      selectedCategoryId = category.id;
+                      _updateSaveButtonState();
+                    });
+                  },
+                  onLongPress: () {
+                    _showDeleteCategoryDialog(context, category);
+                  },
+                  title: Text(
+                    category.name,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  leading: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                      shape: BoxShape.circle,
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
+                        : null,
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.grey.shade400, size: 20),
+                    onPressed: () {
+                      _showDeleteCategoryDialog(context, category);
+                    },
+                    splashRadius: 20,
+                  ),
+                  tileColor: isSelected ? AppColors.primary.withOpacity(0.05) : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                );
+              },
+            ),
+          );
+        }),
+        const SizedBox(height: 8),
+        Text(
+          '카테고리를 길게 누르면 삭제할 수 있습니다.',
+          style: TextStyle(
+            fontSize: 12,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
     );
   }
 }
