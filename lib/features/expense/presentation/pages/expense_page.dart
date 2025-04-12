@@ -13,8 +13,9 @@ import '../../domain/usecases/add_budget.dart';
 import '../controllers/expense_controller.dart';
 import '../widgets/period_selector.dart';
 import '../widgets/overall_budget_card.dart';
-import '../widgets/category_budget_list.dart';
 import '../widgets/add_budget_dialog.dart';
+import '../widgets/budget_pie_chart.dart';
+import '../widgets/category_budget_grid.dart';
 
 class ExpensePage extends StatefulWidget {
   const ExpensePage({Key? key}) : super(key: key);
@@ -173,17 +174,15 @@ class _ExpensePageState extends State<ExpensePage>
                                   crossAxisAlignment:
                                   CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      '이번 달 예산 현황',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    OverallBudgetCard(
-                                        controller: controller),
+                                    // 전체 예산 카드 (간소화된 버전)
+                                    OverallBudgetCard(controller: controller),
+                                    const SizedBox(height: 16),
+
+                                    // 파이 차트 추가
+                                    BudgetPieChart(controller: controller),
                                     const SizedBox(height: 24),
+
+                                    // 카테고리별 예산 섹션 헤더
                                     const Text(
                                       '카테고리별 예산',
                                       style: TextStyle(
@@ -192,12 +191,9 @@ class _ExpensePageState extends State<ExpensePage>
                                       ),
                                     ),
                                     const SizedBox(height: 12),
-                                    // Wrap with SizedBox to ensure content has size even when empty
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: CategoryBudgetList(
-                                          controller: controller),
-                                    ),
+
+                                    // 그리드 형태의 카테고리 목록
+                                    CategoryBudgetGrid(controller: controller),
                                   ],
                                 ),
                               ),
@@ -209,7 +205,6 @@ class _ExpensePageState extends State<ExpensePage>
                   );
                 }),
           ),
-          // 새로운 플로팅 액션 버튼 추가 - 설정 아이콘으로 변경
           floatingActionButton: FloatingActionButton(
             mini: true, // <-- 크기를 작게 만듭니다.
             backgroundColor: AppColors.primary.withOpacity(0.7), // <-- 배경색에 투명도(70% 불투명)를 적용합니다.
