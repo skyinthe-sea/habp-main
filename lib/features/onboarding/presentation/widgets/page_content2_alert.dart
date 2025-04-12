@@ -36,12 +36,12 @@ class _PageContent2AlertState extends State<PageContent2Alert>
   bool _isSaving = false;
 
   // Selected values
-  String _selectedIncomeType = '통신비';
+  String _selectedIncomeType = '주거비';
   String _selectedFrequency = '매월';
   int _selectedDay = 5;
 
   // Dropdown options
-  final List<String> _incomeTypes = ['통신비', '보험', '월세', '기타'];
+  final List<String> _incomeTypes = ['주거비', '통신비', '보험료', '구독서비스', '대출상환'];
   // Only monthly frequency is active, weekly and daily are commented out
   final List<String> _frequencies = ['매월'/*, '매주', '매일'*/];
   final List<String> _weekdays = ['월', '화', '수', '목', '금', '토', '일'];

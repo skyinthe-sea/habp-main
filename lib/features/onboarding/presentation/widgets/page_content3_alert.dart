@@ -41,7 +41,7 @@ class _PageContent3AlertState extends State<PageContent3Alert>
   int _selectedDay = 5;
 
   // Dropdown options
-  final List<String> _incomeTypes = ['저축', '투자', '대출', '기타'];
+  final List<String> _incomeTypes = ['저축', '펀드', '주식', '연금투자'];
   // Only monthly frequency is active, weekly and daily are commented out
   final List<String> _frequencies = ['매월'/*, '매주', '매일'*/];
   final List<String> _customIncomeTypes = [];
