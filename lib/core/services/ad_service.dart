@@ -1,4 +1,6 @@
 // lib/core/services/ad_service.dart
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,8 +13,10 @@ class AdService extends GetxService {
 
   // 테스트 광고 ID
   final String _adUnitId = kDebugMode
-      ? 'ca-app-pub-3940256099942544/6300978111'
-      : 'ca-app-pub-3940256099942544/6300978111';
+      ? 'ca-app-pub-3940256099942544/6300978111' // Keep test ID for debug mode
+      : Platform.isAndroid
+      ? 'ca-app-pub-6902355178006305/6345111569' // Your Android banner ad unit ID
+      : 'ca-app-pub-6902355178006305/2615779808'; // Your iOS banner ad unit ID
 
   @override
   void onInit() {
