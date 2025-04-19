@@ -578,7 +578,7 @@ class _PageContent1AlertState extends State<PageContent1Alert>
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        final allTypes = [..._incomeTypes, ..._customIncomeTypes];
+        final allTypes = [..._incomeTypes];
 
         return Container(
           height: 300,
