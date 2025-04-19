@@ -50,6 +50,19 @@ dependencies:
   url_launcher: ^6.3.1
   syncfusion_flutter_charts: ^29.1.35
   google_mobile_ads: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: "launcher_icon"  # Android에서 사용할 아이콘 이름
+  ios: true                 # iOS에서 기본 아이콘 이름 사용
+  image_path: "assets/images/app_icon5.png"  # 아이콘으로 사용할 이미지 경로
+  min_sdk_android: 23       # Android 최소 SDK 버전
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
 
 dev_dependencies:
   flutter_test:

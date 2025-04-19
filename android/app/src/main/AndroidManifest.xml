@@ -2,7 +2,7 @@
 
     <application
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:label="수기가계부">
         <activity
             android:name=".MainActivity"

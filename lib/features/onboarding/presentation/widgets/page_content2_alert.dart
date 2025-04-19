@@ -85,7 +85,10 @@ class _PageContent2AlertState extends State<PageContent2Alert>
     if (customTypes.isNotEmpty) {
       setState(() {
         _customIncomeTypes.clear();
-        _customIncomeTypes.addAll(customTypes);
+        // 소득 관련 항목만 필터링 (지출이나 재테크 항목은 제외)
+        _customIncomeTypes.addAll(customTypes.where(
+                (type) => !['주거비', '통신비', '보험료', '구독서비스', '대출상환'].contains(type)
+        ));
       });
     }
   }

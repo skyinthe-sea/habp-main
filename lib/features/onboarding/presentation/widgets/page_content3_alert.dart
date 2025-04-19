@@ -84,7 +84,10 @@ class _PageContent3AlertState extends State<PageContent3Alert>
     if (customTypes.isNotEmpty) {
       setState(() {
         _customIncomeTypes.clear();
-        _customIncomeTypes.addAll(customTypes);
+        // 소득 관련 항목만 필터링 (지출이나 재테크 항목은 제외)
+        _customIncomeTypes.addAll(customTypes.where(
+                (type) => !['저축', '펀드', '주식', '연금투자'].contains(type)
+        ));
       });
     }
   }
