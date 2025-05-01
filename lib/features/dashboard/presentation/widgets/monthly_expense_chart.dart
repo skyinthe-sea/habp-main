@@ -543,37 +543,49 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   }
 
   // 컬럼(막대) 차트 구현 - 수정됨
+  // 수정된 막대 차트 구현 메서드
   Widget _buildColumnChart(List<ExpenseData> chartData, Map<int, DateTime> yearChanges) {
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
       primaryXAxis: DateTimeAxis(
-        dateFormat: _monthFormat, // 기본 x축은 월만 표시
+        // 1. 명시적으로 최소/최대 범위 설정 (라인 차트와 동일하게)
+        minimum: chartData.isNotEmpty ? chartData.first.date : null,
+        maximum: chartData.isNotEmpty ? chartData.last.date : null,
+        // 2. 간격 유형은 월로 유지하되, 명시적 간격 값 설정
         intervalType: DateTimeIntervalType.months,
+        interval: 1, // 명시적으로 1개월 간격 설정
+        // 3. auto 패딩으로 변경하여 더 나은 위치 조정
+        rangePadding: ChartRangePadding.auto,
+        // 4. 레이블 표시를 위한 설정 유지
+        dateFormat: _monthFormat,
         majorGridLines: const MajorGridLines(width: 0),
         axisLine: const AxisLine(width: 1, color: Colors.grey),
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
-        rangePadding: ChartRangePadding.none, // Changed from 'round' to 'none' for exact alignment
-        desiredIntervals: chartData.length > 6 ? 6 : chartData.length, // Limit interval count
-        // 단순히 월만 표시하도록 수정
+        // 5. 원하는 간격 조정 - 모든 데이터 포인트에 레이블 표시
+        desiredIntervals: chartData.length,
+        // 6. 레이블 포지셔닝 개선
+        labelAlignment: LabelAlignment.center,
+        // 7. 레이블 포맷터 개선
         axisLabelFormatter: (AxisLabelRenderDetails details) {
           if (details.value is num) {
             final DateTime date = DateTime.fromMillisecondsSinceEpoch(details.value.floor());
 
-            // 데이터 포인트와 일치하는 날짜인지 확인
+            // 데이터 포인트와 매칭되는 월인지 확인
             bool isDataPoint = chartData.any((data) =>
             data.date.year == date.year && data.date.month == date.month);
 
             if (isDataPoint) {
-              // 모든 월에 동일하게 "M월" 형식으로 표시
               return ChartAxisLabel(
                 '${date.month}월',
                 details.textStyle,
               );
             }
           }
-          return ChartAxisLabel(details.text, details.textStyle);
+          return ChartAxisLabel('', details.textStyle); // 빈 레이블 반환하여 표시 안함
         },
+        // 8. X축 플롯 오프셋 설정으로 정확한 위치 조정
+        plotOffset: 0,
       ),
       primaryYAxis: NumericAxis(
         numberFormat: NumberFormat.compact(locale: 'ko'),
@@ -582,7 +594,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         labelFormat: '{value}원',
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
       ),
-      // 툴팁 설정 수정 - 간결하고 현대적인 디자인
+      // 툴팁 설정
       tooltipBehavior: TooltipBehavior(
         enable: true,
         color: Colors.white,
@@ -602,13 +614,15 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           dataSource: chartData,
           xValueMapper: (ExpenseData data, _) => data.date,
           yValueMapper: (ExpenseData data, _) => data.amount,
-          xAxisName: 'primaryXAxis', // 명시적으로 X축 이름 지정
-          name: '', // 빈 이름으로 설정하여 'Series 0' 제거
+          // 9. 정확한 X축 이름 지정
+          xAxisName: 'primaryXAxis',
+          name: '',
           borderRadius: BorderRadius.circular(4),
-          width: 0.6,
-          // 애니메이션 지속 시간 - 슬라이딩 중 최적화
+          // 10. 너비 조정으로 막대 위치 개선
+          width: 0.8,
+          // 애니메이션 지속 시간
           animationDuration: widget.controller.isSliding.value ? 200 : 300,
-          // 막대 색상 설정 - 마지막 항목만 강조
+          // 막대 색상 설정 - 마지막 항목 강조
           pointColorMapper: (ExpenseData data, index) {
             return index == chartData.length - 1
                 ? AppColors.primary
@@ -619,22 +633,19 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             labelAlignment: ChartDataLabelAlignment.top,
             textStyle: TextStyle(fontSize: 10, color: Colors.black),
           ),
-          onPointTap: (ChartPointDetails details) {
-            // 터치 이벤트 처리 (필요시)
-          },
-          // 툴팁 커스터마이징
-          enableTooltip: true,
-          // 데이터 정렬 추가
+          // 11. 데이터 정렬을 확실히 하기 위한 설정
           sortingOrder: SortingOrder.ascending,
           sortFieldValueMapper: (ExpenseData data, _) => data.date,
+          // 12. 스페이싱 모드 추가
+          spacing: 0.2,
+          enableTooltip: true,
         ),
       ],
-      // 막대 차트에도 동일한 툴팁 렌더링 로직 적용
+      // 툴팁 렌더링 이벤트
       onTooltipRender: (TooltipArgs args) {
         if (args.pointIndex != null) {
           final pointIndex = args.pointIndex!.toInt();
 
-          // 시리즈 인덱스를 확인하여 올바른 차트 데이터 접근
           if (pointIndex >= 0 && pointIndex < chartData.length) {
             final data = chartData[pointIndex];
             args.text = '${data.formattedMonthYear}\n₩ ${_formatAmount(data.amount)}';
