@@ -185,8 +185,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
               children: [
                 // 메인 차트
                 _showLineChart.value
-                    ? _buildLineChart(chartData, yearChanges)
-                    : _buildColumnChart(chartData, yearChanges),
+                    ? _buildLineChart(chartData, yearChanges.cast<int, DateTime>())
+                    : _buildColumnChart(chartData, yearChanges.cast<int, DateTime>()),
 
                 // 년도 변경 표시 오버레이
                 _buildYearOverlay(chartData, yearChanges),
@@ -234,110 +234,79 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
     });
   }
 
-  // 년도 변경 지점 수동 설정 (완전히 새로운 접근법)
-  Map<int, DateTime> _getYearChanges(List<ExpenseData> chartData) {
-    // 차트에 표시된 데이터의 년도를 확인
-    Set<int> yearsInChart = {};
+  // 년도 변경 지점 계산 - 정확히 12월과 1월 사이 중앙에 위치하도록 수정
+  Map<String, List<Object>> _getYearChanges(List<ExpenseData> chartData) {
+    // 차트에 표시된 데이터의 년도-월 정보 수집
+    Map<int, List<int>> yearMonths = {};
     for (var data in chartData) {
-      yearsInChart.add(data.year);
+      if (!yearMonths.containsKey(data.year)) {
+        yearMonths[data.year] = [];
+      }
+      if (!yearMonths[data.year]!.contains(data.date.month)) {
+        yearMonths[data.year]!.add(data.date.month);
+      }
     }
 
-    // 결과 맵 (인덱스가 아닌 년도를 키로 사용)
-    Map<int, DateTime> yearChanges = {};
+    // 결과를 저장할 맵 (특정 키와 위치 정보)
+    Map<String, List<Object>> result = {};
 
-    // 변경된 년도가 있는 경우만 처리
-    if (yearsInChart.length > 1) {
-      // 년도 목록 정렬
-      List<int> years = yearsInChart.toList()..sort();
+    // 년도가 2개 이상일 때만 처리
+    if (yearMonths.length > 1) {
+      // 년도 리스트 정렬
+      List<int> years = yearMonths.keys.toList()..sort();
 
-      // 각 년도 변경에 대해
+      // 각 년도 변화에 대해
       for (int i = 0; i < years.length - 1; i++) {
         int currentYear = years[i];
         int nextYear = years[i + 1];
 
-        // 이전 년도의 마지막 데이터 포인트 찾기
-        int lastIndexOfCurrentYear = -1;
-        for (int j = chartData.length - 1; j >= 0; j--) {
-          if (chartData[j].year == currentYear) {
-            lastIndexOfCurrentYear = j;
-            break;
-          }
-        }
+        // 년도 라벨을 고정 비율 위치에 배치 (12월과 1월 사이 중앙)
+        // 실제 데이터와 상관없이, 12월과 1월 사이 정확한 위치에 배치
 
-        // 다음 년도의 첫 데이터 포인트 찾기
-        int firstIndexOfNextYear = -1;
-        for (int j = 0; j < chartData.length; j++) {
-          if (chartData[j].year == nextYear) {
-            firstIndexOfNextYear = j;
-            break;
-          }
-        }
+        // 변경: 위치를 chartData의 인덱스가 아닌
+        // 날짜 범위 내 상대적 위치로 계산 (0.0 ~ 1.0)
 
-        // 두 인덱스 사이의 중간 지점 계산 (년도 변경선을 위한 위치)
-        if (lastIndexOfCurrentYear != -1 && firstIndexOfNextYear != -1) {
-          // 중간 지점 계산
-          int middleIndex = lastIndexOfCurrentYear;
+        // 전체 차트 날짜 범위
+        DateTime chartStart = chartData.first.date;
+        DateTime chartEnd = chartData.last.date;
+        int totalDays = chartEnd.difference(chartStart).inDays;
 
-          // 년도 변경 정보 저장 (인덱스와 다음 년도)
-          yearChanges[middleIndex] = DateTime(nextYear, 1, 1);
+        // 년도 변경 지점 날짜 (12월 31일과 1월 1일의 중간점)
+        DateTime yearChangeDate = DateTime(currentYear, 12, 31);
+
+        // 중간점의 상대적 위치 계산 (전체 차트 범위 내에서 비율)
+        double relativePosition = yearChangeDate.difference(chartStart).inDays / totalDays;
+
+        // 위치가 0과 1 사이에 있을 때만 표시
+        if (relativePosition >= 0 && relativePosition <= 1) {
+          result["${currentYear}_${nextYear}"] = [
+            nextYear.toString(),  // 표시할 년도
+            relativePosition,     // 상대적 위치 (0.0 ~ 1.0)
+            yearChangeDate,       // 날짜 객체
+          ];
         }
       }
     }
 
-    return yearChanges;
+    return result;
   }
 
-  // 년도 변경 오버레이 위젯 - 개선된 버전
-  Widget _buildYearOverlay(List<ExpenseData> chartData, Map<int, DateTime> yearChanges) {
+  // 년도 변경 오버레이 위젯 - 완전히 새롭게 개선
+  Widget _buildYearOverlay(List<ExpenseData> chartData, Map<String, List<Object>> yearChanges) {
     if (yearChanges.isEmpty) return const SizedBox();
-
-    // 그래프 전체 기간
-    final startDate = chartData.first.date;
-    final endDate = chartData.last.date;
-    final totalDays = endDate.difference(startDate).inDays + 1;
 
     return LayoutBuilder(
         builder: (context, constraints) {
           return Stack(
             children: yearChanges.entries.map((entry) {
-              final index = entry.key;
-              final changeDate = entry.value;
-              final year = _yearFormat.format(changeDate);
-
-              // 위치 계산 개선
-              double position;
-
-              // 인덱스가 chartData의 범위 내에 있는지 확인
-              if (index >= 0 && index < chartData.length) {
-                // 현재 데이터 포인트 기준 위치 계산
-                final currentDate = chartData[index].date;
-
-                // 다음 데이터 포인트가 있는 경우 두 포인트 사이에 배치
-                if (index + 1 < chartData.length) {
-                  final nextDate = chartData[index + 1].date;
-
-                  // 두 데이터 포인트 사이의 비율 계산
-                  final currentDaysPassed = currentDate.difference(startDate).inDays;
-                  final nextDaysPassed = nextDate.difference(startDate).inDays;
-
-                  // 두 포인트 사이의 거리를 7:3 비율로 나누어 위치 결정 (년도 변경선이 12월에 더 가깝게)
-                  final weightedDays = currentDaysPassed + (nextDaysPassed - currentDaysPassed) * 0.7;
-                  position = weightedDays / totalDays * constraints.maxWidth;
-                } else {
-                  // 마지막 데이터 포인트인 경우 해당 포인트 바로 앞에 배치
-                  final daysPassed = currentDate.difference(startDate).inDays - 1;
-                  position = daysPassed / totalDays * constraints.maxWidth;
-                }
-              } else {
-                // 안전 장치: 인덱스가 범위를 벗어난 경우 기본 위치 (30%)
-                position = constraints.maxWidth * 0.3;
-              }
+              final year = entry.value[0] as String;
+              final position = (entry.value[1] as double) * constraints.maxWidth;
 
               // 경계 검사: 화면 밖으로 벗어나지 않도록
-              position = position.clamp(5.0, constraints.maxWidth - 30);
+              final adjustedPosition = position.clamp(10.0, constraints.maxWidth - 30);
 
               return Positioned(
-                left: position,
+                left: adjustedPosition,
                 top: 0,
                 bottom: 0,
                 child: Stack(
