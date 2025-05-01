@@ -165,7 +165,6 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
     );
   }
 
-  // 고정된 월 선택 컨트롤러 위젯
   Widget _buildMonthSelectorBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -183,9 +182,14 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
     );
   }
 
+
   Widget _buildMonthSelector() {
     return Obx(() {
+      final isCurrentMonth = _controller.selectedMonth.value.year == DateTime.now().year &&
+          _controller.selectedMonth.value.month == DateTime.now().month;
+
       return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -213,65 +217,203 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
               onTap: _controller.goToPreviousMonth,
             ),
 
-            // 현재 선택된 월 표시 - 클릭하면 현재 달로 이동
-            GestureDetector(
-              onTap: _controller.goToCurrentMonth,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
+            // 월 선택 및 현재 월 버튼
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 월 선택 드롭다운 버튼
+                InkWell(
+                  onTap: () => _showMonthPickerDialog(context),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _controller.getMonthYearString(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(
+                          Icons.arrow_drop_down,
+                          size: 18,
+                          color: Colors.black54,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.calendar_today_rounded,
-                      size: 16,
-                      color: AppColors.primary,
+
+                // 현재 월로 이동 버튼 (항상 표시되도록 수정)
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _controller.goToCurrentMonth,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isCurrentMonth ? Colors.grey.shade100 : AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _controller.getMonthYearString(),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.today,
+                          size: 12,
+                          color: isCurrentMonth ? Colors.grey : AppColors.primary,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 2),
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 16,
-                      color: Colors.black54,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
 
-            // 다음 달로 이동 버튼 - 현재 달 이후는 비활성화
+            // 다음 달로 이동 버튼
             _buildNavigationButton(
               icon: Icons.chevron_right,
-              onTap: _controller.selectedMonth.value.year == DateTime.now().year &&
-                  _controller.selectedMonth.value.month == DateTime.now().month
-                  ? null
-                  : _controller.goToNextMonth,
-              isDisabled: _controller.selectedMonth.value.year == DateTime.now().year &&
-                  _controller.selectedMonth.value.month == DateTime.now().month,
+              onTap: isCurrentMonth ? null : _controller.goToNextMonth,
+              isDisabled: isCurrentMonth,
             ),
           ],
         ),
       );
     });
+  }
+
+  Future<void> _showMonthPickerDialog(BuildContext context) async {
+    final initialDate = _controller.selectedMonth.value;
+    int selectedYear = initialDate.year;
+
+    final result = await showDialog<DateTime>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      setState(() {
+                        selectedYear--;
+                      });
+                    },
+                  ),
+                  Text('$selectedYear년', style: const TextStyle(fontSize: 16)),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: selectedYear >= DateTime.now().year ? null : () {
+                      setState(() {
+                        selectedYear++;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 300,
+                height: 180,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    childAspectRatio: 1.5,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                  ),
+                  itemCount: 12,
+                  itemBuilder: (context, index) {
+                    final month = index + 1;
+                    final isSelected = month == initialDate.month && selectedYear == initialDate.year;
+                    final isDisabled = selectedYear == DateTime.now().year && month > DateTime.now().month;
+
+                    return InkWell(
+                      onTap: isDisabled ? null : () {
+                        Navigator.of(context).pop(DateTime(selectedYear, month, 1));
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primary : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$month월',
+                            style: TextStyle(
+                              color: isDisabled
+                                  ? Colors.grey.shade400
+                                  : isSelected ? Colors.white : Colors.black87,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('취소', style: TextStyle(color: Colors.grey)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(DateTime(
+                      DateTime.now().year,
+                      DateTime.now().month,
+                      1,
+                    ));
+                  },
+                  child: const Text('오늘', style: TextStyle(color: AppColors.primary)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      _controller.selectedMonth.value = result;
+    }
   }
 
   Widget _buildNavigationButton({
