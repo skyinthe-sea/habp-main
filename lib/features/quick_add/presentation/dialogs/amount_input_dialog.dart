@@ -144,12 +144,14 @@ class _AmountInputDialogState extends State<AmountInputDialog>
   }
 
   /// Updates the amount based on angle change with reduced sensitivity
+  /// Updates the amount based on angle change with improved acceleration and precision
   void _updateAmountFromAngleChange(double angleChange) {
     // Calculate rotation speed for sensitivity
     final now = DateTime.now().millisecondsSinceEpoch;
     final timeDelta = now - _lastUpdateTime;
     if (timeDelta > 0) {
-      _rotationSpeed = angleChange / timeDelta * 100; // Adjust for reasonable values
+      // Greatly reduce the speed multiplier to lower overall sensitivity
+      _rotationSpeed = angleChange / timeDelta * 50; // Reduced from 200 to 50
     }
     _lastUpdateTime = now;
 
@@ -157,8 +159,8 @@ class _AmountInputDialogState extends State<AmountInputDialog>
     _cumulativeAngleChange += angleChange;
 
     // 누적된 각도 변화가 임계값을 넘을 때만 금액 변경
-    // 임계값 증가 (5도) - 더 큰 회전이 필요하도록 설정
-    final double angleThreshold = 5.0;
+    // 임계값 증가 (8도) - 더 의도적인 회전이 필요하도록 설정
+    final double angleThreshold = 8.0; // Increased from 3.0 to 8.0 to require more movement
 
     // 금액 변경 계산
     int amountChange = 0;
@@ -167,15 +169,35 @@ class _AmountInputDialogState extends State<AmountInputDialog>
       // 누적 각도의 방향에 따라 금액 변경
       final int direction = _cumulativeAngleChange > 0 ? 1 : -1;
 
-      // 기본 변화량 1,000원
-      amountChange = direction * 1000;
+      // 기본 변화량 10원
+      amountChange = direction * 10;
 
-      // 회전 속도에 따른 배율 적용 (민감도 감소)
-      // 속도 영향 계수 감소 및 임계값 증가
-      if (_rotationSpeed.abs() > 1.5) {
-        // 속도 영향을 완화하기 위해 배율 조정
-        amountChange *= (1 + math.min(3, _rotationSpeed.abs() / 2)).round();
+      // 회전 속도에 따른 배율 적용 (가속도 효과 조정)
+      double speedFactor = 1.0;
+
+      // 속도 범위 재조정 - 훨씬 더 높은 속도에서만 큰 변화가 발생하도록
+      if (_rotationSpeed.abs() > 0.8 && _rotationSpeed.abs() <= 2.0) {
+        // 약간 빠름: 10원 → 50원
+        speedFactor = 5;
+      } else if (_rotationSpeed.abs() > 2.0 && _rotationSpeed.abs() <= 4.0) {
+        // 중간 속도: 10원 → 100원
+        speedFactor = 10;
+      } else if (_rotationSpeed.abs() > 4.0 && _rotationSpeed.abs() <= 6.0) {
+        // 빠름: 10원 → 500원
+        speedFactor = 50;
+      } else if (_rotationSpeed.abs() > 6.0 && _rotationSpeed.abs() <= 10.0) {
+        // 더 빠름: 10원 → 1,000원
+        speedFactor = 100;
+      } else if (_rotationSpeed.abs() > 10.0 && _rotationSpeed.abs() <= 15.0) {
+        // 매우 빠름: 10원 → 10,000원
+        speedFactor = 1000;
+      } else if (_rotationSpeed.abs() > 15.0) {
+        // 극도로 빠름: 10원 → 100,000원
+        speedFactor = 10000; // 백만원은 제거하고 최대 10만원으로 제한
       }
+
+      // 속도 배율 적용
+      amountChange = (amountChange * speedFactor).round();
 
       // 누적 각도 초기화 (임계값의 나머지만 보존)
       _cumulativeAngleChange = _cumulativeAngleChange % angleThreshold;
@@ -192,10 +214,16 @@ class _AmountInputDialogState extends State<AmountInputDialog>
       if (newAmount != currentAmount) {
         final formatted = _formatAmount(newAmount.toString());
         _amountController.text = formatted;
+
+        // 햅틱 피드백 추가 (진동 효과를 통한 사용자 경험 개선)
+        if (amountChange.abs() >= 1000) {
+          HapticFeedback.mediumImpact();
+        } else if (amountChange.abs() >= 100) {
+          HapticFeedback.lightImpact();
+        }
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<QuickAddController>();
