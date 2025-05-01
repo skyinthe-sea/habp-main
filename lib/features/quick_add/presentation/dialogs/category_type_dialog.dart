@@ -86,7 +86,7 @@ class CategoryTypeDialog extends StatelessWidget {
                 Expanded(
                   child: _buildTypeButton(
                     context: context,
-                    icon: Icons.arrow_downward_rounded,
+                    icon: Icons.monetization_on,
                     label: '소득',
                     color: Colors.green[600]!,
                     type: 'INCOME',
@@ -101,7 +101,7 @@ class CategoryTypeDialog extends StatelessWidget {
                 Expanded(
                   child: _buildTypeButton(
                     context: context,
-                    icon: Icons.arrow_upward_rounded,
+                    icon: Icons.payment,
                     label: '지출',
                     color: AppColors.primary,
                     type: 'EXPENSE',
