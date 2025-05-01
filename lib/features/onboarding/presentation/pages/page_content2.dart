@@ -1,11 +1,12 @@
-// lib/features/onboarding/presentation/pages/page_content2.dart
+// lib/features/onboarding/presentation/pages/page_content1.dart
+// (Apply similar modifications to PageContent2 and PageContent3)
 
 import 'package:flutter/material.dart';
 import 'package:gif_view/gif_view.dart';
-import 'package:habp/features/onboarding/presentation/widgets/page_content2_alert.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../widgets/blinking_text_button.dart'; // Using our new component
+import '../widgets/blinking_text_button.dart';
+import '../widgets/page_content2_alert.dart';
 import '../widgets/wave_background.dart';
 
 class PageContent2 extends StatefulWidget {
@@ -139,7 +140,7 @@ class _PageContent2State extends State<PageContent2> with SingleTickerProviderSt
 
                             const SizedBox(height: 8),
 
-                            // Second text (Row)
+                            // Second text (Row with BlinkingTextButton)
                             AnimatedOpacity(
                               opacity: _textAnimations[1].value,
                               duration: const Duration(milliseconds: 200), // Faster animation
@@ -149,16 +150,28 @@ class _PageContent2State extends State<PageContent2> with SingleTickerProviderSt
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    // Using new BlinkingTextButton instead of UnderlineButton
-                                    BlinkingTextButton(
-                                      text: '종류와 액수',
-                                      fontSize: standardFontSize,
+                                    // Wrap BlinkingTextButton with GestureDetector to prevent tap events from propagating
+                                    GestureDetector(
                                       onTap: () {
+                                        // Show dialog when tapped
                                         showDialog(
                                           context: context,
                                           builder: (_) => const PageContent2Alert(),
                                         );
                                       },
+                                      // This is critical - it prevents the tap from propagating to parent
+                                      behavior: HitTestBehavior.opaque,
+                                      child: BlinkingTextButton(
+                                        text: '종류와 액수',
+                                        fontSize: standardFontSize,
+                                        onTap: () {
+                                          // Show dialog when tapped
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => const PageContent2Alert(),
+                                          );
+                                        },
+                                      ),
                                     ),
                                     FittedBox(
                                       fit: BoxFit.scaleDown,

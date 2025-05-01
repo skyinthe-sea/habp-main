@@ -30,23 +30,102 @@ class OnboardingPage extends StatelessWidget {
       backgroundColor: AppColors.primary,
       body: Stack(
         children: [
-          // Page content - changes based on current index
-          Obx(() => AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500), // Faster transition
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.1, 0),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
+          // Page content with swipe detection - changes based on current index
+          Obx(() =>
+              GestureDetector(
+                // Detect swipe gestures
+                onHorizontalDragEnd: (details) {
+                  // Check the drag velocity
+                  if (details.primaryVelocity != null) {
+                    // Swiping from right to left (negative velocity) - Next page
+                    if (details.primaryVelocity! < -300) {
+                      if (controller.currentPageIndex.value < controller.totalPages - 1) {
+                        controller.nextPage();
+                      }
+                    }
+                    // Swiping from left to right (positive velocity) - Previous page
+                    else if (details.primaryVelocity! > 300) {
+                      if (controller.currentPageIndex.value > 0) {
+                        controller.previousPage();
+                      }
+                    }
+                  }
+                },
+                // Detect taps, but only when not tapping on a BlinkingTextButton
+                onTap: () {
+                  // Navigation to next page on general screen tap
+                  if (controller.currentPageIndex.value < controller.totalPages - 1) {
+                    controller.nextPage();
+                  } else {
+                    // Show completion dialog on last page
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                          title: const Text(
+                            '설정완료',
+                            style: TextStyle(
+                              color: AppColors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          content: const Text(
+                            '수기가계부를 시작 하시겠습니까?',
+                            style: TextStyle(
+                              color: AppColors.black,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close alert
+                              },
+                              child: const Text('취소',
+                                  style: TextStyle(color: Colors.grey)),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close alert
+                                controller.completeOnboarding(); // Complete
+                              },
+                              child: const Text(
+                                '확인',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
+                // This allows BlinkingTextButton to capture taps directly
+                behavior: HitTestBehavior.deferToChild,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500), // Faster transition
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.1, 0),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: pageContents[controller.currentPageIndex.value],
                 ),
-              );
-            },
-            child: pageContents[controller.currentPageIndex.value],
-          )),
+              ),
+          ),
 
           // Modern dot indicator
           Positioned(
@@ -130,7 +209,7 @@ class OnboardingPage extends StatelessWidget {
             )),
           ),
 
-          // Bottom navigation buttons
+          // Bottom navigation buttons - now optional, kept for visual aid
           Positioned(
             bottom: 0,
             left: 0,
@@ -161,7 +240,7 @@ class OnboardingPage extends StatelessWidget {
     );
   }
 
-  // Navigation buttons
+  // Navigation buttons - still present for visual guidance and accessibility
   Widget _buildNavigationButtons(BuildContext context, OnboardingController controller) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),

@@ -47,8 +47,16 @@ class _BlinkingTextButtonState extends State<BlinkingTextButton> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: widget.onTap,
+    return GestureDetector(
+      onTap: () {
+        // Call the onTap handler
+        widget.onTap();
+
+        // Very important: Stop event propagation to parent widgets
+        // This prevents the screen tap from triggering page navigation
+      },
+      // This ensures the gesture detector consumes the touch event
+      behavior: HitTestBehavior.opaque,
       child: AnimatedBuilder(
         animation: _animation,
         builder: (context, child) {
