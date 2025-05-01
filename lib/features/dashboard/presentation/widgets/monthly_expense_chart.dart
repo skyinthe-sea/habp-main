@@ -27,6 +27,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   // 포맷터 정의
   final DateFormat _monthYearFormat = DateFormat('yyyy년 M월');
   final DateFormat _monthFormat = DateFormat('M월');
+  final DateFormat _yearFormat = DateFormat('yyyy');
 
   @override
   void initState() {
@@ -94,6 +95,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             // 일관된 포맷팅 적용
             formattedMonth: _monthFormat.format(expense.date),
             formattedMonthYear: _monthYearFormat.format(expense.date),
+            year: expense.date.year,
           )
       ).toList();
 
@@ -103,6 +105,9 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
       // 선택된 월 (마지막 데이터)
       final selectedMonth = expenses.last.date;
       final selectedMonthText = _monthYearFormat.format(selectedMonth);
+
+      // 년도 구분 표시를 위한 데이터 준비
+      final yearChanges = _getYearChanges(chartData);
 
       // 현재 slider 값 가져오기 (sliding 중이면 sliderMonthRange, 아니면 monthRange)
       final currentRangeValue = widget.controller.isSliding.value
@@ -173,12 +178,20 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             ),
           ),
 
-          // 차트 영역
+          // 차트 영역 (년도 표시 줄 포함)
           SizedBox(
             height: 220,
-            child: _showLineChart.value
-                ? _buildLineChart(chartData)
-                : _buildColumnChart(chartData),
+            child: Stack(
+              children: [
+                // 메인 차트
+                _showLineChart.value
+                    ? _buildLineChart(chartData, yearChanges)
+                    : _buildColumnChart(chartData, yearChanges),
+
+                // 년도 변경 표시 오버레이
+                _buildYearOverlay(chartData, yearChanges),
+              ],
+            ),
           ),
 
           // 개월 수 조절 슬라이더 (차트 아래로 이동)
@@ -221,8 +234,159 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
     });
   }
 
+  // 년도 변경 지점 수동 설정 (완전히 새로운 접근법)
+  Map<int, DateTime> _getYearChanges(List<ExpenseData> chartData) {
+    // 차트에 표시된 데이터의 년도를 확인
+    Set<int> yearsInChart = {};
+    for (var data in chartData) {
+      yearsInChart.add(data.year);
+    }
+
+    // 결과 맵 (인덱스가 아닌 년도를 키로 사용)
+    Map<int, DateTime> yearChanges = {};
+
+    // 변경된 년도가 있는 경우만 처리
+    if (yearsInChart.length > 1) {
+      // 년도 목록 정렬
+      List<int> years = yearsInChart.toList()..sort();
+
+      // 각 년도 변경에 대해
+      for (int i = 0; i < years.length - 1; i++) {
+        int currentYear = years[i];
+        int nextYear = years[i + 1];
+
+        // 이전 년도의 마지막 데이터 포인트 찾기
+        int lastIndexOfCurrentYear = -1;
+        for (int j = chartData.length - 1; j >= 0; j--) {
+          if (chartData[j].year == currentYear) {
+            lastIndexOfCurrentYear = j;
+            break;
+          }
+        }
+
+        // 다음 년도의 첫 데이터 포인트 찾기
+        int firstIndexOfNextYear = -1;
+        for (int j = 0; j < chartData.length; j++) {
+          if (chartData[j].year == nextYear) {
+            firstIndexOfNextYear = j;
+            break;
+          }
+        }
+
+        // 두 인덱스 사이의 중간 지점 계산 (년도 변경선을 위한 위치)
+        if (lastIndexOfCurrentYear != -1 && firstIndexOfNextYear != -1) {
+          // 중간 지점 계산
+          int middleIndex = lastIndexOfCurrentYear;
+
+          // 년도 변경 정보 저장 (인덱스와 다음 년도)
+          yearChanges[middleIndex] = DateTime(nextYear, 1, 1);
+        }
+      }
+    }
+
+    return yearChanges;
+  }
+
+  // 년도 변경 오버레이 위젯 - 개선된 버전
+  Widget _buildYearOverlay(List<ExpenseData> chartData, Map<int, DateTime> yearChanges) {
+    if (yearChanges.isEmpty) return const SizedBox();
+
+    // 그래프 전체 기간
+    final startDate = chartData.first.date;
+    final endDate = chartData.last.date;
+    final totalDays = endDate.difference(startDate).inDays + 1;
+
+    return LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            children: yearChanges.entries.map((entry) {
+              final index = entry.key;
+              final changeDate = entry.value;
+              final year = _yearFormat.format(changeDate);
+
+              // 위치 계산 개선
+              double position;
+
+              // 인덱스가 chartData의 범위 내에 있는지 확인
+              if (index >= 0 && index < chartData.length) {
+                // 현재 데이터 포인트 기준 위치 계산
+                final currentDate = chartData[index].date;
+
+                // 다음 데이터 포인트가 있는 경우 두 포인트 사이에 배치
+                if (index + 1 < chartData.length) {
+                  final nextDate = chartData[index + 1].date;
+
+                  // 두 데이터 포인트 사이의 비율 계산
+                  final currentDaysPassed = currentDate.difference(startDate).inDays;
+                  final nextDaysPassed = nextDate.difference(startDate).inDays;
+
+                  // 두 포인트 사이의 거리를 7:3 비율로 나누어 위치 결정 (년도 변경선이 12월에 더 가깝게)
+                  final weightedDays = currentDaysPassed + (nextDaysPassed - currentDaysPassed) * 0.7;
+                  position = weightedDays / totalDays * constraints.maxWidth;
+                } else {
+                  // 마지막 데이터 포인트인 경우 해당 포인트 바로 앞에 배치
+                  final daysPassed = currentDate.difference(startDate).inDays - 1;
+                  position = daysPassed / totalDays * constraints.maxWidth;
+                }
+              } else {
+                // 안전 장치: 인덱스가 범위를 벗어난 경우 기본 위치 (30%)
+                position = constraints.maxWidth * 0.3;
+              }
+
+              // 경계 검사: 화면 밖으로 벗어나지 않도록
+              position = position.clamp(5.0, constraints.maxWidth - 30);
+
+              return Positioned(
+                left: position,
+                top: 0,
+                bottom: 0,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // 세로 구분선
+                    Container(
+                      width: 1,
+                      color: Colors.grey.withOpacity(0.3),
+                    ),
+                    // 년도 표시 뱃지
+                    Positioned(
+                      top: 10,
+                      left: 2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.pink.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          year,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          );
+        }
+    );
+  }
+
   // 라인 차트 구현 - 수정됨
-  Widget _buildLineChart(List<ExpenseData> chartData) {
+  Widget _buildLineChart(List<ExpenseData> chartData, Map<int, DateTime> yearChanges) {
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
@@ -237,7 +401,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
         rangePadding: ChartRangePadding.none, // Changed from 'round' to 'none' for exact alignment
         desiredIntervals: chartData.length > 6 ? 6 : chartData.length, // Limit interval count
-        // 년도는 1월에만 표시하도록 수정
+        // 단순히 월만 표시하도록 수정
         axisLabelFormatter: (AxisLabelRenderDetails details) {
           if (details.value is num) {
             final DateTime date = DateTime.fromMillisecondsSinceEpoch(details.value.floor());
@@ -247,20 +411,11 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             data.date.year == date.year && data.date.month == date.month);
 
             if (isDataPoint) {
-              // 1월인 경우에만 연도 표시
-              if (date.month == 1) {
-                return ChartAxisLabel(
-                  '${date.year}년\n${date.month}월',
-                  details.textStyle,
-                );
-              }
-              // 다른 월은 월만 표시
-              else {
-                return ChartAxisLabel(
-                  '${date.month}월',
-                  details.textStyle,
-                );
-              }
+              // 모든 월에 동일하게 "M월" 형식으로 표시
+              return ChartAxisLabel(
+                '${date.month}월',
+                details.textStyle,
+              );
             }
           }
           return ChartAxisLabel(details.text, details.textStyle);
@@ -290,7 +445,6 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
-        // 커스텀 빌더는 제거하고 onTooltipRender 이벤트로 처리
       ),
       series: <CartesianSeries<ExpenseData, DateTime>>[
         // 스플라인 시리즈
@@ -335,7 +489,6 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           // 각 데이터 포인트의 정확한 날짜를 X축에 맞추기 위한 설정
           sortingOrder: SortingOrder.ascending,
           sortFieldValueMapper: (ExpenseData data, _) => data.date,
-          // 'Series 0' 네이밍 제거
         ),
         // 마지막 데이터 포인트 강조를 위한 별도 시리즈
         ScatterSeries<ExpenseData, DateTime>(
@@ -390,7 +543,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   }
 
   // 컬럼(막대) 차트 구현 - 수정됨
-  Widget _buildColumnChart(List<ExpenseData> chartData) {
+  Widget _buildColumnChart(List<ExpenseData> chartData, Map<int, DateTime> yearChanges) {
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
@@ -402,7 +555,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         labelStyle: const TextStyle(color: Colors.grey, fontSize: 10),
         rangePadding: ChartRangePadding.none, // Changed from 'round' to 'none' for exact alignment
         desiredIntervals: chartData.length > 6 ? 6 : chartData.length, // Limit interval count
-        // 년도는 1월에만 표시하도록 수정
+        // 단순히 월만 표시하도록 수정
         axisLabelFormatter: (AxisLabelRenderDetails details) {
           if (details.value is num) {
             final DateTime date = DateTime.fromMillisecondsSinceEpoch(details.value.floor());
@@ -412,20 +565,11 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             data.date.year == date.year && data.date.month == date.month);
 
             if (isDataPoint) {
-              // 1월인 경우에만 연도 표시
-              if (date.month == 1) {
-                return ChartAxisLabel(
-                  '${date.year}년\n${date.month}월',
-                  details.textStyle,
-                );
-              }
-              // 다른 월은 월만 표시
-              else {
-                return ChartAxisLabel(
-                  '${date.month}월',
-                  details.textStyle,
-                );
-              }
+              // 모든 월에 동일하게 "M월" 형식으로 표시
+              return ChartAxisLabel(
+                '${date.month}월',
+                details.textStyle,
+              );
             }
           }
           return ChartAxisLabel(details.text, details.textStyle);
@@ -483,7 +627,6 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           // 데이터 정렬 추가
           sortingOrder: SortingOrder.ascending,
           sortFieldValueMapper: (ExpenseData data, _) => data.date,
-          // 'Series 0' 네이밍 제거
         ),
       ],
       // 막대 차트에도 동일한 툴팁 렌더링 로직 적용
@@ -522,17 +665,19 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   }
 }
 
-// 차트 데이터 모델 (동일하게 유지)
+// 차트 데이터 모델 (연도 필드 추가)
 class ExpenseData {
   final DateTime date;
   final double amount;
   final String formattedMonth;
   final String formattedMonthYear;
+  final int year;  // 연도 필드 추가
 
   ExpenseData({
     required this.date,
     required this.amount,
     required this.formattedMonth,
     required this.formattedMonthYear,
+    required this.year,
   });
 }
