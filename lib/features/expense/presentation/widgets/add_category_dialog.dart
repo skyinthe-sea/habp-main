@@ -22,6 +22,9 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
   bool isLoading = false;
   bool isButtonEnabled = false;
 
+  // 고정 카테고리 리스트
+  final List<String> fixedCategories = ['통신비', '보험', '월세'];
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +36,36 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
     setState(() {
       isButtonEnabled = categoryNameController.text.trim().isNotEmpty;
     });
+  }
+
+  // 고정 카테고리 알림 다이얼로그 표시
+  void _showFixedCategoryAlert(BuildContext context, String categoryName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('고정 카테고리 알림'),
+          content: Text(
+            '\'$categoryName\'은(는) 기본 고정 카테고리로 이미 존재합니다. 고정 카테고리는 사용자가 변경할 수 없습니다.',
+            style: const TextStyle(fontSize: 14),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+              child: const Text(
+                '확인',
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -145,12 +178,20 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                     onPressed: isLoading || !isButtonEnabled
                         ? null
                         : () async {
+                      final categoryName = categoryNameController.text.trim();
+
+                      // 고정 카테고리인지 확인
+                      if (fixedCategories.contains(categoryName)) {
+                        _showFixedCategoryAlert(context, categoryName);
+                        return;
+                      }
+
                       setState(() {
                         isLoading = true;
                       });
 
                       final category = await widget.controller.addCategory(
-                        name: categoryNameController.text,
+                        name: categoryName,
                       );
 
                       if (category != null) {
