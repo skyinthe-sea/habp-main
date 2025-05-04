@@ -5,7 +5,9 @@ import '../models/category_model.dart';
 
 abstract class ExpenseLocalDataSource {
   Future<List<BudgetStatusModel>> getBudgetStatus(int userId, String period);
+
   Future<List<CategoryModel>> getVariableExpenseCategories();
+
   Future<bool> addBudget({
     required int userId,
     required int categoryId,
@@ -13,12 +15,15 @@ abstract class ExpenseLocalDataSource {
     required String periodStart,
     required String periodEnd,
   });
+
   Future<CategoryModel?> addCategory({
     required String name,
     required String type,
     required int isFixed,
   });
+
   Future<bool> deleteCategory(int categoryId);
+
   Future<bool> addExpense({
     required int userId,
     required int categoryId,
@@ -34,7 +39,8 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
   ExpenseLocalDataSourceImpl({required this.dbHelper});
 
   @override
-  Future<List<BudgetStatusModel>> getBudgetStatus(int userId, String period) async {
+  Future<List<BudgetStatusModel>> getBudgetStatus(
+      int userId, String period) async {
     final db = await dbHelper.database;
 
     try {
@@ -46,32 +52,32 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
       final startDate = DateTime(year, month, 1).toIso8601String();
       final endDate = DateTime(year, month + 1, 0).toIso8601String();
 
-      // 각 지출 카테고리별 예산 상태를 가져오는 쿼리
+      // 각 지출 카테고리별 예산 상태를 가져오는 쿼리 (삭제된 카테고리 제외)
       final result = await db.rawQuery('''
-        SELECT 
-          c.id as category_id, 
-          c.name as category_name, 
-          COALESCE(b.amount, 0) as budget_amount,
-          COALESCE(SUM(t.amount), 0) as spent_amount
-        FROM 
-          category c
-        LEFT JOIN 
-          budget b ON c.id = b.category_id 
-          AND b.user_id = ? 
-          AND b.start_date <= ? 
-          AND b.end_date >= ?
-        LEFT JOIN 
-          transaction_record t ON c.id = t.category_id 
-          AND t.user_id = ? 
-          AND t.transaction_date >= ? 
-          AND t.transaction_date <= ?
-        WHERE 
-          c.type = 'EXPENSE' AND c.is_fixed = 0 AND c.is_deleted = 0
-        GROUP BY 
-          c.id
-        ORDER BY 
-          c.name
-      ''', [userId, endDate, startDate, userId, startDate, endDate]);
+      SELECT 
+        c.id as category_id, 
+        c.name as category_name, 
+        COALESCE(b.amount, 0) as budget_amount,
+        COALESCE(SUM(t.amount), 0) as spent_amount
+      FROM 
+        category c
+      LEFT JOIN 
+        budget b ON c.id = b.category_id 
+        AND b.user_id = ? 
+        AND b.start_date <= ? 
+        AND b.end_date >= ?
+      LEFT JOIN 
+        transaction_record t ON c.id = t.category_id 
+        AND t.user_id = ? 
+        AND t.transaction_date >= ? 
+        AND t.transaction_date <= ?
+      WHERE 
+        c.type = 'EXPENSE' AND c.is_fixed = 0 AND c.is_deleted = 0
+      GROUP BY 
+        c.id
+      ORDER BY 
+        c.name
+    ''', [userId, endDate, startDate, userId, startDate, endDate]);
 
       return result.map((map) => BudgetStatusModel.fromMap(map)).toList();
     } catch (e) {
@@ -88,7 +94,7 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
       final result = await db.query(
         'category',
         where: 'type = ? AND is_fixed = ? AND is_deleted = ?',
-        whereArgs: ['EXPENSE', 0, 0],
+        whereArgs: ['EXPENSE', 0, 0],  // is_deleted = 0 조건 추가
         orderBy: 'name',
       );
 
@@ -115,7 +121,8 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
       // 기존 예산이 있는지 확인
       final existingBudget = await db.query(
         'budget',
-        where: 'user_id = ? AND category_id = ? AND start_date = ? AND end_date = ?',
+        where:
+            'user_id = ? AND category_id = ? AND start_date = ? AND end_date = ?',
         whereArgs: [userId, categoryId, periodStart, periodEnd],
       );
 
@@ -209,24 +216,22 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
           whereArgs: [categoryId],
         );
 
-        // 해당 카테고리와 관련된 거래 내역 삭제
-        // await txn.delete(
-        //   'transaction_record',
-        //   where: 'category_id = ?',
-        //   whereArgs: [categoryId],
-        // );
+        // 카테고리를 실제로 삭제하지 않고 is_deleted 플래그만 업데이트
+        final now = DateTime.now().toIso8601String();
+        final count = await txn.update(
+          'category',
+          {
+            'is_deleted': 1,
+            'updated_at': now,
+          },
+          where: 'id = ?',
+          whereArgs: [categoryId],
+        );
 
-        // 카테고리 삭제
-        // final count = await txn.delete(
-        //   'category',
-        //   where: 'id = ?',
-        //   whereArgs: [categoryId],
-        // );
-
-        // 삭제된 행이 없으면 실패
-        // if (count == 0) {
-        //   throw Exception('카테고리를 찾을 수 없습니다.');
-        // }
+        // 업데이트된 행이 없으면 실패
+        if (count == 0) {
+          throw Exception('카테고리를 찾을 수 없습니다.');
+        }
       });
 
       return true;

@@ -334,20 +334,15 @@ class ExpenseController extends GetxController {
         return false;
       }
 
-      // UI에서 즉시 카테고리 제거 (애니메이션 효과를 위해)
-      // final tempCategories = variableCategories.toList();
-      // final categoryIndex = tempCategories.indexWhere((c) => c.id == categoryId);
-      // if (categoryIndex != -1) {
-      //   tempCategories.removeAt(categoryIndex);
-      //   variableCategories.value = tempCategories;
-      // }
-
       // DB에서 카테고리 삭제
       final result = await deleteCategoryUseCase(categoryId);
 
       if (result) {
         // 예산 상태 다시 불러오기
         await fetchBudgetStatus();
+
+        // 변동 카테고리 목록도 다시 불러오기 (이 부분이 누락되어 있었음)
+        await fetchVariableCategories();
         return true;
       } else {
         // 삭제 실패 시 카테고리 목록 복원
