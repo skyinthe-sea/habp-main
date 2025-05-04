@@ -17,11 +17,14 @@ class SettingsController extends GetxController {
   final CreateFixedTransaction createFixedTransaction;
   final DeleteFixedTransaction deleteFixedTransaction;
 
+  final FixedTransactionRepository repository;
+
   SettingsController({
     required this.getFixedCategoriesByType,
     required this.addFixedTransactionSetting,
     required this.createFixedTransaction,
     required this.deleteFixedTransaction,
+    required this.repository,
   });
 
   // 상태 변수
@@ -35,6 +38,19 @@ class SettingsController extends GetxController {
 
   // EventBusService 인스턴스
   late final EventBusService _eventBusService;
+
+  Future<bool> categoryExists(String name, String type) async {
+    return await repository.categoryExists(name, type);
+  }
+
+  // 리포지토리 메서드들을 컨트롤러에서도 사용할 수 있도록 래퍼 메서드 추가
+  Future<int> addCategory(Category category) async {
+    return await repository.addCategory(category);
+  }
+
+  Future<bool> addSetting(FixedTransactionSetting setting) async {
+    return await repository.addSetting(setting);
+  }
 
   @override
   void onInit() {
@@ -99,37 +115,47 @@ class SettingsController extends GetxController {
     required DateTime effectiveFrom,
   }) async {
     try {
-      // 1. CreateFixedTransaction 유스케이스 실행
-      final success = await createFixedTransaction.execute(
+      // 1. Check if category already exists
+      final exists = await categoryExists(name, type);
+      if (exists) {
+        debugPrint('이미 존재하는 카테고리: $name, $type');
+        return false;
+      }
+
+      // 2. Create category
+      final now = DateTime.now();
+      final category = Category(
         name: name,
         type: type,
-        amount: amount,
-        effectiveFrom: effectiveFrom,
+        isFixed: 1,
+        createdAt: now,
+        updatedAt: now,
       );
 
-      if (!success) {
+      final categoryId = await addCategory(category);
+      if (categoryId <= 0) {
         debugPrint('카테고리 생성 실패');
         return false;
       }
 
-      // 2. 데이터베이스에서 해당 카테고리 ID 조회
-      final dbHelper = DBHelper();
-      final db = await dbHelper.database;
-      final List<Map<String, dynamic>> categories = await db.query(
-        'category',
-        where: 'name = ? AND type = ? AND is_deleted = ?',
-        whereArgs: [name, type, 0],
+      // 3. Create fixed transaction setting
+      final setting = FixedTransactionSetting(
+        categoryId: categoryId,
+        amount: amount,
+        effectiveFrom: effectiveFrom,
+        createdAt: now,
+        updatedAt: now,
       );
 
-      if (categories.isEmpty) {
-        debugPrint('생성된 카테고리를 찾을 수 없음');
+      final settingResult = await addSetting(setting);
+      if (!settingResult) {
+        debugPrint('설정 추가 실패');
         return false;
       }
 
-      final categoryId = categories.first['id'] as int;
-
-      // 3. transaction_record2 테이블에 데이터 생성
-      final now = DateTime.now().toIso8601String();
+      // 4. Create transaction_record2 entry
+      final dbHelper = DBHelper();
+      final db = await dbHelper.database;
 
       // 설명 생성 (매월 고정 거래로 설정)
       final description = '매월 ${_getCategoryDescription(type)}';
@@ -140,24 +166,29 @@ class SettingsController extends GetxController {
       // 사용자 ID (기본값 1로 설정, 필요시 변경)
       const userId = 1;
 
+      // 금액 부호 결정 (지출/재테크는 음수, 소득은 양수)
+      final signedAmount = type == 'EXPENSE' || type == 'FINANCE' ? -amount : amount;
+
       // transaction_record2 테이블에 데이터 삽입
       await db.insert('transaction_record2', {
         'user_id': userId,
         'category_id': categoryId,
-        'amount': type == 'EXPENSE' || type == 'FINANCE' ? -amount : amount, // 지출/재테크는 음수, 소득은 양수
+        'amount': signedAmount,
         'description': description,
         'transaction_date': DateTime(effectiveFrom.year, effectiveFrom.month, effectiveFrom.day).toIso8601String(),
         'transaction_num': transactionNum,
-        'created_at': now,
-        'updated_at': now,
+        'created_at': now.toIso8601String(),
+        'updated_at': now.toIso8601String(),
       });
 
-      // 4. 관련 모든 데이터 다시 로드
+      debugPrint('새 고정 거래 생성 완료: $name, 금액 $amount, 카테고리 ID $categoryId');
+
+      // 5. 관련 모든 데이터 다시 로드
       await loadFixedIncomeCategories();
       await loadFixedExpenseCategories();
       await loadFixedFinanceCategories();
 
-      // 5. 이벤트 발행하여 다른 컨트롤러에게 알림
+      // 6. 이벤트 발행하여 다른 컨트롤러에게 알림
       _eventBusService.emitTransactionChanged();
 
       return true;
@@ -210,15 +241,12 @@ class SettingsController extends GetxController {
       );
 
       final result = await addFixedTransactionSetting.execute(setting);
+      if (!result) {
+        debugPrint('fixed_transaction_setting 추가 실패');
+        return false;
+      }
 
-      // 2. transaction_record2 테이블에 데이터가 있는지 확인
-      final List<Map<String, dynamic>> existingTransactions = await db.query(
-        'transaction_record2',
-        where: 'category_id = ?',
-        whereArgs: [categoryId],
-      );
-
-      // 3. 해당 카테고리의 정보 가져오기
+      // 2. 해당 카테고리의 정보 가져오기
       final List<Map<String, dynamic>> categoryData = await db.query(
         'category',
         where: 'id = ?',
@@ -232,18 +260,26 @@ class SettingsController extends GetxController {
 
       final categoryType = categoryData.first['type'] as String;
 
-      // 4. transaction_record2 데이터가 없으면 새로 생성
+      // 3. transaction_record2 테이블의 기존 데이터 확인
+      final List<Map<String, dynamic>> existingTransactions = await db.query(
+        'transaction_record2',
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
+
+      final now = DateTime.now().toIso8601String();
+      // 금액 부호 결정 (지출/재테크는 음수, 소득은 양수)
+      final signedAmount = categoryType == 'EXPENSE' || categoryType == 'FINANCE' ? -amount : amount;
+
+      // 설명 생성 (매월 고정 거래로 설정)
+      final description = '매월 ${_getCategoryDescription(categoryType)}';
+
+      // transaction_num에 일자 저장 (매월 고정 거래 표시용)
+      final transactionNum = '${effectiveFrom.day}';
+
       if (existingTransactions.isEmpty) {
+        // 4a. 기존 데이터가 없으면 새로 생성
         debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 없어 생성합니다.');
-
-        // 현재 날짜 및 시간
-        final now = DateTime.now().toIso8601String();
-
-        // 설명 생성 (매월 고정 거래로 설정)
-        final description = '매월 ${_getCategoryDescription(categoryType)}';
-
-        // transaction_num에 일자 저장 (매월 고정 거래 표시용)
-        final transactionNum = '${effectiveFrom.day}';
 
         // 사용자 ID (기본값 1로 설정, 필요시 변경)
         const userId = 1;
@@ -252,7 +288,7 @@ class SettingsController extends GetxController {
         await db.insert('transaction_record2', {
           'user_id': userId,
           'category_id': categoryId,
-          'amount': categoryType == 'EXPENSE' || categoryType == 'FINANCE' ? -amount : amount, // 지출/재테크는 음수, 소득은 양수
+          'amount': signedAmount,
           'description': description,
           'transaction_date': DateTime(effectiveFrom.year, effectiveFrom.month, effectiveFrom.day).toIso8601String(),
           'transaction_num': transactionNum,
@@ -262,15 +298,34 @@ class SettingsController extends GetxController {
 
         debugPrint('새로운 고정 거래 생성 완료: 카테고리 $categoryId, 금액 $amount, 날짜 ${effectiveFrom.day}일');
       } else {
-        debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 이미 존재합니다. 새 설정만 적용됩니다.');
+        // 4b. 기존 데이터가 있으면 업데이트
+        debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 있어 업데이트합니다.');
+
+        final transactionId = existingTransactions.first['id'];
+
+        // 기존 transaction_record2 레코드 업데이트
+        await db.update(
+          'transaction_record2',
+          {
+            'amount': signedAmount,
+            'description': description,
+            'transaction_date': DateTime(effectiveFrom.year, effectiveFrom.month, effectiveFrom.day).toIso8601String(),
+            'transaction_num': transactionNum,
+            'updated_at': now,
+          },
+          where: 'id = ?',
+          whereArgs: [transactionId],
+        );
+
+        debugPrint('고정 거래 업데이트 완료: 카테고리 $categoryId, 새 금액 $amount, 날짜 ${effectiveFrom.day}일');
       }
 
-      // 관련 모든 데이터 다시 로드
+      // 5. 관련 모든 데이터 다시 로드
       await loadFixedIncomeCategories();
       await loadFixedExpenseCategories();
       await loadFixedFinanceCategories();
 
-      // 이벤트 발행하여 다른 컨트롤러에게 알림
+      // 6. 이벤트 발행하여 다른 컨트롤러에게 알림
       _eventBusService.emitTransactionChanged();
 
       return true;

@@ -106,6 +106,7 @@ class _SettingsDialogState extends State<SettingsDialog>
         addFixedTransactionSetting: addFixedTransactionSetting,
         createFixedTransaction: createFixedTransaction,
         deleteFixedTransaction: deleteFixedTransaction,
+        repository: repository,
       );
 
       Get.put(_settingsController);
