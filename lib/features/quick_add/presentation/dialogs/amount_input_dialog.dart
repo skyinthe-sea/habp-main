@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../calendar/presentation/controllers/calendar_controller.dart';
 import '../controllers/quick_add_controller.dart';
 import 'date_selection_dialog.dart';
 
@@ -172,167 +171,280 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
   /// Builds the amount input field with visual feedback
   Widget _buildAmountField() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
+    return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _isHighlighted
-              ? AppColors.primary
-              : _amountFocusNode.hasFocus
-              ? AppColors.primary
-              : Colors.grey.shade300,
-          width: _isHighlighted ? 2.0 : 1.0,
-        ),
-        color: _isHighlighted ? AppColors.primary.withOpacity(0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            spreadRadius: 1,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
-        children: [
-          // Decrement button
-          _buildIncrementButton(
-            icon: Icons.remove,
-            onPressed: () {
-              final step = _getSmartIncrement(false);
-              _updateAmount(_currentAmount - step);
-            },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _isHighlighted
+                ? AppColors.primary
+                : _amountFocusNode.hasFocus
+                ? AppColors.primary
+                : Colors.grey.shade200,
+            width: _isHighlighted ? 2.0 : 1.0,
           ),
-
-          // Amount text field
-          Expanded(
-            child: TextField(
-              controller: _amountController,
-              focusNode: _amountFocusNode,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: _isHighlighted ? AppColors.primary : Colors.black,
+          color: Colors.white,
+        ),
+        child: Row(
+          children: [
+            // Decrement button
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  final step = _getSmartIncrement(false);
+                  if (_currentAmount >= step) {
+                    _updateAmount(_currentAmount - step);
+                  } else {
+                    _updateAmount(0);
+                  }
+                },
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      bottomLeft: Radius.circular(15),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.remove,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
               ),
-              decoration: InputDecoration(
-                hintText: '0',
-                suffixText: '원',
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 16),
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              onChanged: (value) {
-                // Parse current value
-                final cleanValue = value.replaceAll(',', '');
-                _currentAmount = int.tryParse(cleanValue) ?? 0;
-
-                // Format with commas
-                final formatted = _formatAmount(value);
-                if (formatted != value) {
-                  _amountController.value = TextEditingValue(
-                    text: formatted,
-                    selection: TextSelection.collapsed(offset: formatted.length),
-                  );
-                }
-              },
             ),
+
+            // Amount text field
+            Expanded(
+              child: TextField(
+                controller: _amountController,
+                focusNode: _amountFocusNode,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _isHighlighted ? AppColors.primary : Colors.black,
+                ),
+                decoration: InputDecoration(
+                  hintText: '0',
+                  suffixText: '원',
+                  suffixStyle: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey.shade600,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                onChanged: (value) {
+                  // Parse current value
+                  final cleanValue = value.replaceAll(',', '');
+                  _currentAmount = int.tryParse(cleanValue) ?? 0;
+
+                  // Format with commas
+                  final formatted = _formatAmount(value);
+                  if (formatted != value) {
+                    _amountController.value = TextEditingValue(
+                      text: formatted,
+                      selection: TextSelection.collapsed(offset: formatted.length),
+                    );
+                  }
+                },
+              ),
+            ),
+
+            // Increment button
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  final step = _getSmartIncrement(true);
+                  _updateAmount(_currentAmount + step);
+                },
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(15),
+                      bottomRight: Radius.circular(15),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Builds the quick amount selection buttons with add/subtract functionality
+  Widget _buildQuickAmountButtons() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          // First row: 100, 1,000, 5,000
+          Row(
+            children: [
+              // Subtraction side (left)
+              _buildOperationButton(amount: 100, isAddition: false),
+              const SizedBox(width: 8),
+              _buildOperationButton(amount: 1000, isAddition: false),
+              const SizedBox(width: 8),
+              _buildOperationButton(amount: 5000, isAddition: false),
+
+              // Center divider
+              Container(
+                height: 40,
+                width: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                color: Colors.grey.shade300,
+              ),
+
+              // Addition side (right)
+              _buildOperationButton(amount: 100, isAddition: true),
+              const SizedBox(width: 8),
+              _buildOperationButton(amount: 1000, isAddition: true),
+              const SizedBox(width: 8),
+              _buildOperationButton(amount: 5000, isAddition: true),
+            ],
           ),
 
-          // Increment button
-          _buildIncrementButton(
-            icon: Icons.add,
-            onPressed: () {
-              final step = _getSmartIncrement(true);
-              _updateAmount(_currentAmount + step);
-            },
+          const SizedBox(height: 8),
+
+          // Second row: 10,000, 50,000, 100,000
+          Row(
+            children: [
+              // Subtraction side (left)
+              _buildOperationButton(amount: 10000, isAddition: false),
+              const SizedBox(width: 8),
+              _buildOperationButton(amount: 50000, isAddition: false),
+              const SizedBox(width: 8),
+              _buildOperationButton(amount: 100000, isAddition: false),
+
+              // Center divider
+              Container(
+                height: 40,
+                width: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                color: Colors.grey.shade300,
+              ),
+
+              // Addition side (right)
+              _buildOperationButton(amount: 10000, isAddition: true),
+              const SizedBox(width: 8),
+              _buildOperationButton(amount: 50000, isAddition: true),
+              const SizedBox(width: 8),
+              _buildOperationButton(amount: 100000, isAddition: true),
+            ],
           ),
         ],
       ),
     );
   }
 
-  /// Builds an increment/decrement button with visual effects
-  Widget _buildIncrementButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: Colors.transparent,
+  /// Helper method to build operation buttons
+  Widget _buildOperationButton({required int amount, required bool isAddition}) {
+    final Color backgroundColor = isAddition
+        ? AppColors.primary.withOpacity(0.1)
+        : Colors.grey.shade200;
+
+    final Color textColor = isAddition
+        ? AppColors.primary
+        : Colors.grey.shade700;
+
+    final IconData icon = isAddition ? Icons.add : Icons.remove;
+
+    // Adjust font size based on digit count to prevent text wrapping
+    double fontSize = 11.0;
+    if (amount >= 100000) {
+      fontSize = 9.0; // Smaller font for 100,000 to prevent line breaks
+    }
+
+    return Expanded(
       child: InkWell(
-        onTap: onPressed,
+        onTap: () {
+          if (isAddition) {
+            _updateAmount(_currentAmount + amount);
+          } else if (_currentAmount >= amount) {
+            // Only subtract if the result won't be negative
+            _updateAmount(_currentAmount - amount);
+          } else {
+            // If subtracting would result in negative, set to 0
+            _updateAmount(0);
+          }
+        },
         borderRadius: BorderRadius.circular(12),
-        child: Ink(
-          padding: const EdgeInsets.all(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.transparent,
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
-          child: Icon(
-            icon,
-            color: AppColors.primary,
-            size: 24,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 12, color: textColor),
+              const SizedBox(height: 2),
+              Text(
+                NumberFormat('#,###').format(amount),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
-
-  /// Builds the quick amount selection buttons
-  Widget _buildQuickAmountButtons() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            '빠른 선택',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _presetAmounts.map((amount) {
-            // Check if this preset is the current selection
-            final isSelected = _currentAmount == amount;
-
-            return GestureDetector(
-              onTap: () {
-                _updateAmount(amount);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.primary
-                        : Colors.transparent,
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  NumberFormat('#,###').format(amount) + '원',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? Colors.white : AppColors.primary,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
     );
   }
 
@@ -424,8 +536,9 @@ class _AmountInputDialogState extends State<AmountInputDialog>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,7 +611,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
               const SizedBox(height: 16),
 
-              // Quick amount selection buttons
+              // Quick amount selection buttons with add/subtract functionality
               _buildQuickAmountButtons(),
 
               const SizedBox(height: 16),
@@ -589,11 +702,11 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     disabledBackgroundColor:
                     AppColors.primary.withOpacity(0.3),
-                    elevation: 0,
+                    elevation: 2,
                   ),
                   child: controller.isLoading.value
                       ? const SizedBox(
