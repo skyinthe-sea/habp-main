@@ -186,7 +186,7 @@ class DBHelper {
     try {
       // 소득 카테고리
       final incomeCategories = [
-        {'name': '월급', 'type': 'INCOME', 'is_fixed': 1},
+        {'name': '급여', 'type': 'INCOME', 'is_fixed': 1},
         {'name': '용돈', 'type': 'INCOME', 'is_fixed': 1},
         {'name': '이자', 'type': 'INCOME', 'is_fixed': 1},
       ];

@@ -152,7 +152,7 @@ class QuickAddController extends GetxController {
   }
 
   // 카테고리 추가 메서드
-  Future<CategoryModel?> addCategory({
+  Future<CategoryResult> addCategory({
     required String name,
     required String type,
     required int isFixed,
@@ -172,13 +172,31 @@ class QuickAddController extends GetxController {
       );
 
       if (existingCategory.isNotEmpty) {
-        // 이미 존재하는 카테고리가 있으면 그것을 반환
         final category = existingCategory.first;
-        return CategoryModel(
-          id: category['id'] as int,
-          name: category['name'] as String,
-          type: category['type'] as String,
-          isFixed: category['is_fixed'] as int,
+        final isFixedCategory = category['is_fixed'] as int;
+
+        // 고정 카테고리인 경우 (is_fixed = 1)
+        if (isFixedCategory == 1) {
+          return CategoryResult(
+            status: CategoryStatus.existingFixed,
+            category: CategoryModel(
+              id: category['id'] as int,
+              name: category['name'] as String,
+              type: category['type'] as String,
+              isFixed: isFixedCategory,
+            ),
+          );
+        }
+
+        // 이미 존재하는 변동 카테고리인 경우
+        return CategoryResult(
+          status: CategoryStatus.existingVariable,
+          category: CategoryModel(
+            id: category['id'] as int,
+            name: category['name'] as String,
+            type: category['type'] as String,
+            isFixed: isFixedCategory,
+          ),
         );
       }
 
@@ -195,15 +213,18 @@ class QuickAddController extends GetxController {
       await loadCategoriesForType(type);
       _eventBusService.emitTransactionChanged();
 
-      return CategoryModel(
-        id: id,
-        name: name,
-        type: type,
-        isFixed: isFixed,
+      return CategoryResult(
+        status: CategoryStatus.created,
+        category: CategoryModel(
+          id: id,
+          name: name,
+          type: type,
+          isFixed: isFixed,
+        ),
       );
     } catch (e) {
       debugPrint('카테고리 추가 중 오류: $e');
-      return null;
+      return CategoryResult(status: CategoryStatus.error);
     } finally {
       isLoading.value = false;
     }
@@ -263,6 +284,25 @@ class QuickAddController extends GetxController {
       isLoading.value = false;
     }
   }
+}
+
+// 카테고리 상태 열거형 추가
+enum CategoryStatus {
+  created,          // 새로 생성됨
+  existingVariable, // 기존 변동 카테고리와 동일
+  existingFixed,    // 기존 고정 카테고리와 동일
+  error,            // 오류 발생
+}
+
+// 카테고리 결과 클래스 추가
+class CategoryResult {
+  final CategoryStatus status;
+  final CategoryModel? category;
+
+  CategoryResult({
+    required this.status,
+    this.category,
+  });
 }
 
 // 카테고리 모델 클래스 (필요한 경우)

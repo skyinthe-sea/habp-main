@@ -44,6 +44,36 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
     super.dispose();
   }
 
+  // 고정 카테고리 오류 다이얼로그를 표시하는 메서드
+  void _showFixedCategoryAlert(BuildContext context, String categoryName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('고정 카테고리 알림'),
+          content: Text(
+            '\'$categoryName\'은(는) 기본 고정 카테고리로 이미 존재합니다. 고정 카테고리는 사용자가 변경할 수 없습니다.',
+            style: const TextStyle(fontSize: 14),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+              child: const Text(
+                '확인',
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoryType = widget.controller.transaction.value.categoryType;
@@ -56,13 +86,13 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
 
     if (isIncome) {
       titleText = '소득 카테고리 추가';
-      hintText = '월급, 용돈, 부수입 등';
+      hintText = '부수입, 아르바이트 등';
     } else if (isFinance) {
       titleText = '재테크 카테고리 추가';
-      hintText = '주식, 저축, 가상화폐 등';
+      hintText = '쇼핑, 술약속 등';
     } else {
       titleText = '지출 카테고리 추가';
-      hintText = '식비, 교통비, 문화생활 등';
+      hintText = '예금, 주식항목 등';
     }
 
     return Dialog(
@@ -176,32 +206,55 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                         isFixed: 0, // 변동 카테고리
                       );
 
-                      if (result != null) {
+                      setState(() {
+                        isLoading = false;
+                      });
+
+                      // 결과에 따른 처리
+                      switch (result.status) {
+                        case CategoryStatus.created:
                         // 성공 메시지
-                        Get.snackbar(
-                          '성공',
-                          '카테고리가 추가되었습니다.',
-                          snackPosition: SnackPosition.TOP,
-                        );
+                          Get.snackbar(
+                            '성공',
+                            '카테고리가 추가되었습니다.',
+                            snackPosition: SnackPosition.TOP,
+                          );
 
-                        // 다이얼로그 닫기만 하고 자동으로 다음 단계로 진행하지 않음
-                        Navigator.of(context).pop();
+                          // 다이얼로그 닫기
+                          Navigator.of(context).pop();
+                          break;
 
-                        // 콜백이 있는 경우에만 호출 (옵션)
-                        // if (widget.onCategoryAdded != null) {
-                        //   widget.onCategoryAdded!(result.id, result.name);
-                        // }
-                      } else {
-                        setState(() {
-                          isLoading = false;
-                        });
+                        case CategoryStatus.existingVariable:
+                        // 기존 변동 카테고리와 동일한 경우 - 성공으로 처리
+                          Get.snackbar(
+                            '정보',
+                            '이미 존재하는 카테고리입니다.',
+                            snackPosition: SnackPosition.TOP,
+                          );
 
+                          // 다이얼로그 닫기
+                          Navigator.of(context).pop();
+                          break;
+
+                        case CategoryStatus.existingFixed:
+                        // 고정 카테고리인 경우 - 경고 다이얼로그 표시
+                          if (result.category != null) {
+                            _showFixedCategoryAlert(
+                                context,
+                                result.category!.name
+                            );
+                          }
+                          break;
+
+                        case CategoryStatus.error:
+                        default:
                         // 오류 메시지
-                        Get.snackbar(
-                          '오류',
-                          '카테고리 추가에 실패했습니다.',
-                          snackPosition: SnackPosition.TOP,
-                        );
+                          Get.snackbar(
+                            '오류',
+                            '카테고리 추가에 실패했습니다.',
+                            snackPosition: SnackPosition.TOP,
+                          );
+                          break;
                       }
                     },
                     style: ElevatedButton.styleFrom(
