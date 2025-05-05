@@ -108,6 +108,7 @@ class MonthCalendar extends StatelessWidget {
                   ),
                   calendarBuilders: CalendarBuilders(
                     // 마커 빌더 (거래 금액 표시)
+                    // In month_calendar.dart, replace the existing markerBuilder with this version
                     markerBuilder: (context, date, events) {
                       // Get filtered transactions for this day
                       final transactions = controller.getEventsForDay(date);
@@ -127,87 +128,112 @@ class MonthCalendar extends StatelessWidget {
                         }
                       }
 
-                      // 마커가 없으면 빈 위젯 반환
+                      // No markers if no transactions
                       if (income == 0 && expense == 0 && finance == 0) {
                         return null;
                       }
 
-                      // 날짜 셀의 크기를 고려하여 마커 크기와 여백 조정
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          clipBehavior: Clip.none, // 자식 위젯이 잘리지 않도록 설정
+                      // Count how many indicators we need to show
+                      int indicatorCount = 0;
+                      if (income > 0) indicatorCount++;
+                      if (expense > 0) indicatorCount++;
+                      if (finance != 0) indicatorCount++;
+
+                      // Determine if we should stack vertically based on indicator count
+                      bool useVerticalStack = indicatorCount > 2;
+
+                      // Create a more compact display
+                      return Positioned(
+                        bottom: 1,
+                        left: 0,
+                        right: 0,
+                        child: useVerticalStack
+                        // Vertical stack for 3 indicators
+                            ? Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            // 부모 컨테이너 (최대 크기 제한)
-                            Container(
-                              constraints: const BoxConstraints(maxWidth: 52),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Income display (green)
-                                  if (income > 0)
-                                    Container(
-                                      key: ValueKey('income-$date-$income'),
-                                      margin: const EdgeInsets.only(bottom: 2),
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.withOpacity(0.15),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        income >= 1000000
-                                            ? '+${(income / 1000000).toStringAsFixed(1)}M'
-                                            : '+${NumberFormat.compact().format(income)}',
-                                        style: TextStyle(
-                                          color: Colors.green[700],
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-
-                                  // Expense display (red)
-                                  if (expense > 0)
-                                    Container(
-                                      key: ValueKey('expense-$date-$expense'),
-                                      margin: const EdgeInsets.only(bottom: 2),
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        '-${NumberFormat.compact().format(expense)}',
-                                        style: TextStyle(
-                                          color: Colors.red[700],
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-
-                                  // Finance display (blue)
-                                  if (finance != 0)
-                                    Container(
-                                      key: ValueKey('finance-$date-$finance'),
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        (finance >= 0 ? '+' : '') + '${NumberFormat.compact().format(finance)}',
-                                        style: TextStyle(
-                                          color: Colors.blue[700],
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                            // Income indicator (green)
+                            if (income > 0)
+                              _buildCompactIndicator(
+                                '+${NumberFormat.compact().format(income)}',
+                                Colors.green,
                               ),
-                            ),
+
+                            // Expense indicator (red)
+                            if (expense > 0)
+                              _buildCompactIndicator(
+                                '-${NumberFormat.compact().format(expense)}',
+                                Colors.red,
+                              ),
+
+                            // Finance indicator (blue)
+                            if (finance != 0)
+                              _buildCompactIndicator(
+                                (finance >= 0 ? '+' : '') + '${NumberFormat.compact().format(finance)}',
+                                Colors.blue,
+                              ),
+                          ],
+                        )
+                        // Horizontal layout for 1-2 indicators
+                            : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Income indicator (green)
+                            if (income > 0)
+                              Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 1),
+                                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text(
+                                  '+${NumberFormat.compact().format(income)}',
+                                  style: TextStyle(
+                                    color: Colors.green[700],
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            // Expense indicator (red)
+                            if (expense > 0)
+                              Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 1),
+                                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text(
+                                  '-${NumberFormat.compact().format(expense)}',
+                                  style: TextStyle(
+                                    color: Colors.red[700],
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            // Finance indicator (blue)
+                            if (finance != 0)
+                              Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 1),
+                                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text(
+                                  (finance >= 0 ? '+' : '') + '${NumberFormat.compact().format(finance)}',
+                                  style: TextStyle(
+                                    color: Colors.blue[700],
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       );
@@ -262,6 +288,27 @@ class MonthCalendar extends StatelessWidget {
           );
         });
       },
+    );
+  }
+
+  // Helper method for compact vertical indicators
+  Widget _buildCompactIndicator(String text, Color baseColor) {
+    // Instead of color[700], use the base color directly
+    return Container(
+      margin: const EdgeInsets.only(top: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+      decoration: BoxDecoration(
+        color: baseColor.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(2),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: baseColor,  // Use the base color directly
+          fontSize: 7,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 
