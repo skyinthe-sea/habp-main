@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/entities/category_expense.dart';
 import '../presentation/dashboard_controller.dart';
@@ -259,25 +260,25 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
         child: Column(
           children: [
             // 차트 타이틀
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              decoration: BoxDecoration(
-                color: baseColor.withOpacity(0.1),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
-              ),
-              width: double.infinity,
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: baseColor,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-            const SizedBox(height: 8),
+            // Container(
+            //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            //   decoration: BoxDecoration(
+            //     color: baseColor.withOpacity(0.1),
+            //     borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+            //   ),
+            //   width: double.infinity,
+            //   child: Text(
+            //     title,
+            //     style: TextStyle(
+            //       fontSize: 14,
+            //       fontWeight: FontWeight.bold,
+            //       color: baseColor,
+            //     ),
+            //     textAlign: TextAlign.center,
+            //   ),
+            // ),
+            //
+            // const SizedBox(height: 8),
 
             // 차트와 범례를 좌우로 배치
             Expanded(
@@ -354,62 +355,171 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Container(
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // 색상 아이콘과 카테고리명
-                  Expanded(
-                    child: Row(
+            child: InkWell(
+              onTap: () => _showCategoryDetailDialog(context, item, color, type),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 첫 번째 행: 카테고리명과 퍼센트
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
+                        // 색상 아이콘과 카테고리명
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  item.categoryName,
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
+
+                        // 퍼센트
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           child: Text(
-                            item.categoryName,
-                            style: const TextStyle(fontSize: 12),
-                            overflow: TextOverflow.ellipsis,
+                            '${item.percentage.toInt()}%',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
 
-                  // 퍼센트
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${item.percentage.toInt()}%',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: color,
+                    // 두 번째 행: 실제 금액 표시 (추가된 부분)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16, top: 2),
+                      child: Text(
+                        _formatAmount(item.amount),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
         },
       ),
     );
+  }
+
+  // 카테고리 상세 정보를 보여주는 다이얼로그
+  void _showCategoryDetailDialog(BuildContext context, CategoryExpense category, Color color, String type) {
+    final titleText = type == 'INCOME' ? '소득 상세' :
+    type == 'EXPENSE' ? '지출 상세' : '재테크 상세';
+
+    // 숫자 포맷팅을 위한 형식
+    final NumberFormat numberFormat = NumberFormat('#,###', 'ko');
+    final formattedAmount = numberFormat.format(category.amount);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          category.categoryName,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('$titleText (${_formatTypeTitle(type)})',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 12),
+
+            // 금액 정보
+            _buildDetailRow('금액:', '₩$formattedAmount'),
+            _buildDetailRow('비율:', '${category.percentage.toStringAsFixed(1)}%'),
+
+            // 예상 정보 (월간/연간)
+            const SizedBox(height: 12),
+            const Text('예상 금액', style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 6),
+            _buildDetailRow('월 평균:', '₩${numberFormat.format(category.amount)}'),
+            _buildDetailRow('연 환산:', '₩${numberFormat.format(category.amount * 12)}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('닫기'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  String _formatAmount(double amount) {
+    if (amount >= 1000000) {
+      return '${(amount / 10000).toStringAsFixed(0)}만';
+    } else if (amount >= 10000) {
+      return '${(amount / 10000).toStringAsFixed(1)}만';
+    } else {
+      return '${amount.toStringAsFixed(0)}';
+    }
+  }
+
+  String _formatTypeTitle(String type) {
+    switch (type) {
+      case 'INCOME':
+        return '수입';
+      case 'EXPENSE':
+        return '지출';
+      case 'FINANCE':
+        return '재테크';
+      default:
+        return '';
+    }
   }
 
   // 카테고리별 색상 가져오기 (각 유형별로 일관된 색상 팔레트 사용)
@@ -474,16 +584,5 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
         ],
       ),
     );
-  }
-
-  // 금액 포맷팅
-  String _formatAmount(double amount) {
-    if (amount >= 1000000) {
-      return '${(amount / 10000).toStringAsFixed(0)}만';
-    } else if (amount >= 10000) {
-      return '${(amount / 10000).toStringAsFixed(1)}만';
-    } else {
-      return amount.toStringAsFixed(0);
-    }
   }
 }
