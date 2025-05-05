@@ -73,8 +73,8 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
     final dbHelper = DBHelper();
     final db = await dbHelper.database;
 
-    // 각 카테고리별 처리 (예시로 FixedIncomeDialog의 경우)
-    for (final category in _controller.incomeCategories) { // 각 다이얼로그에 맞게 변경 필요
+    // 각 카테고리별 처리
+    for (final category in _controller.expenseCategories) {
       // 1. fixed_transaction_setting에서 최신 설정 가져오기
       final List<Map<String, dynamic>> settings = await db.query(
         'fixed_transaction_setting',
@@ -392,11 +392,8 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
     );
   }
 
-  // 모든 다이얼로그(FixedIncomeDialog, FixedExpenseDialog, FixedFinanceDialog)에서 사용하는 메서드
-// 예시로 FixedIncomeDialog의 _buildCategoryList 메서드 수정
-
   Widget _buildCategoryList() {
-    if (_controller.incomeCategories.isEmpty) {
+    if (_controller.expenseCategories.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(40),
@@ -435,10 +432,10 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(vertical: 16),
         shrinkWrap: true,
-        itemCount: _controller.incomeCategories.length,
+        itemCount: _controller.expenseCategories.length,
         separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
         itemBuilder: (context, index) {
-          final category = _controller.incomeCategories[index];
+          final category = _controller.expenseCategories[index];
 
           // settings가 있으면 최신 설정의 금액을 사용
           // 없으면 transaction_record2에서 금액 가져오기
@@ -474,7 +471,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
           }
 
           return Dismissible(
-            key: Key('income-${category.id}'),
+            key: Key('expense-${category.id}'),
             direction: DismissDirection.endToStart,
             background: Container(
               alignment: Alignment.centerRight,
@@ -520,16 +517,16 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 );
 
                 // 데이터 다시 로드
-                await _controller.loadFixedIncomeCategories();
+                await _controller.loadFixedExpenseCategories();
               }
             },
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               leading: CircleAvatar(
-                backgroundColor: Colors.green.shade700.withOpacity(0.2),
+                backgroundColor: AppColors.cate4.withOpacity(0.2),
                 child: Icon(
-                  Icons.attach_money,
-                  color: Colors.green.shade700,
+                  Icons.money_off,
+                  color: AppColors.cate4,
                 ),
               ),
               title: Text(
@@ -548,12 +545,12 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 icon: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade700.withOpacity(0.1),
+                    color: AppColors.cate4.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.edit,
-                    color: Colors.green,
+                    color: AppColors.cate4,
                     size: 20,
                   ),
                 ),
