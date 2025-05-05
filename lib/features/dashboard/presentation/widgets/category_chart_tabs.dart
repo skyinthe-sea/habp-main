@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/database/db_helper.dart';
 import '../../data/entities/category_expense.dart';
 import '../presentation/dashboard_controller.dart';
+
 
 class CategoryChartTabs extends StatefulWidget {
   final DashboardController controller;
@@ -336,7 +338,99 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     );
   }
 
-  // 차트 터치 처리 메서드는 더 이상 필요 없음 - PieTouchData에서 직접 처리
+  // 카테고리별 월평균 데이터 계산
+  Future<Map<String, dynamic>> _calculateCategoryMonthlyAverage(int categoryId, String type) async {
+    try {
+      final db = await DBHelper().database;
+      final now = DateTime.now();
+      final oneYearAgo = DateTime(now.year - 1, now.month, now.day);
+
+      // SQLite용 날짜 형식
+      final oneYearAgoStr = "${oneYearAgo.year}-${oneYearAgo.month.toString().padLeft(2, '0')}-${oneYearAgo.day.toString().padLeft(2, '0')}";
+      final nowStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+      // 1. 변동 거래 내역 가져오기
+      final List<Map<String, dynamic>> variableTransactions = await db.rawQuery('''
+        SELECT tr.amount
+        FROM transaction_record tr
+        JOIN category c ON tr.category_id = c.id
+        WHERE tr.category_id = ?
+        AND c.type = ?
+        AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+      ''', [categoryId, type, oneYearAgoStr, nowStr]);
+
+      // 2. 고정 거래 내역 가져오기 (매월 발생하므로 1년치 12개월로 계산)
+      final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
+        SELECT tr.amount, tr.description, tr.transaction_num
+        FROM transaction_record2 tr
+        JOIN category c ON tr.category_id = c.id
+        WHERE tr.category_id = ?
+        AND c.type = ?
+        AND c.is_fixed = 1
+      ''', [categoryId, type]);
+
+      // 거래 내역 개수
+      int transactionCount = variableTransactions.length;
+
+      // 총 거래 금액
+      double totalAmount = 0.0;
+
+      // 변동 거래 금액 합산
+      for (var transaction in variableTransactions) {
+        totalAmount += (transaction['amount'] as double).abs();
+      }
+
+      // 고정 거래는 매월 발생으로 계산 (최근 1년간 12개월로 처리)
+      double monthlyFixedAmount = 0.0;
+
+      for (var transaction in fixedTransactions) {
+        final amount = (transaction['amount'] as double).abs();
+        final description = transaction['description'] as String;
+        final transactionNum = transaction['transaction_num'].toString();
+
+        if (description.contains('매월')) {
+          // 매월 고정 거래는 1년에 12번 발생
+          monthlyFixedAmount += amount;
+        }
+        else if (description.contains('매주')) {
+          // 매주 고정 거래는 1년에 약 52번 발생 (4.33주/월 × 12개월)
+          final weeklyAmount = amount * 4.33;  // 월 평균 4.33주
+          monthlyFixedAmount += weeklyAmount;
+        }
+        else if (description.contains('매일')) {
+          // 매일 고정 거래는 1년에 약 365번 발생 (30.42일/월 × 12개월)
+          final dailyAmount = amount * 30.42;  // 월 평균 30.42일
+          monthlyFixedAmount += dailyAmount;
+        }
+      }
+
+      // 고정 거래가 있으면 12개월치 데이터가 있다고 가정
+      if (fixedTransactions.isNotEmpty) {
+        totalAmount += (monthlyFixedAmount * 12);
+        transactionCount += 12;  // 1년 12개월
+      }
+
+      // 평균 계산
+      final double averageAmount = transactionCount > 0 ? totalAmount / transactionCount : 0.0;
+
+      // 데이터 포인트 개수
+      final int dataPoints = transactionCount;
+
+      // 결과 반환
+      return {
+        'averageAmount': averageAmount,
+        'dataPoints': dataPoints,
+        'period': transactionCount > 0 ? '최근 1년' : '데이터 없음'
+      };
+    } catch (e) {
+      debugPrint('카테고리 월평균 계산 오류: $e');
+      return {
+        'averageAmount': 0.0,
+        'dataPoints': 0,
+        'period': '계산 실패'
+      };
+    }
+  }
 
   // 스크롤 가능한 범례 위젯 구현 - 모든 카테고리 표시
   Widget _buildScrollableLegend(List<CategoryExpense> data, String type) {
@@ -437,53 +531,107 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   }
 
   // 카테고리 상세 정보를 보여주는 다이얼로그
-  void _showCategoryDetailDialog(BuildContext context, CategoryExpense category, Color color, String type) {
+  void _showCategoryDetailDialog(BuildContext context, CategoryExpense category, Color color, String type) async {
     final titleText = type == 'INCOME' ? '소득 상세' :
     type == 'EXPENSE' ? '지출 상세' : '재테크 상세';
+
+    // 로딩 상태로 다이얼로그 먼저 표시
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            category.categoryName,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: SizedBox(
+            height: 100,
+            child: Center(
+              child: CircularProgressIndicator(
+                color: color,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    // 월 평균 데이터 계산
+    final averageData = await _calculateCategoryMonthlyAverage(category.categoryId, type);
+    final double averageAmount = averageData['averageAmount'];
+    final int dataPoints = averageData['dataPoints'];
+    final String period = averageData['period'];
+
+    // 기존 다이얼로그를 닫고 새 다이얼로그 표시
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
 
     // 숫자 포맷팅을 위한 형식
     final NumberFormat numberFormat = NumberFormat('#,###', 'ko');
     final formattedAmount = numberFormat.format(category.amount);
+    final formattedAverage = numberFormat.format(averageAmount);
+    final formattedAnnual = numberFormat.format(averageAmount * 12);
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          category.categoryName,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            category.categoryName,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('$titleText (${_formatTypeTitle(type)})',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 12),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('$titleText (${_formatTypeTitle(type)})',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 12),
 
-            // 금액 정보
-            _buildDetailRow('금액:', '₩$formattedAmount'),
-            _buildDetailRow('비율:', '${category.percentage.toStringAsFixed(1)}%'),
+              // 금액 정보
+              _buildDetailRow('금액:', '₩$formattedAmount'),
+              _buildDetailRow('비율:', '${category.percentage.toStringAsFixed(1)}%'),
 
-            // 예상 정보 (월간/연간)
-            const SizedBox(height: 12),
-            const Text('예상 금액', style: TextStyle(fontWeight: FontWeight.w500)),
-            const SizedBox(height: 6),
-            _buildDetailRow('월 평균:', '₩${numberFormat.format(category.amount)}'),
-            _buildDetailRow('연 환산:', '₩${numberFormat.format(category.amount * 12)}'),
+              // 예상 정보 (월간/연간)
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Text('평균 금액', style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 6),
+                  Text(
+                    '($period, $dataPoints개 데이터)',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              _buildDetailRow('월 평균:', '₩$formattedAverage'),
+              _buildDetailRow('연 환산:', '₩$formattedAnnual'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('닫기'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('닫기'),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 
   Widget _buildDetailRow(String label, String value) {
