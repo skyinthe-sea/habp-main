@@ -128,7 +128,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
 
           // Swipeable chart container
           SizedBox(
-            height: 280,
+            height: 320, // 차트 영역 높이 증가
             child: PageView(
               controller: _pageController,
               onPageChanged: (index) {
@@ -259,42 +259,39 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
         ),
         child: Column(
           children: [
-            // 차트 타이틀
-            // Container(
-            //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-            //   decoration: BoxDecoration(
-            //     color: baseColor.withOpacity(0.1),
-            //     borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
-            //   ),
-            //   width: double.infinity,
-            //   child: Text(
-            //     title,
-            //     style: TextStyle(
-            //       fontSize: 14,
-            //       fontWeight: FontWeight.bold,
-            //       color: baseColor,
-            //     ),
-            //     textAlign: TextAlign.center,
-            //   ),
-            // ),
-            //
-            // const SizedBox(height: 8),
-
             // 차트와 범례를 좌우로 배치
             Expanded(
               child: Row(
                 children: [
-                  // 차트 부분 (Left)
+                  // 차트 부분 (Left) - 비율 증가
                   Expanded(
+                    flex: 3, // 차트 영역 비율 증가
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
+                        // 차트 영역 - 직접 터치 이벤트 처리
                         PieChart(
                           PieChartData(
                             sectionsSpace: 2,
                             centerSpaceRadius: 40, // 도넛 차트 중앙 구멍 크기
                             sections: _createSections(mainCategories, type),
                             startDegreeOffset: 180,
+                            pieTouchData: PieTouchData(
+                              enabled: true,
+                              touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                // 터치 이벤트 처리
+                                if (event is FlTapUpEvent && pieTouchResponse != null &&
+                                    pieTouchResponse.touchedSection != null) {
+                                  final sectionIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                                  if (sectionIndex >= 0 && sectionIndex < mainCategories.length) {
+                                    final touchedCategory = mainCategories[sectionIndex];
+                                    final color = _getCategoryColor(
+                                        touchedCategory.categoryName, sectionIndex, type);
+                                    _showCategoryDetailDialog(context, touchedCategory, color, type);
+                                  }
+                                }
+                              },
+                            ),
                           ),
                         ),
 
@@ -325,8 +322,9 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                     ),
                   ),
 
-                  // 오른쪽 범례 영역 (Right) - 모든 카테고리 표시 (스크롤 가능)
+                  // 오른쪽 범례 영역 (Right) - 비율 감소
                   Expanded(
+                    flex: 2, // 범례 영역 비율 감소
                     child: _buildScrollableLegend(sortedData, type),
                   ),
                 ],
@@ -337,6 +335,8 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
       ),
     );
   }
+
+  // 차트 터치 처리 메서드는 더 이상 필요 없음 - PieTouchData에서 직접 처리
 
   // 스크롤 가능한 범례 위젯 구현 - 모든 카테고리 표시
   Widget _buildScrollableLegend(List<CategoryExpense> data, String type) {
@@ -534,24 +534,37 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     }
   }
 
-  // 도넛 차트 섹션 생성
+  // 도넛 차트 섹션 생성 (수정됨 - 모든 카테고리명 표시)
   List<PieChartSectionData> _createSections(
       List<CategoryExpense> categories,
       String type) {
     return categories.map((item) {
       final index = categories.indexOf(item);
       final color = _getCategoryColor(item.categoryName, index, type);
-      final showLabel = item.percentage >= 10; // 10% 이상일 때만 라벨 표시
+
+      // 모든 섹션에 라벨 표시 (5% 이상인 경우)
+      final showLabel = item.percentage >= 5;
+
+      // 퍼센티지와 카테고리명을 함께 표시
+      String displayText = '';
+      if (showLabel) {
+        // 카테고리명이 짧은 경우 함께 표시, 긴 경우 퍼센트만 표시
+        if (item.categoryName.length <= 4 || item.percentage >= 16) {
+          displayText = '${item.categoryName}\n${item.percentage.toInt()}%';
+        } else {
+          displayText = '${item.percentage.toInt()}%';
+        }
+      }
 
       return PieChartSectionData(
         color: color,
         value: item.amount,
-        title: showLabel ? '${item.percentage.toInt()}%' : '',
-        titleStyle: const TextStyle(
-          fontSize: 12,
+        title: displayText,
+        titleStyle: TextStyle(
+          fontSize: 11, // 폰트 크기 조정
           fontWeight: FontWeight.bold,
           color: Colors.white,
-          shadows: [
+          shadows: const [
             Shadow(
               offset: Offset(0, 1),
               blurRadius: 2,
@@ -559,8 +572,9 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
             ),
           ],
         ),
-        radius: 50,
+        radius: 60, // 섹션 반지름 유지
         badgeWidget: null,
+        titlePositionPercentageOffset: 0.58, // 라벨 위치 안쪽으로 조정
       );
     }).toList();
   }
