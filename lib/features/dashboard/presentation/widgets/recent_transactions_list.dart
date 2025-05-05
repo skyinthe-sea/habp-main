@@ -289,46 +289,16 @@ class RecentTransactionsList extends StatelessWidget {
     // 다이얼로그 최대 높이 (화면의 80% 또는 최대 600px)
     final dialogMaxHeight = math.min(safeHeight * 0.8, 600.0);
 
+    // StatefulBuilder 외부에 상태 변수들을 선언하여 상태가 유지되도록 함
+    String searchQuery = '';
+    String selectedFilter = '전체';
+    List<TransactionWithCategory> filteredTransactions = allTransactions;
+
     // StatefulBuilder를 사용하여 다이얼로그 내부에서 상태 관리
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          // 검색어 및 필터 상태 변수
-          String searchQuery = '';
-          String selectedFilter = '전체';
-
-          // 검색 및 필터링된 트랜잭션 목록 계산
-          List<TransactionWithCategory> filteredTransactions = _getFilteredTransactions(
-              allTransactions,
-              searchQuery,
-              selectedFilter
-          );
-
-          // 검색어 변경 핸들러
-          void onSearchChanged(String query) {
-            setState(() {
-              searchQuery = query;
-              filteredTransactions = _getFilteredTransactions(
-                  allTransactions,
-                  searchQuery,
-                  selectedFilter
-              );
-            });
-          }
-
-          // 필터 변경 핸들러
-          void onFilterSelected(String filter) {
-            setState(() {
-              selectedFilter = filter;
-              filteredTransactions = _getFilteredTransactions(
-                  allTransactions,
-                  searchQuery,
-                  selectedFilter
-              );
-            });
-          }
-
           return Dialog(
             backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
@@ -420,7 +390,7 @@ class RecentTransactionsList extends StatelessWidget {
                       ),
                     ),
 
-                    // 검색창 - 이제 실제로 동작함
+                    // 검색창 - 수정된 부분: onChanged 함수에서 setState 사용
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
                       child: Container(
@@ -448,12 +418,21 @@ class RecentTransactionsList extends StatelessWidget {
                               vertical: 8,
                             ),
                           ),
-                          onChanged: onSearchChanged, // 검색어 변경 시 호출
+                          onChanged: (value) {
+                            setState(() {
+                              searchQuery = value;
+                              filteredTransactions = _getFilteredTransactions(
+                                  allTransactions,
+                                  searchQuery,
+                                  selectedFilter
+                              );
+                            });
+                          },
                         ),
                       ),
                     ),
 
-                    // 필터 칩 - 이제 실제로 동작함
+                    // 필터 칩 - 수정된 부분: onSelected 콜백에서 setState 사용
                     SizedBox(
                       height: 36,
                       child: Padding(
@@ -464,22 +443,58 @@ class RecentTransactionsList extends StatelessWidget {
                             _buildFilterChip(
                                 '전체',
                                 isSelected: selectedFilter == '전체',
-                                onSelected: (_) => onFilterSelected('전체')
+                                onSelected: (selected) {
+                                  setState(() {
+                                    selectedFilter = '전체';
+                                    filteredTransactions = _getFilteredTransactions(
+                                        allTransactions,
+                                        searchQuery,
+                                        selectedFilter
+                                    );
+                                  });
+                                }
                             ),
                             _buildFilterChip(
                                 '수입',
                                 isSelected: selectedFilter == '수입',
-                                onSelected: (_) => onFilterSelected('수입')
+                                onSelected: (selected) {
+                                  setState(() {
+                                    selectedFilter = '수입';
+                                    filteredTransactions = _getFilteredTransactions(
+                                        allTransactions,
+                                        searchQuery,
+                                        selectedFilter
+                                    );
+                                  });
+                                }
                             ),
                             _buildFilterChip(
                                 '지출',
                                 isSelected: selectedFilter == '지출',
-                                onSelected: (_) => onFilterSelected('지출')
+                                onSelected: (selected) {
+                                  setState(() {
+                                    selectedFilter = '지출';
+                                    filteredTransactions = _getFilteredTransactions(
+                                        allTransactions,
+                                        searchQuery,
+                                        selectedFilter
+                                    );
+                                  });
+                                }
                             ),
                             _buildFilterChip(
                                 '재테크',
                                 isSelected: selectedFilter == '재테크',
-                                onSelected: (_) => onFilterSelected('재테크')
+                                onSelected: (selected) {
+                                  setState(() {
+                                    selectedFilter = '재테크';
+                                    filteredTransactions = _getFilteredTransactions(
+                                        allTransactions,
+                                        searchQuery,
+                                        selectedFilter
+                                    );
+                                  });
+                                }
                             ),
                           ],
                         ),
