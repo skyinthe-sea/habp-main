@@ -9,8 +9,8 @@ import '../../domain/usecases/get_month_transactions.dart';
 import '../../domain/usecases/get_day_summary.dart';
 import '../controllers/calendar_controller.dart';
 import '../controllers/calendar_filter_controller.dart';
-import '../widgets/month_calendar.dart';
-import '../widgets/day_transactions_list.dart';
+import '../widgets/month_calendar_fullscreen.dart';
+import '../widgets/transaction_dialog.dart';
 import '../widgets/filter_modal.dart';
 import '../widgets/filter_floating_button.dart';
 
@@ -58,14 +58,31 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
     final getDaySummaryUseCase = GetDaySummary(repository);
 
     // 컨트롤러 초기화
-    return Get.put(
-        CalendarController(
-          getMonthTransactions: getMonthTransactionsUseCase,
-          getDaySummary: getDaySummaryUseCase,
-          filterController: _filterController, // 필터 컨트롤러 연결
-        ),
-        permanent: true
+    final controller = CalendarController(
+      getMonthTransactions: getMonthTransactionsUseCase,
+      getDaySummary: getDaySummaryUseCase,
+      filterController: _filterController,
     );
+
+    return Get.put(controller, permanent: true);
+  }
+
+  // 트랜잭션 다이얼로그 표시 메서드
+  void _showTransactionDialog(DateTime date) {
+    // 선택한 날짜에 거래가 있는지 확인
+    final transactions = _controller.getEventsForDay(date);
+
+    // 거래가 있을 때만 다이얼로그 표시
+    if (transactions.isNotEmpty) {
+      Get.dialog(
+        TransactionDialog(
+          controller: _controller,
+          filterController: _filterController,
+          date: date,
+        ),
+        barrierDismissible: true,
+      );
+    }
   }
 
   // 초기 데이터 로드 함수
@@ -86,82 +103,29 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
       builder: (context, snapshot) {
         // 데이터 로딩 중이면 로딩 화면 표시
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 1,
-              title: const Text(
-                '수기가계부',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-            body: const Center(
-              child: CircularProgressIndicator(),
+          return const Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
             ),
           );
         }
 
         // 데이터 로드 완료 후 실제 캘린더 화면 표시
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Colors.white,
           body: SafeArea(
             child: Stack(
               children: [
-                // 전체 페이지가 스크롤되는 구조로 변경
-                CustomScrollView(
-                  slivers: [
-                    // 월간 캘린더 (이제 전체 페이지 스크롤의 일부)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: MonthCalendar(controller: _controller),
-                      ),
-                    ),
-
-                    // 거래 내역 (전체 스크롤의 일부이면서 내부에서도 스크롤 가능)
-                    SliverToBoxAdapter(
-                      child: Container(
-                        width: double.infinity,
-                        // 최소 높이 지정 (화면의 60% 정도)
-                        constraints: BoxConstraints(
-                          minHeight: MediaQuery.of(context).size.height * 0.6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(16),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, -2),
-                            ),
-                          ],
-                        ),
-                        child: DayTransactionsList(
-                          controller: _controller,
-                          filterController: _filterController,
-                          nestedScrollEnabled: true, // 중첩 스크롤 활성화
-                        ),
-                      ),
-                    ),
-
-                    // 플로팅 버튼 아래 여백 추가
-                    SliverToBoxAdapter(
-                      child: SizedBox(height: 80),
-                    ),
-                  ],
+                // 전체 화면을 차지하는 달력
+                MonthCalendarFullscreen(
+                  controller: _controller,
+                  onDateTap: _showTransactionDialog,
                 ),
 
-                // 새로운 필터 플로팅 버튼
+                // 필터 플로팅 버튼
                 FilterFloatingButton(controller: _filterController),
 
-                // 필터 모달 (기존 코드 유지)
+                // 필터 모달
                 FilterModal(controller: _filterController),
               ],
             ),
