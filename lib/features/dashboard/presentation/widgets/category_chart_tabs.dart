@@ -6,10 +6,46 @@ import '../../../../core/constants/app_colors.dart';
 import '../../data/entities/category_expense.dart';
 import '../presentation/dashboard_controller.dart';
 
-class CategoryChartTabs extends StatelessWidget {
+class CategoryChartTabs extends StatefulWidget {
   final DashboardController controller;
 
   const CategoryChartTabs({Key? key, required this.controller}) : super(key: key);
+
+  @override
+  State<CategoryChartTabs> createState() => _CategoryChartTabsState();
+}
+
+class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late PageController _pageController;
+
+  final List<String> _tabs = ['소득', '지출', '재테크'];
+  final List<Color> _tabColors = [Colors.green.shade400, AppColors.primary, Colors.blue.shade400];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _pageController = PageController();
+
+    // Sync tab controller with page controller
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        _pageController.animateToPage(
+          _tabController.index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,47 +89,85 @@ class CategoryChartTabs extends StatelessWidget {
             ),
           ),
 
-          // 세 개의 미니 도넛 차트를 가로로 배치
+          // Tab bar for selecting category type
+          TabBar(
+            controller: _tabController,
+            labelColor: _tabColors[_tabController.index],
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: _tabColors[_tabController.index],
+            indicatorSize: TabBarIndicatorSize.label,
+            labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            tabs: _tabs.map((title) => Tab(text: title)).toList(),
+            onTap: (index) {
+              // Update indicator color when tab changes
+              setState(() {});
+            },
+          ),
+
+          // Swipeable chart container
           SizedBox(
-            height: 220, // 높이 축소
-            child: Row(
+            height: 220,
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                _tabController.animateTo(index);
+                // Update indicator color when page changes
+                setState(() {});
+              },
               children: [
                 // 소득 차트
-                Expanded(
-                  child: _buildMiniChart(
-                    data: controller.categoryIncome,
-                    title: '소득',
-                    isLoading: controller.isCategoryIncomeLoading.value,
-                    emptyMessage: '소득 데이터가 없습니다',
-                    baseColor: Colors.green.shade400,
-                    type: 'INCOME',
-                  ),
+                _buildMiniChart(
+                  data: widget.controller.categoryIncome,
+                  title: '소득',
+                  isLoading: widget.controller.isCategoryIncomeLoading.value,
+                  emptyMessage: '소득 데이터가 없습니다',
+                  baseColor: Colors.green.shade400,
+                  type: 'INCOME',
                 ),
 
                 // 지출 차트
-                Expanded(
-                  child: _buildMiniChart(
-                    data: controller.categoryExpenses,
-                    title: '지출',
-                    isLoading: controller.isCategoryExpenseLoading.value,
-                    emptyMessage: '지출 데이터가 없습니다',
-                    baseColor: AppColors.primary,
-                    type: 'EXPENSE',
-                  ),
+                _buildMiniChart(
+                  data: widget.controller.categoryExpenses,
+                  title: '지출',
+                  isLoading: widget.controller.isCategoryExpenseLoading.value,
+                  emptyMessage: '지출 데이터가 없습니다',
+                  baseColor: AppColors.primary,
+                  type: 'EXPENSE',
                 ),
 
                 // 재테크 차트
-                Expanded(
-                  child: _buildMiniChart(
-                    data: controller.categoryFinance,
-                    title: '재테크',
-                    isLoading: controller.isCategoryFinanceLoading.value,
-                    emptyMessage: '재테크 데이터가 없습니다',
-                    baseColor: Colors.blue.shade400,
-                    type: 'FINANCE',
-                  ),
+                _buildMiniChart(
+                  data: widget.controller.categoryFinance,
+                  title: '재테크',
+                  isLoading: widget.controller.isCategoryFinanceLoading.value,
+                  emptyMessage: '재테크 데이터가 없습니다',
+                  baseColor: Colors.blue.shade400,
+                  type: 'FINANCE',
                 ),
               ],
+            ),
+          ),
+
+          // Custom page indicator
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(3, (index) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  height: 8,
+                  width: _tabController.index == index ? 24 : 8,
+                  decoration: BoxDecoration(
+                    color: _tabController.index == index
+                        ? _tabColors[index]
+                        : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                );
+              }),
             ),
           ),
         ],
@@ -155,7 +229,7 @@ class CategoryChartTabs extends StatelessWidget {
     return GestureDetector(
       onTap: () => _showDetailChart(Get.context!, data, title.replaceAll('소득', '수입'), baseColor, type, total),
       child: Padding(
-        padding: const EdgeInsets.all(4.0),
+        padding: const EdgeInsets.all(8.0),
         child: Container(
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade200, width: 1),
@@ -186,42 +260,44 @@ class CategoryChartTabs extends StatelessWidget {
               const SizedBox(height: 8),
 
               // 미니 도넛 차트
-              SizedBox(
-                height: 120,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    PieChart(
-                      PieChartData(
-                        sectionsSpace: 1,
-                        centerSpaceRadius: 35, // 중앙 공간 축소
-                        sections: _createSections(mainCategories, data, baseColor, type),
-                        startDegreeOffset: 180,
+              Expanded(
+                child: Hero(
+                  tag: 'chart_$type',
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      PieChart(
+                        PieChartData(
+                          sectionsSpace: 1,
+                          centerSpaceRadius: 35, // 중앙 공간 축소
+                          sections: _createSections(mainCategories, data, baseColor, type),
+                          startDegreeOffset: 180,
+                        ),
                       ),
-                    ),
 
-                    // 중앙 총액 표시
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _formatAmount(total),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: baseColor,
+                      // 중앙 총액 표시
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _formatAmount(total),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: baseColor,
+                            ),
                           ),
-                        ),
-                        Text(
-                          '원',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey.shade600,
+                          Text(
+                            '원',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -230,8 +306,6 @@ class CategoryChartTabs extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 2, bottom: 4, left: 4, right: 4),
                 child: _buildSimpleLegend(data, baseColor, type),
               ),
-
-              const Spacer(flex: 1),
             ],
           ),
         ),
@@ -395,41 +469,44 @@ class CategoryChartTabs extends StatelessWidget {
               // 상세 도넛 차트
               SizedBox(
                 height: 300,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    PieChart(
-                      PieChartData(
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 60,
-                        sections: _createDetailSections(data, baseColor, type),
-                        startDegreeOffset: 180,
+                child: Hero(
+                  tag: 'chart_$type',
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      PieChart(
+                        PieChartData(
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 60,
+                          sections: _createDetailSections(data, baseColor, type),
+                          startDegreeOffset: 180,
+                        ),
                       ),
-                    ),
 
-                    // 중앙 텍스트
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: baseColor,
+                      // 중앙 텍스트
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: baseColor,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '카테고리 비율',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
+                          const SizedBox(height: 4),
+                          Text(
+                            '카테고리 비율',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
