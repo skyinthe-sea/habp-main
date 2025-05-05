@@ -199,7 +199,7 @@ class AssetSummaryCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: positive ? Colors.white : Colors.red.shade200,
+                  color: positive ? Colors.white : Colors.red.shade400,
                 ),
               ),
             ],
