@@ -154,10 +154,20 @@ class AssetLocalDataSourceImpl implements AssetLocalDataSource {
         'category',
         where: 'type = ?',
         whereArgs: ['ASSET'],
-        orderBy: 'name',
+        orderBy: 'name', // Keep initial alphabetical sorting
       );
 
-      return result.map((map) => AssetCategoryModel.fromMap(map)).toList();
+      // Convert to list of models
+      final categories = result.map((map) => AssetCategoryModel.fromMap(map)).toList();
+
+      // Custom sort to ensure "기타" is always at the end
+      categories.sort((a, b) {
+        if (a.name == '기타') return 1;      // Move "기타" to the end
+        if (b.name == '기타') return -1;     // Move "기타" to the end
+        return a.name.compareTo(b.name);    // Normal alphabetical sorting for other items
+      });
+
+      return categories;
     } catch (e) {
       debugPrint('자산 카테고리 조회 중 오류: $e');
       return [];

@@ -16,4 +16,6 @@ abstract class TransactionRepository {
   Future<List<Transaction>> getTransactionsByDateRange(DateTime start, DateTime end);
   Future<double> getAssets(int year, int month);
   Future<Map<String, dynamic>> getMonthlySummary(int year, int month);
+  Future<List<TransactionWithCategory>> getRecentTransactionsForRange(
+      DateTime startDate, DateTime endDate, int limit);
 }

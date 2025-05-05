@@ -12,6 +12,7 @@ import '../../domain/usecases/get_monthly_summary.dart';
 import '../../domain/usecases/get_monthly_expenses_trend.dart';
 import '../../domain/usecases/get_category_expenses.dart';
 import '../../domain/usecases/get_recent_transactions.dart';
+import '../../domain/usecases/get_recent_transactions_for_range.dart';
 import '../presentation/dashboard_controller.dart';
 import '../widgets/monthly_summary_card.dart';
 import '../widgets/monthly_expense_chart.dart';
@@ -53,6 +54,8 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
     final categoryIncomeUseCase = GetCategoryIncome(repository);
     final categoryFinanceUseCase = GetCategoryFinance(repository);
     final recentTransactionsUseCase = GetRecentTransactions(repository);
+    // 새로운 UseCase 추가
+    final recentTransactionsForRangeUseCase = GetRecentTransactionsForRange(repository);
     final assetsUseCase = GetAssets(repository);
 
     dbHelper.printDatabaseInfo();
@@ -64,6 +67,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
       getCategoryIncome: categoryIncomeUseCase,
       getCategoryFinance: categoryFinanceUseCase,
       getRecentTransactions: recentTransactionsUseCase,
+      getRecentTransactionsForRange: recentTransactionsForRangeUseCase, // 새로운 UseCase 등록
       getAssets: assetsUseCase,
     );
     Get.put(_controller);

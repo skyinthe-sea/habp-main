@@ -62,4 +62,10 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<Map<String, dynamic>> getMonthlySummary(int year, int month) async {
     return await localDataSource.getMonthlySummary(year, month);
   }
+
+  @override
+  Future<List<TransactionWithCategory>> getRecentTransactionsForRange(
+      DateTime startDate, DateTime endDate, int limit) async {
+    return await localDataSource.getRecentTransactionsForRange(startDate, endDate, limit);
+  }
 }
