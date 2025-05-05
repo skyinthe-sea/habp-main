@@ -22,6 +22,36 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   final List<String> _tabs = ['소득', '지출', '재테크'];
   final List<Color> _tabColors = [Colors.green.shade400, AppColors.primary, Colors.blue.shade400];
 
+  // 카테고리별 고유 색상 맵핑 (지출용)
+  final Map<String, Color> _categoryColors = {
+    '술약속': Color(0xFFFF6B6B),
+    '통신': Color(0xFF4ECDC4),
+    '이건뭐지': Color(0xFFFFD166),
+    '이것도': Color(0xFF6A0572),
+    '기타': Colors.grey.shade400,
+    '하나더': Color(0xFF1A535C),
+    '여러개더': Color(0xFFF9DB6D),
+    '이건': Color(0xFF3C91E6),
+  };
+
+  // 소득 카테고리 색상
+  final List<Color> _incomeColors = [
+    Color(0xFF2ECC71),
+    Color(0xFF27AE60),
+    Color(0xFF1E8449),
+    Color(0xFF145A32),
+    Color(0xFF52BE80),
+  ];
+
+  // 재테크 카테고리 색상
+  final List<Color> _financeColors = [
+    Color(0xFF3498DB),
+    Color(0xFF2980B9),
+    Color(0xFF1F618D),
+    Color(0xFF154360),
+    Color(0xFF5DADE2),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -107,7 +137,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
 
           // Swipeable chart container
           SizedBox(
-            height: 220,
+            height: 280, // 높이 증가
             child: PageView(
               controller: _pageController,
               onPageChanged: (index) {
@@ -240,7 +270,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
           ),
           child: Column(
             children: [
-              // 차트 타이틀 - 더 눈에 띄게 개선
+              // 차트 타이틀
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                 decoration: BoxDecoration(
@@ -276,9 +306,9 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                           children: [
                             PieChart(
                               PieChartData(
-                                sectionsSpace: 1,
-                                centerSpaceRadius: 35,
-                                sections: _createSections(mainCategories, data, baseColor, type),
+                                sectionsSpace: 2,
+                                centerSpaceRadius: 40,
+                                sections: _createSections(mainCategories, type),
                                 startDegreeOffset: 180,
                               ),
                             ),
@@ -290,7 +320,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                                 Text(
                                   _formatAmount(total),
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: baseColor,
                                   ),
@@ -298,7 +328,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                                 Text(
                                   '원',
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     color: Colors.grey.shade600,
                                   ),
                                 ),
@@ -312,7 +342,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                     // 범례 부분 (50%)
                     Expanded(
                       flex: 1,
-                      child: _buildSideLegend(mainCategories, baseColor, type),
+                      child: _buildSideLegend(mainCategories, type),
                     ),
                   ],
                 ),
@@ -325,15 +355,12 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   }
 
   // 우측 범례 위젯 구현
-  Widget _buildSideLegend(List<CategoryExpense> data, Color baseColor, String type) {
+  Widget _buildSideLegend(List<CategoryExpense> data, String type) {
     if (data.isEmpty) return const SizedBox();
 
-    // 최대 표시 항목 수
-    const int maxVisibleItems = 5;
-
-    // 표시할 항목과 페이드아웃 처리할 항목 구분
-    final visibleItems = data.take(maxVisibleItems).toList();
-    final hasMore = data.length > maxVisibleItems;
+    // 표시할 항목
+    final visibleItems = data.take(6).toList();
+    final hasMore = data.length > 6;
 
     return Padding(
       padding: const EdgeInsets.only(left: 4, right: 12, top: 4, bottom: 4),
@@ -342,61 +369,49 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
         children: [
           // 주요 항목 리스트
           ...visibleItems.map((item) {
-            Color color;
-            if (type == 'EXPENSE') {
-              color = item.categoryId == -1
-                  ? Colors.grey
-                  : AppColors.getCategoryColor(item.categoryId);
-            } else if (type == 'INCOME') {
-              color = item.categoryId == -1
-                  ? Colors.grey
-                  : Color.lerp(Colors.lightGreen, Colors.green.shade700,
-                  data.indexOf(item) / data.length)!;
-            } else {
-              color = item.categoryId == -1
-                  ? Colors.grey
-                  : Color.lerp(Colors.lightBlue, Colors.indigo,
-                  data.indexOf(item) / data.length)!;
-            }
+            Color color = _getCategoryColor(item.categoryName, data.indexOf(item), type);
 
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 5),
               child: Row(
                 children: [
                   // 색상 표시
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 10,
+                    height: 10,
                     decoration: BoxDecoration(
                       color: color,
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
 
-                  // 카테고리명과 비율
+                  // 카테고리명과 비율 (간격 좁게)
                   Expanded(
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Flexible(
-                          flex: 2,
+                        Expanded(
+                          flex: 5,
                           child: Text(
                             item.categoryName,
-                            style: const TextStyle(fontSize: 10),
+                            style: const TextStyle(fontSize: 12),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Flexible(
-                          flex: 1,
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           child: Text(
                             '${item.percentage.toInt()}%',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: color,
                             ),
-                            textAlign: TextAlign.end,
                           ),
                         ),
                       ],
@@ -411,7 +426,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
           if (hasMore)
             Container(
               width: double.infinity,
-              height: 32,
+              height: 24,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -440,41 +455,58 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     );
   }
 
-  // 도넛 차트 섹션 생성
-  List<PieChartSectionData> _createSections(
-      List<CategoryExpense> mainCategories,
-      List<CategoryExpense> allData,
-      Color baseColor,
-      String type) {
-    return mainCategories.map((item) {
-      // 색상 결정
-      Color color;
-      if (type == 'EXPENSE') {
-        color = item.categoryId == -1
-            ? Colors.grey
-            : AppColors.getCategoryColor(item.categoryId);
-      } else if (type == 'INCOME') {
-        if (item.categoryId == -1) {
-          color = Colors.grey;
-        } else {
-          int index = allData.indexWhere((e) => e.categoryId == item.categoryId);
-          color = Color.lerp(Colors.lightGreen, Colors.green.shade700, index / allData.length)!;
-        }
+  // 카테고리별 색상 가져오기
+  Color _getCategoryColor(String categoryName, int index, String type) {
+    if (type == 'EXPENSE') {
+      // 지출은 카테고리 이름 기반 고유 색상 사용
+      if (_categoryColors.containsKey(categoryName)) {
+        return _categoryColors[categoryName]!;
       } else {
-        if (item.categoryId == -1) {
-          color = Colors.grey;
-        } else {
-          int index = allData.indexWhere((e) => e.categoryId == item.categoryId);
-          color = Color.lerp(Colors.lightBlue, Colors.indigo, index / allData.length)!;
-        }
+        // 동적으로 색상 생성 - 인덱스 기반
+        int r = ((index * 25 + 100) % 255).clamp(0, 255);
+        int g = ((255 - index * 25) % 255).clamp(0, 255);
+        int b = ((150 + index * 10) % 255).clamp(0, 255);
+        return Color.fromARGB(255, r, g, b);
       }
+    } else if (type == 'INCOME') {
+      // 소득은 초록색 계열 사용
+      return index < _incomeColors.length
+          ? _incomeColors[index]
+          : _incomeColors[index % _incomeColors.length];
+    } else {
+      // 재테크는 파란색 계열 사용
+      return index < _financeColors.length
+          ? _financeColors[index]
+          : _financeColors[index % _financeColors.length];
+    }
+  }
+
+  // 도넛 차트 섹션 생성 (퍼센티지 표시 추가)
+  List<PieChartSectionData> _createSections(
+      List<CategoryExpense> categories,
+      String type) {
+    return categories.map((item) {
+      final color = _getCategoryColor(item.categoryName, categories.indexOf(item), type);
+      final showLabel = item.percentage >= 10; // 10% 이상일 때만 라벨 표시
 
       return PieChartSectionData(
         color: color,
         value: item.amount,
-        title: '', // 미니 차트에서는 제목 표시 X
-        radius: 45, // 반지름 축소
-        badgeWidget: null, // 미니 차트에서는 배지 표시 X
+        title: showLabel ? '${item.percentage.toInt()}%' : '',
+        titleStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              offset: Offset(0, 1),
+              blurRadius: 2,
+              color: Colors.black54,
+            ),
+          ],
+        ),
+        radius: 50,
+        badgeWidget: null,
       );
     }).toList();
   }
@@ -500,7 +532,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     );
   }
 
-  // 상세 차트 다이얼로그 표시
+  // 상세 차트 다이얼로그 표시 (업데이트된 디자인)
   void _showDetailChart(BuildContext context, List<CategoryExpense> data, String title, Color baseColor, String type, double total) {
     // 금액 기준 내림차순 정렬
     final sortedData = List<CategoryExpense>.from(data)
@@ -537,138 +569,150 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                 ],
               ),
 
-              // 총액 정보
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  '총 금액: ${_formatAmount(total)}원',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+              // 총액 정보 (금액 크게 표시)
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: baseColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '총 금액',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_formatAmount(total)}원',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: baseColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              // 상세 차트와 카테고리 목록을 좌우로 배치
+              // 차트와 카테고리 목록
               SizedBox(
-                height: 300,
-                child: Row(
+                height: 350, // 높이 증가
+                child: Column(
                   children: [
-                    // 도넛 차트 (왼쪽 50%)
-                    Expanded(
-                      flex: 1,
-                      child: Hero(
-                        tag: 'chart_$type',
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            PieChart(
-                              PieChartData(
-                                sectionsSpace: 2,
-                                centerSpaceRadius: 60,
-                                sections: _createDetailSections(sortedData, baseColor, type),
-                                startDegreeOffset: 180,
-                              ),
-                            ),
+                    // 차트 (상단 30%)
+                    SizedBox(
+                      height: 150,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 40,
+                          sections: sortedData.map((item) {
+                            final color = _getCategoryColor(item.categoryName, sortedData.indexOf(item), type);
+                            final showLabel = item.percentage >= 8; // 8% 이상일 때만 라벨 표시
 
-                            // 중앙 텍스트
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  title,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: baseColor,
+                            return PieChartSectionData(
+                              color: color,
+                              value: item.amount,
+                              title: showLabel ? '${item.percentage.toInt()}%' : '',
+                              titleStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(0, 1),
+                                    blurRadius: 2,
+                                    color: Colors.black54,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '카테고리 비율',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                              radius: 55,
+                              badgeWidget: null,
+                            );
+                          }).toList(),
+                          startDegreeOffset: 180,
                         ),
                       ),
                     ),
 
-                    // 카테고리 목록 (오른쪽 50%)
+                    // 구분선
+                    Divider(color: Colors.grey.shade200, thickness: 1),
+
+                    // 카테고리 목록 (하단 70%)
                     Expanded(
-                      flex: 1,
                       child: ListView.builder(
                         shrinkWrap: true,
                         itemCount: sortedData.length,
                         itemBuilder: (context, index) {
                           final item = sortedData[index];
-                          // 색상 설정
-                          Color color;
-                          if (type == 'EXPENSE') {
-                            color = AppColors.getCategoryColor(item.categoryId);
-                          } else if (type == 'INCOME') {
-                            color = Color.lerp(Colors.lightGreen, Colors.green.shade700, index / sortedData.length)!;
-                          } else {
-                            color = Color.lerp(Colors.lightBlue, Colors.indigo, index / sortedData.length)!;
-                          }
+                          final color = _getCategoryColor(item.categoryName, index, type);
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
+                          return Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: color.withOpacity(0.2)),
+                            ),
                             child: Row(
                               children: [
+                                // 색상 표시
                                 Container(
-                                  width: 12,
-                                  height: 12,
+                                  width: 14,
+                                  height: 14,
                                   decoration: BoxDecoration(
                                     color: color,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 10),
+
+                                // 카테고리명
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              item.categoryName,
-                                              style: const TextStyle(fontSize: 14),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                            decoration: BoxDecoration(
-                                              color: color.withOpacity(0.15),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              '${item.percentage.toStringAsFixed(1)}%',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: color,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${_formatAmount(item.amount)}원',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ],
+                                  flex: 5,
+                                  child: Text(
+                                    item.categoryName,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+
+                                // 금액
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    '${_formatAmount(item.amount)}원',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 8),
+
+                                // 퍼센트
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: color.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${item.percentage.toStringAsFixed(1)}%',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: color,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -685,32 +729,6 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
         ),
       ),
     );
-  }
-
-  // 상세 차트용 섹션 생성
-  List<PieChartSectionData> _createDetailSections(List<CategoryExpense> data, Color baseColor, String type) {
-    return data.map((item) {
-      // 색상 설정
-      Color color;
-      if (type == 'EXPENSE') {
-        color = AppColors.getCategoryColor(item.categoryId);
-      } else if (type == 'INCOME') {
-        color = Color.lerp(Colors.lightGreen, Colors.green.shade700, data.indexOf(item) / data.length)!;
-      } else {
-        color = Color.lerp(Colors.lightBlue, Colors.indigo, data.indexOf(item) / data.length)!;
-      }
-
-      return PieChartSectionData(
-        color: color,
-        value: item.amount,
-        title: '',
-        radius: 60,
-        titlePositionPercentageOffset: 0.6,
-        // 상세 모드에서는 배지 제거하여 깔끔하게 유지
-        badgeWidget: null,
-        badgePositionPercentageOffset: 1.2,
-      );
-    }).toList();
   }
 
   // 금액 포맷팅
