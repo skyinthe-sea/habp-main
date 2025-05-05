@@ -33,82 +33,40 @@ class RecentTransactionsList extends StatelessWidget {
                 const Text(
                   '최근 거래 내역',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                GestureDetector(
+                InkWell(
                   onTap: () {
                     _showAllTransactionsDialog(context);
                   },
-                  child: const Text(
-                    '모두 보기 →',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w500,
+                  borderRadius: BorderRadius.circular(4),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Row(
+                      children: const [
+                        Text(
+                          '모두 보기',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(width: 2),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 12,
+                          color: AppColors.primary,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
           ),
-
-          // 거래 목록 헤더
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    '날짜',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    '내용',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    '카테고리',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    '금액',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
 
           // 거래 목록
           if (controller.recentTransactions.isEmpty)
@@ -122,23 +80,85 @@ class RecentTransactionsList extends StatelessWidget {
               ),
             )
           else
-            ListView.separated(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: controller.recentTransactions.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final transaction = controller.recentTransactions[index];
-                return _buildTransactionItem(transaction);
-              },
+            Column(
+              children: [
+                // 거래 목록 헤더
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey[300]!),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 70,
+                        child: Text(
+                          '날짜',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          '내용',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 80,
+                        child: Text(
+                          '카테고리',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 90,
+                        child: Text(
+                          '금액',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                ListView.separated(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: controller.recentTransactions.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+                  itemBuilder: (context, index) {
+                    final transaction = controller.recentTransactions[index];
+                    return _buildTransactionItem(transaction);
+                  },
+                ),
+              ],
             ),
         ],
       );
     });
   }
-
-  // Add this method to the RecentTransactionsList class in
-// lib/features/dashboard/presentation/widgets/recent_transactions_list.dart
 
   Future<void> _showAllTransactionsDialog(BuildContext context) async {
     // Show loading indicator
@@ -169,10 +189,10 @@ class RecentTransactionsList extends StatelessWidget {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
         child: Container(
           width: double.maxFinite,
-          height:
-              MediaQuery.of(context).size.height * 0.7, // 70% of screen height
+          height: MediaQuery.of(context).size.height * 0.7,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -182,7 +202,7 @@ class RecentTransactionsList extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -195,29 +215,37 @@ class RecentTransactionsList extends StatelessWidget {
                         color: AppColors.primary,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.grey),
-                      onPressed: () => Navigator.of(context).pop(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        child: const Icon(Icons.close, color: Colors.grey, size: 20),
+                      ),
                     ),
                   ],
                 ),
               ),
 
               // Column headers
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[300]!),
+                  ),
+                ),
                 child: Row(
                   children: [
-                    Expanded(
-                      flex: 2,
+                    SizedBox(
+                      width: 70,
                       child: Text(
                         '날짜',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -227,30 +255,31 @@ class RecentTransactionsList extends StatelessWidget {
                         '내용',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    Expanded(
-                      flex: 2,
+                    SizedBox(
+                      width: 80,
                       child: Text(
                         '카테고리',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                    Expanded(
-                      flex: 2,
+                    SizedBox(
+                      width: 90,
                       child: Text(
                         '금액',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
                         ),
                         textAlign: TextAlign.right,
                       ),
@@ -258,26 +287,25 @@ class RecentTransactionsList extends StatelessWidget {
                   ],
                 ),
               ),
-              const Divider(),
 
               // Transaction list
               Expanded(
                 child: transactions.isEmpty
                     ? const Center(
-                        child: Text(
-                          '거래 내역이 없습니다',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
+                  child: Text(
+                    '거래 내역이 없습니다',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
                     : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        itemCount: transactions.length,
-                        separatorBuilder: (context, index) =>
-                            const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          return _buildTransactionItem(transactions[index]);
-                        },
-                      ),
+                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+                  itemCount: transactions.length,
+                  separatorBuilder: (context, index) =>
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  itemBuilder: (context, index) {
+                    return _buildTransactionItem(transactions[index]);
+                  },
+                ),
               ),
             ],
           ),
@@ -300,17 +328,18 @@ class RecentTransactionsList extends StatelessWidget {
     final isIncome = transaction.categoryType == 'INCOME';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12), // 12,16에서 8,12로 감소
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       child: Row(
         children: [
           // 날짜
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 70,
             child: Text(
               date,
               style: TextStyle(
-                fontSize: 12, // 14에서 12로 감소
-                color: Colors.grey[700],
+                fontSize: 13,
+                color: Colors.grey[800],
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
@@ -320,44 +349,47 @@ class RecentTransactionsList extends StatelessWidget {
             flex: 3,
             child: Text(
               transaction.description,
-              style: const TextStyle(
-                fontSize: 12, // 14에서 12로 감소
+              style: TextStyle(
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
+                color: Colors.grey[900],
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
 
           // 카테고리
-          Expanded(
-            flex: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), // 8,2에서 6,1로 감소
-              decoration: BoxDecoration(
-                color: categoryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10), // 12에서 10으로 감소
-              ),
-              child: Text(
-                transaction.categoryName,
-                style: TextStyle(
-                  fontSize: 10, // 12에서 10으로 감소
-                  fontWeight: FontWeight.w500,
-                  color: categoryColor,
+          SizedBox(
+            width: 80,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: categoryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
+                child: Text(
+                  transaction.categoryName,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: categoryColor,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ),
 
           // 금액
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 90,
             child: Text(
               (isIncome ? '+' : '-') + formattedAmount + '원',
               style: TextStyle(
-                fontSize: 12, // 14에서 12로 감소
-                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
                 color: isIncome ? Colors.green[600] : Colors.grey[850],
               ),
               textAlign: TextAlign.right,
