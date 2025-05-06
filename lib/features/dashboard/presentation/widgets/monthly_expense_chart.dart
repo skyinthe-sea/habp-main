@@ -511,21 +511,23 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
     );
   }
 
-  // 컬럼(막대) 차트 구현 - 수정됨
-  // 수정된 막대 차트 구현 메서드
+  // monthly_expense_chart.dart 파일에서 _buildColumnChart 메서드를 아래와 같이 수정
+
   Widget _buildColumnChart(List<ExpenseData> chartData, Map<int, DateTime> yearChanges) {
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
       primaryXAxis: DateTimeAxis(
-        // 1. 명시적으로 최소/최대 범위 설정 (라인 차트와 동일하게)
+        // 1. 명시적으로 최소/최대 범위 설정 - 마지막 데이터 이후에 약간의 여백 추가
         minimum: chartData.isNotEmpty ? chartData.first.date : null,
-        maximum: chartData.isNotEmpty ? chartData.last.date : null,
+        // 마지막 날짜에 15일 추가하여 충분한 공간 확보
+        maximum: chartData.isNotEmpty ?
+        DateTime(chartData.last.date.year, chartData.last.date.month, chartData.last.date.day + 15) : null,
         // 2. 간격 유형은 월로 유지하되, 명시적 간격 값 설정
         intervalType: DateTimeIntervalType.months,
         interval: 1, // 명시적으로 1개월 간격 설정
-        // 3. auto 패딩으로 변경하여 더 나은 위치 조정
-        rangePadding: ChartRangePadding.auto,
+        // 3. 패딩 설정 변경 - additional로 설정하여 양끝에 여백 추가
+        rangePadding: ChartRangePadding.additional,
         // 4. 레이블 표시를 위한 설정 유지
         dateFormat: _monthFormat,
         majorGridLines: const MajorGridLines(width: 0),
@@ -587,8 +589,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           xAxisName: 'primaryXAxis',
           name: '',
           borderRadius: BorderRadius.circular(4),
-          // 10. 너비 조정으로 막대 위치 개선
-          width: 0.8,
+          // 10. 너비 조정으로 막대 위치 개선 - 너비를 약간 줄임
+          width: 0.7,
           // 애니메이션 지속 시간
           animationDuration: widget.controller.isSliding.value ? 200 : 300,
           // 막대 색상 설정 - 마지막 항목 강조
@@ -605,8 +607,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           // 11. 데이터 정렬을 확실히 하기 위한 설정
           sortingOrder: SortingOrder.ascending,
           sortFieldValueMapper: (ExpenseData data, _) => data.date,
-          // 12. 스페이싱 모드 추가
-          spacing: 0.2,
+          // 12. 스페이싱 모드 추가 - 약간 더 넓게 설정
+          spacing: 0.15,
           enableTooltip: true,
         ),
       ],
