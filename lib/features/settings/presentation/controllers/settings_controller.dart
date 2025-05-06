@@ -221,7 +221,9 @@ class SettingsController extends GetxController {
     }
   }
 
-  // 고정 거래 설정 추가/업데이트 - 수정된 버전
+  // lib/features/settings/presentation/controllers/settings_controller.dart
+// updateFixedTransactionSetting 메서드 완전히 수정
+
   Future<bool> updateFixedTransactionSetting({
     required int categoryId,
     required double amount,
@@ -231,22 +233,7 @@ class SettingsController extends GetxController {
       final dbHelper = DBHelper();
       final db = await dbHelper.database;
 
-      // 1. fixed_transaction_setting 테이블에 새 설정 추가
-      final setting = FixedTransactionSetting(
-        categoryId: categoryId,
-        amount: amount,
-        effectiveFrom: effectiveFrom,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      final result = await addFixedTransactionSetting.execute(setting);
-      if (!result) {
-        debugPrint('fixed_transaction_setting 추가 실패');
-        return false;
-      }
-
-      // 2. 해당 카테고리의 정보 가져오기
+      // 1. 해당 카테고리 정보 가져오기
       final List<Map<String, dynamic>> categoryData = await db.query(
         'category',
         where: 'id = ?',
@@ -259,30 +246,46 @@ class SettingsController extends GetxController {
       }
 
       final categoryType = categoryData.first['type'] as String;
+      final now = DateTime.now();
 
-      // 3. transaction_record2 테이블의 기존 데이터 확인
+      // 2. transaction_record2 테이블의 기존 데이터 확인
       final List<Map<String, dynamic>> existingTransactions = await db.query(
         'transaction_record2',
         where: 'category_id = ?',
         whereArgs: [categoryId],
       );
 
-      final now = DateTime.now().toIso8601String();
-      // 금액 부호 결정 (지출/재테크는 음수, 소득은 양수)
-      final signedAmount = categoryType == 'EXPENSE' || categoryType == 'FINANCE' ? -amount : amount;
+      // 3. 새 설정 정보 저장 - fixed_transaction_setting 테이블에 추가
+      final setting = FixedTransactionSetting(
+        categoryId: categoryId,
+        amount: amount,
+        effectiveFrom: effectiveFrom, // 여기에 날짜와 금액 정보가 모두 포함됨
+        createdAt: now,
+        updatedAt: now,
+      );
 
-      // 설명 생성 (매월 고정 거래로 설정)
-      final description = '매월 ${_getCategoryDescription(categoryType)}';
+      final result = await addFixedTransactionSetting.execute(setting);
+      if (!result) {
+        debugPrint('fixed_transaction_setting 추가 실패');
+        return false;
+      }
 
-      // transaction_num에 일자 저장 (매월 고정 거래 표시용)
-      final transactionNum = '${effectiveFrom.day}';
-
+      // 4. 최초 생성일 경우에만 transaction_record2에 삽입
+      // 이미 있는 경우는 transaction_record2를 업데이트하지 않음
       if (existingTransactions.isEmpty) {
-        // 4a. 기존 데이터가 없으면 새로 생성
-        debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 없어 생성합니다.');
+        debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 없어 새로 생성합니다.');
+
+        // 설명 생성 (매월 고정 거래로 설정)
+        final description = '매월 ${_getCategoryDescription(categoryType)}';
+
+        // transaction_num에 일자 저장 (매월 고정 거래 표시용)
+        final transactionNum = '${effectiveFrom.day}';
 
         // 사용자 ID (기본값 1로 설정, 필요시 변경)
         const userId = 1;
+
+        // 금액 부호 결정 (지출/재테크는 음수, 소득은 양수)
+        final signedAmount = categoryType == 'EXPENSE' || categoryType == 'FINANCE' ? -amount : amount;
 
         // transaction_record2 테이블에 데이터 삽입
         await db.insert('transaction_record2', {
@@ -292,32 +295,16 @@ class SettingsController extends GetxController {
           'description': description,
           'transaction_date': DateTime(effectiveFrom.year, effectiveFrom.month, effectiveFrom.day).toIso8601String(),
           'transaction_num': transactionNum,
-          'created_at': now,
-          'updated_at': now,
+          'created_at': now.toIso8601String(),
+          'updated_at': now.toIso8601String(),
         });
 
         debugPrint('새로운 고정 거래 생성 완료: 카테고리 $categoryId, 금액 $amount, 날짜 ${effectiveFrom.day}일');
       } else {
-        // 4b. 기존 데이터가 있으면 업데이트
-        debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 있어 업데이트합니다.');
-
-        final transactionId = existingTransactions.first['id'];
-
-        // 기존 transaction_record2 레코드 업데이트
-        await db.update(
-          'transaction_record2',
-          {
-            'amount': signedAmount,
-            'description': description,
-            'transaction_date': DateTime(effectiveFrom.year, effectiveFrom.month, effectiveFrom.day).toIso8601String(),
-            'transaction_num': transactionNum,
-            'updated_at': now,
-          },
-          where: 'id = ?',
-          whereArgs: [transactionId],
-        );
-
-        debugPrint('고정 거래 업데이트 완료: 카테고리 $categoryId, 새 금액 $amount, 날짜 ${effectiveFrom.day}일');
+        // 기존에 있는 경우는 transaction_record2를 업데이트하지 않음
+        // 이렇게 하면 과거 거래는 기존 날짜와 금액으로 유지됨
+        debugPrint('카테고리 $categoryId에 대한 transaction_record2 데이터가 있어 업데이트하지 않습니다.');
+        debugPrint('새 설정만 추가함: 금액 $amount, 날짜 ${effectiveFrom.day}일, 효력일 ${effectiveFrom.toString()}');
       }
 
       // 5. 관련 모든 데이터 다시 로드
