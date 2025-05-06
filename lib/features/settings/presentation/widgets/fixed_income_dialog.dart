@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/database/db_helper.dart';
+import '../../../../core/util/thousands_formatter.dart';
 import '../../data/datasources/fixed_transaction_local_data_source.dart';
 import '../controllers/settings_controller.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -602,8 +604,45 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
             const SizedBox(height: 8),
             TextFormField(
               controller: _amountController,
-              keyboardType: TextInputType.number,
-              onChanged: _validateAmount,
+              keyboardType: TextInputType.numberWithOptions(decimal: false),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                ThousandsFormatter(),
+              ],
+              onChanged: (value) {
+                // 콤마를 제거한 순수 숫자 값 얻기
+                final plainValue = value.replaceAll(',', '');
+
+                setState(() {
+                  _isValidAmount = plainValue.isEmpty ||
+                      (double.tryParse(plainValue) != null &&
+                          double.parse(plainValue) > 0);
+                });
+
+                // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
+                if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                  // 키보드가 열려 있으면 닫기
+                  FocusManager.instance.primaryFocus?.unfocus();
+
+                  // 경고 메시지 표시
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: Colors.white),
+                          SizedBox(width: 10),
+                          Text('숫자만 입력 가능합니다'),
+                        ],
+                      ),
+                      backgroundColor: Colors.red.shade700,
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      margin: EdgeInsets.all(10),
+                    ),
+                  );
+                }
+              },
               decoration: InputDecoration(
                 hintText: '숫자만 입력',
                 filled: true,
@@ -635,7 +674,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 if (value == null || value.isEmpty) {
                   return '금액을 입력해주세요';
                 }
-                final amount = double.tryParse(value);
+                final amount = double.tryParse(value.replaceAll(',', ''));
                 if (amount == null || amount <= 0) {
                   return '유효한 금액을 입력해주세요';
                 }
@@ -722,6 +761,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                       ],
                     ),
                   ),
+                  // Calendar for create form
                   TableCalendar(
                     firstDay: DateTime.utc(2020, 1, 1),
                     lastDay: DateTime.utc(2030, 12, 31),
@@ -732,6 +772,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     onDaySelected: (selectedDay, focusedDay) {
                       setState(() {
                         _selectedDate = selectedDay;
+                        _effectiveFromDate = focusedDay;
+                      });
+                    },
+                    onPageChanged: (focusedDay) {
+                      // Update the displayed month when swiping
+                      setState(() {
                         _effectiveFromDate = focusedDay;
                       });
                     },
@@ -1898,7 +1944,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               child: ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    final amount = double.parse(_amountController.text);
+                    final amount = double.parse(_amountController.text.replaceAll(',', ''));
 
                     // Create the fixed transaction starting from the selected date
                     final success = await _controller.createNewFixedTransaction(
@@ -2031,7 +2077,10 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
   // Show update dialog for adding a new setting
   void _showUpdateDialog(CategoryWithSettings category) {
     final TextEditingController amountController = TextEditingController();
-    final TextEditingController dayController = TextEditingController();
+
+    // Success state variables
+    bool showSuccess = false;
+    bool isLoading = false;
 
     // Get the last setting day
     int defaultDay = 1;
@@ -2044,28 +2093,14 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       amountController.text = defaultAmount.toStringAsFixed(0);
     }
 
-    dayController.text = defaultDay.toString();
-
     // Set default date (current month with the default day)
     final now = DateTime.now();
     DateTime selectedDate = DateTime(now.year, now.month, defaultDay);
-
-    // For effective month selection
-    int selectedYear = now.year;
-    int selectedMonth = now.month;
-
-    // Create date from selected values
-    void updateSelectedDate() {
-      // Make sure day is valid for the month
-      int day = int.tryParse(dayController.text) ?? defaultDay;
-      int maxDaysInMonth = DateTime(selectedYear, selectedMonth + 1, 0).day;
-      if (day > maxDaysInMonth) day = maxDaysInMonth;
-
-      selectedDate = DateTime(selectedYear, selectedMonth, day);
-    }
+    DateTime effectiveFromDate = DateTime(now.year, now.month, 1);
 
     showDialog(
       context: context,
+      barrierDismissible: false, // Prevent closing by tapping outside
       builder: (context) {
         return Dialog(
           shape: RoundedRectangleBorder(
@@ -2076,11 +2111,6 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               bool isValidAmount = amountController.text.isEmpty ||
                   (double.tryParse(amountController.text) != null &&
                       double.parse(amountController.text) > 0);
-
-              bool isValidDay = dayController.text.isEmpty ||
-                  (int.tryParse(dayController.text) != null &&
-                      int.parse(dayController.text) > 0 &&
-                      int.parse(dayController.text) <= 31);
 
               return Container(
                 width: 320,
@@ -2200,219 +2230,388 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     ),
 
                     // Content
-                    Padding(
+                    SingleChildScrollView(
                       padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Stack(
                         children: [
-                          // Amount input
-                          const Text(
-                            '새 금액',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: amountController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: '금액 입력',
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                              prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
-                              prefixText: '₩ ',
-                              prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                    color: isValidAmount ? Colors.grey[200]! : Colors.red[300]!
+                          // Success overlay
+                          if (showSuccess)
+                            Positioned.fill(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade50,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                      border: Border.all(color: Colors.green.shade200, width: 1),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.shade100,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.check,
+                                            color: Colors.green.shade700,
+                                            size: 36,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          '저장 완료!',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.green.shade700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          '설정이 성공적으로 적용되었습니다',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.green.shade800,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: isValidAmount ? Colors.green.shade700 : Colors.red[400]!,
-                                  width: 2,
+                            ),
+
+                          // Loading overlay
+                          if (isLoading)
+                            Positioned.fill(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: 40,
+                                        height: 40,
+                                        child: CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade700),
+                                          strokeWidth: 3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        '저장 중...',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.green.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              errorText: !isValidAmount ? '유효한 금액을 입력해주세요' : null,
                             ),
-                            onChanged: (value) {
-                              setState(() {});
-                            },
-                          ),
-                          const SizedBox(height: 24),
 
-                          // Date selection
-                          const Text(
-                            '적용 시작일',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Year/Month selection row
-                          Row(
+                          // Main content
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Year dropdown
-                              Expanded(
-                                flex: 2,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[50],
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey[200]!),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<int>(
-                                      value: selectedYear,
-                                      items: List.generate(11, (index) {
-                                        final year = DateTime.now().year - 5 + index;
-                                        return DropdownMenuItem(
-                                          value: year,
-                                          child: Text(
-                                            '$year년',
-                                            style: const TextStyle(fontSize: 14),
-                                          ),
-                                        );
-                                      }),
-                                      onChanged: (value) {
-                                        if (value != null) {
-                                          setState(() {
-                                            selectedYear = value;
-                                            updateSelectedDate();
-                                          });
-                                        }
-                                      },
-                                      icon: const Icon(Icons.arrow_drop_down),
-                                      isExpanded: true,
-                                    ),
-                                  ),
+                              // Amount input
+                              const Text(
+                                '새 금액',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: amountController,
+                                keyboardType: TextInputType.numberWithOptions(decimal: false),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                                  ThousandsFormatter(),
+                                ],
+                                onChanged: (value) {
+                                  // 콤마를 제거한 순수 숫자 값 얻기
+                                  final plainValue = value.replaceAll(',', '');
 
-                              // Month dropdown
-                              Expanded(
-                                flex: 2,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[50],
+                                  // 유효성 검사
+                                  setState(() {
+                                    _isValidAmount = plainValue.isEmpty || (int.tryParse(plainValue) != null && int.parse(plainValue) > 0);
+                                  });
+
+                                  // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
+                                  if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                                    showNumberFormatAlert(context);
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  hintText: '금액 입력',
+                                  filled: true,
+                                  fillColor: Colors.grey[50],
+                                  prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
+                                  prefixText: '₩ ',
+                                  prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
+                                  border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey[200]!),
+                                    borderSide: BorderSide.none,
                                   ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<int>(
-                                      value: selectedMonth,
-                                      items: List.generate(12, (index) {
-                                        return DropdownMenuItem(
-                                          value: index + 1,
-                                          child: Text(
-                                            '${index + 1}월',
-                                            style: const TextStyle(fontSize: 14),
-                                          ),
-                                        );
-                                      }),
-                                      onChanged: (value) {
-                                        if (value != null) {
-                                          setState(() {
-                                            selectedMonth = value;
-                                            updateSelectedDate();
-                                          });
-                                        }
-                                      },
-                                      icon: const Icon(Icons.arrow_drop_down),
-                                      isExpanded: true,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                        color: _isValidAmount ? Colors.grey[200]! : Colors.red[300]!
                                     ),
                                   ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: _isValidAmount ? Colors.green.shade700 : Colors.red[400]!,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  errorText: !_isValidAmount && amountController.text.isNotEmpty
+                                      ? '유효한 금액을 입력해주세요'
+                                      : null,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(height: 24),
 
-                              // Day input
-                              Expanded(
-                                flex: 1,
-                                child: TextField(
-                                  controller: dayController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(
-                                    hintText: '일',
-                                    filled: true,
-                                    fillColor: Colors.grey[50],
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                          color: isValidDay ? Colors.grey[200]! : Colors.red[300]!
+                              // Date selection
+                              const Text(
+                                '적용 시작일',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '설정한 날짜부터 새 금액이 적용됩니다.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Calendar for selecting effective from date
+                              // Calendar container with LayoutBuilder and ScrollView
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Month header with navigation
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            DateFormat('yyyy년 M월').format(effectiveFromDate),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.chevron_left),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    effectiveFromDate = DateTime(
+                                                      effectiveFromDate.year,
+                                                      effectiveFromDate.month - 1,
+                                                      1,
+                                                    );
+                                                  });
+                                                },
+                                                iconSize: 24,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              IconButton(
+                                                icon: const Icon(Icons.chevron_right),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    effectiveFromDate = DateTime(
+                                                      effectiveFromDate.year,
+                                                      effectiveFromDate.month + 1,
+                                                      1,
+                                                    );
+                                                  });
+                                                },
+                                                iconSize: 24,
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(
-                                        color: isValidDay ? Colors.green.shade700 : Colors.red[400]!,
-                                        width: 2,
+
+                                    // Calendar with adaptive height and scroll capability
+                                    Container(
+                                      height: 265, // Fixed height
+                                      child: SingleChildScrollView(
+                                        physics: const BouncingScrollPhysics(),
+                                        child: LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            // Calculate rows in month (for current focused month)
+                                            final int daysInMonth = DateTime(
+                                                effectiveFromDate.year,
+                                                effectiveFromDate.month + 1,
+                                                0
+                                            ).day;
+                                            final int firstDayOfMonthWeekday = DateTime(
+                                                effectiveFromDate.year,
+                                                effectiveFromDate.month,
+                                                1
+                                            ).weekday % 7; // 0-6 with 0 being Sunday
+
+                                            // Calculate number of rows (weeks) in the month
+                                            final int totalDaysToShow = firstDayOfMonthWeekday + daysInMonth;
+                                            final int rowsNeeded = (totalDaysToShow / 7).ceil();
+
+                                            // Decide if we need compact mode
+                                            final bool useCompactMode = rowsNeeded > 5;
+
+                                            return TableCalendar(
+                                              firstDay: DateTime.utc(2020, 1, 1),
+                                              lastDay: DateTime.utc(2030, 12, 31),
+                                              focusedDay: effectiveFromDate,
+                                              selectedDayPredicate: (day) {
+                                                return isSameDay(selectedDate, day);
+                                              },
+                                              onDaySelected: (selectedDay, focusedDay) {
+                                                setState(() {
+                                                  selectedDate = selectedDay;
+                                                  effectiveFromDate = focusedDay;
+                                                });
+                                              },
+                                              onPageChanged: (focusedDay) {
+                                                setState(() {
+                                                  effectiveFromDate = focusedDay;
+                                                });
+                                              },
+                                              calendarStyle: CalendarStyle(
+                                                // Smaller cells in compact mode
+                                                cellMargin: useCompactMode ? EdgeInsets.all(2) : EdgeInsets.all(4),
+                                                cellPadding: useCompactMode ? EdgeInsets.all(3) : EdgeInsets.all(5),
+                                                todayDecoration: BoxDecoration(
+                                                  color: Colors.green.shade200,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                selectedDecoration: BoxDecoration(
+                                                  color: Colors.green.shade700,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                // Smaller text in compact mode
+                                                defaultTextStyle: TextStyle(
+                                                  fontSize: useCompactMode ? 13 : 14,
+                                                ),
+                                                weekendTextStyle: TextStyle(
+                                                  fontSize: useCompactMode ? 13 : 14,
+                                                  color: Colors.red.shade300,
+                                                ),
+                                                selectedTextStyle: TextStyle(
+                                                  fontSize: useCompactMode ? 13 : 14,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                todayTextStyle: TextStyle(
+                                                  fontSize: useCompactMode ? 13 : 14,
+                                                  color: Colors.white,
+                                                ),
+                                                outsideTextStyle: TextStyle(
+                                                  fontSize: useCompactMode ? 12 : 13,
+                                                  color: Colors.grey.withOpacity(0.5),
+                                                ),
+                                              ),
+                                              headerVisible: false,
+                                              calendarFormat: CalendarFormat.month,
+                                              availableCalendarFormats: const {
+                                                CalendarFormat.month: '월',
+                                              },
+                                              // Use smaller row height for compact mode
+                                              rowHeight: useCompactMode ? 42 : 47,
+                                              daysOfWeekHeight: useCompactMode ? 20 : 25,
+                                              daysOfWeekStyle: DaysOfWeekStyle(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade100,
+                                                ),
+                                                weekdayStyle: TextStyle(
+                                                  fontSize: useCompactMode ? 12 : 13,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                                weekendStyle: TextStyle(
+                                                  fontSize: useCompactMode ? 12 : 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.red.shade300,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ),
-                                    errorText: !isValidDay ? '!' : null,
-                                    errorStyle: const TextStyle(
-                                      height: 0,
-                                      color: Colors.transparent,
+
+                                    // Info text at bottom
+                                    Padding(
+                                      padding: const EdgeInsets.all(12.0),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.info_outline,
+                                            size: 16,
+                                            color: Colors.grey[600],
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              '선택한 날짜: ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 적용',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      if (value.isNotEmpty && int.tryParse(value) != null) {
-                                        updateSelectedDate();
-                                      }
-                                    });
-                                  },
+                                  ],
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Date preview
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.event,
-                                  size: 16,
-                                  color: Colors.green.shade700,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '${selectedYear}년 ${selectedMonth}월 ${int.tryParse(dayController.text) ?? defaultDay}일부터 적용',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.green.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
                         ],
                       ),
@@ -2457,69 +2656,89 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                               ),
                               onPressed: () async {
                                 // Validate inputs
-                                final amount = double.tryParse(amountController.text);
-                                final day = int.tryParse(dayController.text);
+                                final plainAmount = amountController.text.replaceAll(',', '');
+                                final amount = double.tryParse(plainAmount);
 
                                 if (amount == null || amount <= 0) {
                                   Get.snackbar('오류', '올바른 금액을 입력해주세요');
                                   return;
                                 }
 
-                                if (day == null || day <= 0 || day > 31) {
-                                  Get.snackbar('오류', '올바른 날짜를 입력해주세요');
-                                  return;
-                                }
-
-                                // Validate date
-                                final maxDaysInMonth = DateTime(selectedYear, selectedMonth + 1, 0).day;
-                                if (day > maxDaysInMonth) {
-                                  Get.snackbar('오류', '$selectedMonth월은 $maxDaysInMonth일까지만 있습니다.');
-                                  return;
-                                }
-
-                                // Update selected date with validated day
-                                final validatedDate = DateTime(selectedYear, selectedMonth, day);
-
                                 // Check if there's a change
-                                if (amount == defaultAmount && validatedDate.day == defaultDay) {
+                                if (amount == defaultAmount && selectedDate.day == defaultDay) {
                                   Get.snackbar('알림', '변경된 내용이 없습니다');
-                                  Navigator.pop(context);
                                   return;
                                 }
+
+                                // Show loading indicator
+                                setState(() {
+                                  isLoading = true;
+                                });
 
                                 // Update the setting
                                 final success = await _controller.updateFixedTransactionSetting(
                                   categoryId: category.id,
                                   amount: amount,
-                                  effectiveFrom: validatedDate,
+                                  effectiveFrom: selectedDate,
                                 );
-
-                                // Close dialog
-                                Navigator.pop(context);
 
                                 // Show result
                                 if (success) {
                                   // Reload data
                                   await _controller.loadFixedIncomeCategories();
-                                  await _loadTransactionHistory();
 
-                                  // Refresh the selected category settings if in detail view
-                                  if (_selectedCategory != null && _selectedCategory!.id == category.id) {
-                                    setState(() {
-                                      _selectedHistoricalSettings = _getHistoricalSettings(category);
+                                  // Find the updated category from the controller
+                                  CategoryWithSettings? updatedCategory;
+                                  for (var cat in _controller.incomeCategories) {
+                                    if (cat.id == category.id) {
+                                      updatedCategory = cat;
+                                      break;
+                                    }
+                                  }
+
+                                  // Update the parent state
+                                  if (_selectedCategory != null && _selectedCategory!.id == category.id && updatedCategory != null) {
+                                    // Update our parent widget's state to show the new setting immediately
+                                    this.setState(() {
+                                      _selectedCategory = updatedCategory;
+                                      _selectedHistoricalSettings = _getHistoricalSettings(updatedCategory!);
                                     });
                                   }
 
+                                  // Reload transaction history
+                                  await _loadTransactionHistory();
+
+                                  // Update dialog state with new values and show success indicator
+                                  setState(() {
+                                    defaultAmount = amount;
+                                    defaultDay = selectedDate.day;
+                                    amountController.text = amount.toStringAsFixed(0);
+                                    showSuccess = true;
+                                    isLoading = false;
+                                  });
+
+                                  // Show external snackbar
                                   Get.snackbar(
                                     '성공',
-                                    '${category.name}의 설정이 ${DateFormat('yyyy년 M월 d일').format(validatedDate)}부터 ${NumberFormat('#,###').format(amount)}원으로 변경되었습니다.',
+                                    '${category.name}의 설정이 ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 ${NumberFormat('#,###').format(amount)}원으로 변경되었습니다.',
                                     backgroundColor: Colors.green[100],
                                     borderRadius: 12,
                                     margin: const EdgeInsets.all(12),
                                     snackPosition: SnackPosition.BOTTOM,
                                     duration: const Duration(seconds: 2),
                                   );
+
+                                  // Close the dialog after success message
+                                  Future.delayed(const Duration(seconds: 1), () {
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                  });
                                 } else {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+
                                   Get.snackbar(
                                     '오류',
                                     '설정 업데이트에 실패했습니다.',
