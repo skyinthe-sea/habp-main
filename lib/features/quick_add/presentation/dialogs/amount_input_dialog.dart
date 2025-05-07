@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../controllers/quick_add_controller.dart';
 import 'date_selection_dialog.dart';
+import 'calculator_dialog.dart';
 
 /// Final dialog in the quick add flow
 /// Allows inputting the transaction amount with improved UX
@@ -150,6 +151,25 @@ class _AmountInputDialogState extends State<AmountInputDialog>
     });
   }
 
+  /// 계산기 다이얼로그 표시
+  void _showCalculatorDialog() async {
+    // 키보드 닫기
+    FocusScope.of(context).unfocus();
+
+    // 계산기 다이얼로그 표시하고 결과 기다리기
+    final result = await showDialog<int>(
+      context: context,
+      builder: (context) => CalculatorDialog(
+        initialValue: _currentAmount, // 현재 금액을 초기값으로 전달
+      ),
+    );
+
+    // 결과가 있으면 금액 업데이트
+    if (result != null) {
+      _updateAmount(result);
+    }
+  }
+
   /// Determines the appropriate increment/decrement step based on current amount
   int _getSmartIncrement(bool isIncrement) {
     // For zero or very small amounts, use smallest increment
@@ -199,17 +219,13 @@ class _AmountInputDialogState extends State<AmountInputDialog>
         ),
         child: Row(
           children: [
-            // Decrement button
+            // 0으로 초기화하는 버튼 추가
             Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  final step = _getSmartIncrement(false);
-                  if (_currentAmount >= step) {
-                    _updateAmount(_currentAmount - step);
-                  } else {
-                    _updateAmount(0);
-                  }
+                  _updateAmount(0);
+                  HapticFeedback.lightImpact();
                 },
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
@@ -224,16 +240,19 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                       bottomLeft: Radius.circular(15),
                     ),
                   ),
-                  child: Icon(
-                    Icons.remove,
-                    color: AppColors.primary,
-                    size: 24,
+                  child: const Text(
+                    'C',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
               ),
             ),
 
-            // Amount text field
+            // 금액 입력 필드 (확장)
             Expanded(
               child: TextField(
                 controller: _amountController,
@@ -276,14 +295,11 @@ class _AmountInputDialogState extends State<AmountInputDialog>
               ),
             ),
 
-            // Increment button
+            // 계산기 버튼 추가
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {
-                  final step = _getSmartIncrement(true);
-                  _updateAmount(_currentAmount + step);
-                },
+                onTap: _showCalculatorDialog,
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(16),
                   bottomRight: Radius.circular(16),
@@ -298,7 +314,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     ),
                   ),
                   child: Icon(
-                    Icons.add,
+                    Icons.calculate_rounded,
                     color: AppColors.primary,
                     size: 24,
                   ),
@@ -604,7 +620,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                   ),
                   const SizedBox(height: 12),
 
-                  // Enhanced amount field with +/- buttons
+                  // 수정된 금액 입력 필드 (계산기 버튼 추가)
                   _buildAmountField(),
                 ],
               ),
