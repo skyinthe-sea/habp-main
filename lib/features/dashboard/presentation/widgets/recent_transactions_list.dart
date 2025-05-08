@@ -884,11 +884,14 @@ class RecentTransactionsList extends StatelessWidget {
                           // 일별 요약 계산
                           double dayIncome = 0;
                           double dayExpense = 0;
+                          double dayFinance = 0;  // 재테크 변수 추가
                           for (var tx in dayTransactions) {
                             if (tx.categoryType == 'INCOME') {
                               dayIncome += tx.amount.abs();
                             } else if (tx.categoryType == 'EXPENSE') {
                               dayExpense += tx.amount.abs();
+                            } else if (tx.categoryType == 'FINANCE') {  // 재테크 합산 추가
+                              dayFinance += tx.amount.abs();
                             }
                           }
 
@@ -963,6 +966,25 @@ class RecentTransactionsList extends StatelessWidget {
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w600,
                                                 color: Colors.red.shade700,
+                                              ),
+                                            ),
+                                          ),
+
+                                        // 재테크 요약 추가
+                                        if (dayFinance > 0)
+                                          Container(
+                                            margin: const EdgeInsets.only(left: 8),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue.shade50,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              '-${NumberFormat('#,###').format(dayFinance)}',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.blue.shade700,
                                               ),
                                             ),
                                           ),
