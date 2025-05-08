@@ -12,7 +12,7 @@ import '../controllers/calendar_filter_controller.dart';
 import '../widgets/month_calendar_fullscreen.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/filter_modal.dart';
-import '../widgets/filter_floating_button.dart';
+import '../widgets/filter_button.dart'; // Import our new filter button
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({Key? key}) : super(key: key);
@@ -27,19 +27,19 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
   late Future<void> _initFuture;
 
   @override
-  bool get wantKeepAlive => true; // 페이지가 탭 간에 상태를 유지하도록 설정
+  bool get wantKeepAlive => true; // Keep page state between tabs
 
   @override
   void initState() {
     super.initState();
     _filterController = _initFilterController();
     _controller = _initController();
-    // 데이터 로드가 완료된 후에만 화면을 그리도록 Future 생성
+    // Create a Future to ensure data is loaded before rendering the screen
     _initFuture = _loadInitialData();
   }
 
   CalendarFilterController _initFilterController() {
-    // 필터 컨트롤러 초기화
+    // Initialize filter controller
     final dbHelper = DBHelper();
     return Get.put(
         CalendarFilterController(
@@ -50,14 +50,14 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
   }
 
   CalendarController _initController() {
-    // 의존성 주입
+    // Dependency injection
     final dbHelper = DBHelper();
     final dataSource = CalendarLocalDataSourceImpl(dbHelper: dbHelper);
     final repository = CalendarRepositoryImpl(localDataSource: dataSource);
     final getMonthTransactionsUseCase = GetMonthTransactions(repository);
     final getDaySummaryUseCase = GetDaySummary(repository);
 
-    // 컨트롤러 초기화
+    // Initialize controller
     final controller = CalendarController(
       getMonthTransactions: getMonthTransactionsUseCase,
       getDaySummary: getDaySummaryUseCase,
@@ -67,41 +67,39 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
     return Get.put(controller, permanent: true);
   }
 
-  // 트랜잭션 다이얼로그 표시 메서드
+  // Show transaction dialog method
   void _showTransactionDialog(DateTime date) {
-    // 선택한 날짜에 거래가 있는지 확인
+    // Check if there are transactions for the selected date
     final transactions = _controller.getEventsForDay(date);
 
-    // 거래가 있을 때만 다이얼로그 표시
-    if (transactions.isNotEmpty) {
-      Get.dialog(
-        TransactionDialog(
-          controller: _controller,
-          filterController: _filterController,
-          date: date,
-        ),
-        barrierDismissible: true,
-      );
-    }
+    // Only show dialog if there are transactions
+    Get.dialog(
+      TransactionDialog(
+        controller: _controller,
+        filterController: _filterController,
+        date: date,
+      ),
+      barrierDismissible: true,
+    );
   }
 
-  // 초기 데이터 로드 함수
+  // Initial data load function
   Future<void> _loadInitialData() async {
-    print('초기 데이터 로드 시작');
-    // 명시적으로 await를 사용하여 데이터 로드가 완료될 때까지 대기
+    print('Loading initial data...');
+    // Explicitly use await to wait for data loading to complete
     await _controller.fetchMonthEvents(DateTime.now());
     await _controller.fetchDaySummary(DateTime.now());
-    print('초기 데이터 로드 완료');
+    print('Initial data load complete');
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // AutomaticKeepAliveClientMixin 사용 시 필요
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
 
     return FutureBuilder(
       future: _initFuture,
       builder: (context, snapshot) {
-        // 데이터 로딩 중이면 로딩 화면 표시
+        // Show loading screen while data is loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(
@@ -110,22 +108,22 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
           );
         }
 
-        // 데이터 로드 완료 후 실제 캘린더 화면 표시
+        // Show actual calendar screen after data is loaded
         return Scaffold(
           backgroundColor: Colors.white,
           body: SafeArea(
             child: Stack(
               children: [
-                // 전체 화면을 차지하는 달력
+                // Full-screen calendar with scroll support
                 MonthCalendarFullscreen(
                   controller: _controller,
                   onDateTap: _showTransactionDialog,
                 ),
 
-                // 필터 플로팅 버튼
-                FilterFloatingButton(controller: _filterController),
+                // Modern filter button (our new implementation)
+                FilterButton(controller: _filterController),
 
-                // 필터 모달
+                // Filter modal (still used for detailed category filtering)
                 FilterModal(controller: _filterController),
               ],
             ),

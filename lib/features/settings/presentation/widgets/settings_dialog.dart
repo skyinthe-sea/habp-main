@@ -626,15 +626,15 @@ class _SettingsDialogState extends State<SettingsDialog>
       }
 
       // 오류 메시지 표시
-      Get.snackbar(
-        '오류 발생',
-        '데이터 초기화 중 오류가 발생했습니다: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
-      );
+      // Get.snackbar(
+      //   '오류 발생',
+      //   '데이터 초기화 중 오류가 발생했습니다: $e',
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      //   snackPosition: SnackPosition.BOTTOM,
+      //   margin: const EdgeInsets.all(16),
+      //   duration: const Duration(seconds: 3),
+      // );
     }
   }
 }
