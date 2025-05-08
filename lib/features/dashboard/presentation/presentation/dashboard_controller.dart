@@ -662,6 +662,33 @@ class DashboardController extends GetxController {
     }
   }
 
+  Future<List<TransactionWithCategory>> fetchTransactionsByDateRange(
+      DateTime startDate, DateTime endDate, int limit) async {
+    try {
+      // 날짜를 정규화 (시간 정보 제거)
+      final normalizedStartDate = DateTime(startDate.year, startDate.month, startDate.day);
+      final normalizedEndDate = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+
+      debugPrint('날짜 범위 거래 내역 조회: ${normalizedStartDate.toIso8601String()} ~ ${normalizedEndDate.toIso8601String()}');
+
+      // 최대 건수를 제한하여 불러옴 (기본값: 500건)
+      final maxLimit = limit > 0 ? limit : 500;
+
+      // 이미 구현된 usecase 메서드를 호출
+      final transactions = await getRecentTransactionsForRange.execute(
+          normalizedStartDate,
+          normalizedEndDate,
+          maxLimit
+      );
+
+      debugPrint('조회된 거래 건수: ${transactions.length}건');
+      return transactions;
+    } catch (e) {
+      debugPrint('날짜 범위 거래 내역 가져오기 오류: $e');
+      return [];
+    }
+  }
+
   // 퍼센트 변화 부호 가져오기
   String getPercentageSign(double value) {
     return value >= 0 ? '+' : '';
