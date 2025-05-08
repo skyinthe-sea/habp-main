@@ -31,58 +31,90 @@ class RecentTransactionsList extends StatelessWidget {
       return Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.grey.withOpacity(0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 헤더 부분
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    '최근 거래 내역',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      _showAllTransactionsDialog(context);
-                    },
-                    borderRadius: BorderRadius.circular(18),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(18),
+                  // 타이틀 부분
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long_rounded,
+                          color: AppColors.primary,
+                          size: 18,
+                        ),
                       ),
-                      child: Row(
-                        children: const [
-                          Text(
-                            '모두 보기',
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '최근 거래 내역',
                             style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
                             ),
                           ),
-                          SizedBox(width: 2),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 12,
-                            color: AppColors.primary,
+                          Text(
+                            controller.getMonthYearString(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
                         ],
+                      ),
+                    ],
+                  ),
+
+                  // 전체보기 버튼
+                  Material(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
+                      onTap: () => _showAllTransactionsDialog(context),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Row(
+                          children: const [
+                            Text(
+                              '전체보기',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 14,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -90,152 +122,449 @@ class RecentTransactionsList extends StatelessWidget {
               ),
             ),
 
-            // 거래 목록
+            // 거래 리스트 부분
             if (controller.recentTransactions.isEmpty)
-              Container(
-                height: 180,
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.receipt_long_outlined,
-                      size: 48,
-                      color: Colors.grey.shade300,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${controller.getMonthYearString()}의 거래 내역이 없습니다',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              )
+              _buildEmptyState()
             else
-              Column(
-                children: [
-                  // 거래 목록 헤더
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      border: Border(
-                        top: BorderSide(color: Colors.grey.shade200),
-                        bottom: BorderSide(color: Colors.grey.shade200),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 70,
-                          child: Text(
-                            '날짜',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            '내용',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 80,
-                          child: Text(
-                            '카테고리',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        SizedBox(
-                          width: 90,
-                          child: Text(
-                            '금액',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Column(
-                    children: List.generate(
-                      controller.recentTransactions.length > 8
-                          ? 8
-                          : controller.recentTransactions.length,
-                          (index) {
-                        final transaction = controller.recentTransactions[index];
-
-                        // 투명도 적용 (5개 이후부터 점점 투명하게 처리)
-                        double opacity = 1.0;
-                        if (index == 5) opacity = 0.8;
-                        else if (index == 6) opacity = 0.5;
-                        else if (index == 7) opacity = 0.2;
-
-                        return Opacity(
-                          opacity: opacity,
-                          child: Column(
-                            children: [
-                              _buildTransactionItem(transaction),
-                              if (index < (controller.recentTransactions.length > 8 ? 7 : controller.recentTransactions.length - 1))
-                                Divider(height: 1, indent: 16, endIndent: 16, color: Colors.grey.shade200),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  // 하단 그라데이션 표시 (더 볼 내용이 있음을 암시)
-                  if (controller.recentTransactions.length > 8)
-                    Container(
-                      height: 30,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withOpacity(0.2),
-                            Colors.white
-                          ],
-                        ),
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(14),
-                          bottomRight: Radius.circular(14),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              _buildDayGroupedTransactions(controller.recentTransactions),
           ],
         ),
       );
     });
   }
 
+  // 빈 상태 표시 위젯
+  Widget _buildEmptyState() {
+    return Container(
+      height: 200,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 48,
+            color: Colors.grey.shade200,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '${controller.getMonthYearString()}의 거래 내역이 없습니다',
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '우측 하단의 + 버튼을 눌러 거래를 추가해보세요',
+            style: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 일별 그룹화된 거래 리스트
+  Widget _buildDayGroupedTransactions(List<TransactionWithCategory> transactions) {
+    // 거래 내역을 날짜별로 그룹화
+    final Map<String, List<TransactionWithCategory>> groupedTransactions = {};
+    final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
+    final DateFormat displayFormat = DateFormat('M월 d일 (E)', 'ko_KR');
+
+    // 날짜별로 그룹화
+    for (var transaction in transactions) {
+      final dateString = dateFormat.format(transaction.transactionDate);
+      if (!groupedTransactions.containsKey(dateString)) {
+        groupedTransactions[dateString] = [];
+      }
+      groupedTransactions[dateString]!.add(transaction);
+    }
+
+    // 날짜 키를 정렬 (최신 날짜가 먼저 오도록)
+    final sortedDates = groupedTransactions.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    // 표시할 최대 날짜 수 제한 (최근 5일)
+    final limitedDates = sortedDates.take(5).toList();
+
+    // 모든 투명도를 통합적으로 관리
+    final List<double> dayOpacities = [1.0, 0.95, 0.9, 0.8, 0.7];
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: limitedDates.length,
+      itemBuilder: (context, dayIndex) {
+        final dateKey = limitedDates[dayIndex];
+        final dayTransactions = groupedTransactions[dateKey]!;
+        final date = dateFormat.parse(dateKey);
+        final displayDate = displayFormat.format(date);
+
+        // 날짜별 요약 정보 계산
+        double dayIncome = 0;
+        double dayExpense = 0;
+        double dayFinance = 0;
+        for (var tx in dayTransactions) {
+          if (tx.categoryType == 'INCOME') {
+            dayIncome += tx.amount.abs();
+          } else if (tx.categoryType == 'EXPENSE') {
+            dayExpense += tx.amount.abs();
+          } else if (tx.categoryType == 'FINANCE') {
+            dayFinance += tx.amount.abs();
+          }
+        }
+
+        // 그날의 잔액 = 수입 - 지출
+        final dayBalance = dayIncome - dayExpense;
+
+        // 일별 영역에 투명도 적용
+        final opacity = dayIndex < dayOpacities.length ? dayOpacities[dayIndex] : 0.6;
+
+        return Opacity(
+          opacity: opacity,
+          child: Column(
+            children: [
+              // 날짜 헤더
+              _buildDayHeader(displayDate, dayIncome, dayExpense, dayFinance, dayBalance),
+
+              // 해당 날짜의 거래 내역
+              ...dayTransactions.take(3).map((tx) => _buildTransactionItem(tx)).toList(),
+
+              // 만약 해당 날짜의 거래가 3개 이상이면 "더보기" 표시
+              if (dayTransactions.length > 3)
+                _buildMoreTransactionsIndicator(dayTransactions.length - 3),
+
+              // 날짜 구분선
+              if (dayIndex < limitedDates.length - 1)
+                const Divider(height: 16, thickness: 1),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 날짜 헤더 위젯
+  Widget _buildDayHeader(String date, double income, double expense, double finance, double balance) {
+    // 수입/지출/재테크 포맷팅
+    final formatter = NumberFormat('#,###');
+    final formattedIncome = formatter.format(income);
+    final formattedExpense = formatter.format(expense);
+    final formattedFinance = formatter.format(finance);
+    final formattedBalance = formatter.format(balance.abs());
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 날짜 표시
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.calendar_today_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                date,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+
+          // 일일 요약 정보
+          Row(
+            children: [
+              // 수입
+              if (income > 0)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '+$formattedIncome원',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                ),
+
+              // 지출
+              if (expense > 0)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '-$formattedExpense원',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                ),
+
+              // 재테크
+              if (finance > 0)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '-$formattedFinance원',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 거래 항목 위젯 개선
+  Widget _buildTransactionItem(TransactionWithCategory transaction) {
+    // 시간 표시 포맷팅
+    final timeFormat = DateFormat('a h:mm', 'ko_KR');
+    final time = timeFormat.format(transaction.transactionDate);
+
+    // 금액 포맷팅
+    final formattedAmount = NumberFormat('#,###').format(transaction.amount.abs());
+
+    // 카테고리 색상
+    final categoryColor = _getCategoryColor(transaction.categoryType);
+
+    // 수입인지 확인
+    final isIncome = transaction.categoryType == 'INCOME';
+    // 재테크인지 확인
+    final isFinance = transaction.categoryType == 'FINANCE';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade100),
+        ),
+      ),
+      child: Row(
+        children: [
+          // 카테고리 아이콘
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: categoryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Icon(
+                _getCategoryIcon(transaction.categoryType, transaction.categoryName),
+                color: categoryColor,
+                size: 20,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // 거래 정보
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // 거래 내용
+                    Expanded(
+                      child: Text(
+                        transaction.description,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+
+                    // 금액
+                    Text(
+                      (isIncome ? '+' : '-') + formattedAmount + '원',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isIncome ? Colors.green.shade600 :
+                        isFinance ? Colors.blue.shade600 :
+                        Colors.red.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 4),
+
+                // 시간과 카테고리
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // 시간
+                    Text(
+                      time,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+
+                    // 카테고리
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: categoryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        transaction.categoryName,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: categoryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 더 많은 거래가 있음을 표시하는 위젯
+  Widget _buildMoreTransactionsIndicator(int count) {
+    return GestureDetector(
+      onTap: () {},
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+        ),
+        child: Text(
+          '외 $count건 더보기',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 카테고리 타입에 맞는 아이콘 반환
+  IconData _getCategoryIcon(String categoryType, String categoryName) {
+    switch (categoryType) {
+      case 'INCOME':
+        if (categoryName.contains('급여') || categoryName.contains('월급')) {
+          return Icons.work_outline;
+        } else if (categoryName.contains('용돈')) {
+          return Icons.card_giftcard;
+        } else if (categoryName.contains('이자')) {
+          return Icons.account_balance;
+        }
+        return Icons.arrow_downward_rounded;
+
+      case 'EXPENSE':
+        if (categoryName.contains('식비') || categoryName.contains('음식')) {
+          return Icons.restaurant;
+        } else if (categoryName.contains('교통')) {
+          return Icons.directions_bus;
+        } else if (categoryName.contains('통신')) {
+          return Icons.phone_android;
+        } else if (categoryName.contains('월세') || categoryName.contains('주거')) {
+          return Icons.home;
+        } else if (categoryName.contains('쇼핑')) {
+          return Icons.shopping_bag;
+        } else if (categoryName.contains('의료')) {
+          return Icons.healing;
+        }
+        return Icons.arrow_upward_rounded;
+
+      case 'FINANCE':
+        if (categoryName.contains('저축')) {
+          return Icons.savings;
+        } else if (categoryName.contains('투자')) {
+          return Icons.trending_up;
+        } else if (categoryName.contains('대출')) {
+          return Icons.money;
+        }
+        return Icons.account_balance_wallet;
+
+      default:
+        return Icons.receipt_long;
+    }
+  }
+
+  // 카테고리 유형에 맞는 색상 반환
+  Color _getCategoryColor(String categoryType) {
+    switch (categoryType) {
+      case 'INCOME':
+        return Colors.green[600]!;
+      case 'EXPENSE':
+        return Colors.red[600]!;
+      case 'FINANCE':
+        return Colors.blue[600]!;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // 전체 거래 목록 다이얼로그
   Future<void> _showAllTransactionsDialog(BuildContext context) async {
-    // Show loading indicator
+    // 로딩 표시
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -271,10 +600,10 @@ class RecentTransactionsList extends StatelessWidget {
       ),
     );
 
-    // Fetch transactions for current month
+    // 거래 내역 불러오기
     final allTransactions = await controller.getAllCurrentMonthTransactions();
 
-    // Close loading dialog
+    // 로딩 다이얼로그 닫기
     if (context.mounted) Navigator.of(context).pop();
 
     if (!context.mounted) return;
@@ -289,16 +618,34 @@ class RecentTransactionsList extends StatelessWidget {
     // 다이얼로그 최대 높이 (화면의 80% 또는 최대 600px)
     final dialogMaxHeight = math.min(safeHeight * 0.8, 600.0);
 
-    // StatefulBuilder 외부에 상태 변수들을 선언하여 상태가 유지되도록 함
+    // 상태 변수 선언
     String searchQuery = '';
     String selectedFilter = '전체';
     List<TransactionWithCategory> filteredTransactions = allTransactions;
 
-    // StatefulBuilder를 사용하여 다이얼로그 내부에서 상태 관리
+    // 모든 거래 내역 보여주는 다이얼로그
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
+          // 거래 내역을 날짜별로 그룹화
+          final Map<String, List<TransactionWithCategory>> groupedTransactions = {};
+          final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
+          final DateFormat displayFormat = DateFormat('yyyy년 M월 d일 (E)', 'ko_KR');
+
+          // 날짜별로 그룹화
+          for (var transaction in filteredTransactions) {
+            final dateString = dateFormat.format(transaction.transactionDate);
+            if (!groupedTransactions.containsKey(dateString)) {
+              groupedTransactions[dateString] = [];
+            }
+            groupedTransactions[dateString]!.add(transaction);
+          }
+
+          // 날짜 키를 정렬 (최신 날짜가 먼저 오도록)
+          final sortedDates = groupedTransactions.keys.toList()
+            ..sort((a, b) => b.compareTo(a));
+
           return Dialog(
             backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
@@ -324,7 +671,7 @@ class RecentTransactionsList extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Dialog header
+                    // 다이얼로그 헤더
                     Container(
                       padding: const EdgeInsets.fromLTRB(24, 16, 16, 16),
                       decoration: BoxDecoration(
@@ -357,7 +704,7 @@ class RecentTransactionsList extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '총 ${allTransactions.length}건',
+                                  '총 ${filteredTransactions.length}건',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Colors.white.withOpacity(0.9),
@@ -390,7 +737,7 @@ class RecentTransactionsList extends StatelessWidget {
                       ),
                     ),
 
-                    // 검색창 - 수정된 부분: onChanged 함수에서 setState 사용
+                    // 검색창
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
                       child: Container(
@@ -432,7 +779,7 @@ class RecentTransactionsList extends StatelessWidget {
                       ),
                     ),
 
-                    // 필터 칩 - 수정된 부분: onSelected 콜백에서 setState 사용
+                    // 필터 칩
                     SizedBox(
                       height: 36,
                       child: Padding(
@@ -501,69 +848,7 @@ class RecentTransactionsList extends StatelessWidget {
                       ),
                     ),
 
-                    // Column headers
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        border: Border(
-                          top: BorderSide(color: Colors.grey.shade200),
-                          bottom: BorderSide(color: Colors.grey.shade200),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 70,
-                            child: Text(
-                              '날짜',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              '내용',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 80,
-                            child: Text(
-                              '카테고리',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          SizedBox(
-                            width: 90,
-                            child: Text(
-                              '금액',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Transaction list
+                    // 거래 내역 목록
                     Expanded(
                       child: filteredTransactions.isEmpty
                           ? Center(
@@ -588,88 +873,229 @@ class RecentTransactionsList extends StatelessWidget {
                           ],
                         ),
                       )
-                          : Theme(
-                        data: Theme.of(context).copyWith(
-                          scrollbarTheme: ScrollbarThemeData(
-                            thumbColor: MaterialStateProperty.all(
-                              AppColors.primary.withOpacity(0.6),
-                            ),
-                            thickness: MaterialStateProperty.all(6),
-                            radius: const Radius.circular(12),
-                            minThumbLength: 80,
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            // 트랜잭션 리스트
-                            Scrollbar(
-                              radius: const Radius.circular(10),
-                              thickness: 6,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.fromLTRB(0, 0, 0, 60),
-                                itemCount: filteredTransactions.length,
-                                separatorBuilder: (context, index) =>
-                                    Divider(height: 1, indent: 16, endIndent: 16, color: Colors.grey.shade200),
-                                itemBuilder: (context, index) {
-                                  return _buildTransactionItem(filteredTransactions[index]);
-                                },
-                              ),
-                            ),
+                          : ListView.builder(
+                        itemCount: sortedDates.length,
+                        itemBuilder: (context, index) {
+                          final dateKey = sortedDates[index];
+                          final dayTransactions = groupedTransactions[dateKey]!;
+                          final date = dateFormat.parse(dateKey);
+                          final displayDate = displayFormat.format(date);
 
-                            // 스크롤 인디케이터
-                            if (filteredTransactions.length > 5)
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                child: Container(
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.white.withOpacity(0),
-                                        Colors.white.withOpacity(0.8),
-                                        Colors.white,
+                          // 일별 요약 계산
+                          double dayIncome = 0;
+                          double dayExpense = 0;
+                          for (var tx in dayTransactions) {
+                            if (tx.categoryType == 'INCOME') {
+                              dayIncome += tx.amount.abs();
+                            } else if (tx.categoryType == 'EXPENSE') {
+                              dayExpense += tx.amount.abs();
+                            }
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 날짜 헤더
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                color: Colors.grey.shade50,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // 날짜
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary.withOpacity(0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.calendar_today_rounded,
+                                            size: 14,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          displayDate,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ],
                                     ),
-                                  ),
-                                  child: Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.swipe_vertical_outlined,
-                                            size: 14,
-                                            color: AppColors.primary.withOpacity(0.7),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '스크롤하여 더 보기',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey[600],
-                                              fontWeight: FontWeight.w500,
+
+                                    // 일별 요약
+                                    Row(
+                                      children: [
+                                        if (dayIncome > 0)
+                                          Container(
+                                            margin: const EdgeInsets.only(left: 8),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.shade50,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              '+${NumberFormat('#,###').format(dayIncome)}',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.green.shade700,
+                                              ),
                                             ),
                                           ),
-                                        ],
-                                      ),
+
+                                        if (dayExpense > 0)
+                                          Container(
+                                            margin: const EdgeInsets.only(left: 8),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red.shade50,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              '-${NumberFormat('#,###').format(dayExpense)}',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.red.shade700,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
-                          ],
-                        ),
+
+                              // 해당 날짜의 모든 거래
+                              ...dayTransactions.map((tx) {
+                                // 시간 표시 포맷팅
+                                final timeFormat = DateFormat('a h:mm', 'ko_KR');
+                                final time = timeFormat.format(tx.transactionDate);
+
+                                // 금액 포맷팅
+                                final formattedAmount = NumberFormat('#,###').format(tx.amount.abs());
+
+                                // 카테고리 색상
+                                final categoryColor = _getCategoryColor(tx.categoryType);
+
+                                // 수입인지 확인
+                                final isIncome = tx.categoryType == 'INCOME';
+
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(color: Colors.grey.shade100),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // 카테고리 아이콘
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: categoryColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            _getCategoryIcon(tx.categoryType, tx.categoryName),
+                                            color: categoryColor,
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 12),
+
+                                      // 거래 정보
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                // 거래 내용
+                                                Expanded(
+                                                  child: Text(
+                                                    tx.description,
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+
+                                                // 금액
+                                                Text(
+                                                  (isIncome ? '+' : (tx.categoryType == 'FINANCE' ? '-' : '-')) + formattedAmount + '원',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isIncome ? Colors.green.shade600 :
+                                                    tx.categoryType == 'FINANCE' ? Colors.blue.shade600 :
+                                                    Colors.red.shade600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+
+                                            const SizedBox(height: 3),
+
+                                            // 시간과 카테고리
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                // 시간
+                                                Text(
+                                                  time,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                ),
+
+                                                // 카테고리
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: categoryColor.withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    tx.categoryName,
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: categoryColor,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+
+                              // 날짜 구분선
+                              if (index < sortedDates.length - 1)
+                                const Divider(height: 1, thickness: 4, color: Color(0xFFF5F5F5)),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -682,6 +1108,44 @@ class RecentTransactionsList extends StatelessWidget {
     );
   }
 
+  // 필터 칩 위젯
+  Widget _buildFilterChip(
+      String label,
+      {bool isSelected = false,
+        required Function(bool) onSelected}
+      ) {
+    return Container(
+      margin: const EdgeInsets.only(right: 6),
+      child: FilterChip(
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isSelected ? AppColors.primary : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        selected: isSelected,
+        onSelected: onSelected,
+        selectedColor: AppColors.primary.withOpacity(0.2),
+        checkmarkColor: AppColors.primary,
+        backgroundColor: Colors.grey.shade100,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            width: 1,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 거래 필터링 메서드
   List<TransactionWithCategory> _getFilteredTransactions(
       List<TransactionWithCategory> transactions,
       String searchQuery,
@@ -732,140 +1196,5 @@ class RecentTransactionsList extends StatelessWidget {
     }
 
     return filtered;
-  }
-
-  Widget _buildFilterChip(
-      String label,
-      {bool isSelected = false,
-        required Function(bool) onSelected}
-      ) {
-    return Container(
-      margin: const EdgeInsets.only(right: 6),
-      child: FilterChip(
-        label: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: isSelected ? AppColors.primary : Colors.grey.shade700,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        selected: isSelected,
-        onSelected: onSelected, // 이제 콜백 사용
-        selectedColor: AppColors.primary.withOpacity(0.2),
-        checkmarkColor: AppColors.primary,
-        backgroundColor: Colors.grey.shade100,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            width: 1,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTransactionItem(TransactionWithCategory transaction) {
-    // 날짜 포맷팅
-    final dateFormat = DateFormat('M월 d일');
-    final date = dateFormat.format(transaction.transactionDate);
-
-    // 카테고리 색상
-    final categoryColor = _getCategoryColor(transaction.categoryType);
-
-    // 금액
-    final formattedAmount =
-    NumberFormat('#,###').format(transaction.amount.abs()).toString();
-    final isIncome = transaction.categoryType == 'INCOME';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // 패딩 줄임
-      child: Row(
-        children: [
-          // 날짜
-          SizedBox(
-            width: 70,
-            child: Text(
-              date,
-              style: TextStyle(
-                fontSize: 12, // 폰트 크기 줄임
-                color: Colors.grey[800],
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-
-          // 내용
-          Expanded(
-            flex: 3,
-            child: Text(
-              transaction.description,
-              style: TextStyle(
-                fontSize: 13, // 폰트 크기 줄임
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[900],
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-
-          // 카테고리
-          SizedBox(
-            width: 80,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // 패딩 줄임
-                decoration: BoxDecoration(
-                  color: categoryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  transaction.categoryName,
-                  style: TextStyle(
-                    fontSize: 10, // 폰트 크기 줄임
-                    fontWeight: FontWeight.w500,
-                    color: categoryColor,
-                  ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          ),
-
-          // 금액
-          SizedBox(
-            width: 90,
-            child: Text(
-              (isIncome ? '+' : '-') + formattedAmount + '원',
-              style: TextStyle(
-                fontSize: 12, // 폰트 크기 줄임
-                fontWeight: FontWeight.w600,
-                color: isIncome ? Colors.green[600] : Colors.grey[850],
-              ),
-              textAlign: TextAlign.right,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getCategoryColor(String categoryType) {
-    switch (categoryType) {
-      case 'INCOME':
-        return Colors.green[600]!;
-      case 'EXPENSE':
-        return AppColors.primary;
-      case 'FINANCE':
-        return Colors.blue[600]!;
-      default:
-        return Colors.grey;
-    }
   }
 }
