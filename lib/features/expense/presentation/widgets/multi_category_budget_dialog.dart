@@ -31,6 +31,7 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
   bool isLoading = false;
   bool _isSaveButtonEnabled = false;
   bool _useDefaultAmount = true;
+  bool _isCompleted = false; // 추가: 완료 상태 추적 변수
 
   // Animation controller
   late AnimationController _animationController;
@@ -80,11 +81,21 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text.toLowerCase();
+      // 검색어가 변경되면 완료 상태 리셋
+      if (_isCompleted) {
+        _isCompleted = false;
+      }
     });
   }
 
   void _updateSaveButtonState() {
     setState(() {
+      // 완료 상태일 경우 버튼은 항상 활성화
+      if (_isCompleted) {
+        _isSaveButtonEnabled = true;
+        return;
+      }
+
       bool hasValidAmounts = true;
 
       if (_useDefaultAmount) {
@@ -130,6 +141,9 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
   // Toggle category selection
   void _toggleCategorySelection(CategoryModel category) {
     setState(() {
+      // 카테고리 선택 상태가 변경되면 완료 상태 리셋
+      _isCompleted = false;
+
       if (selectedCategories.containsKey(category.id)) {
         // Remove if already selected
         selectedCategories.remove(category.id);
@@ -300,19 +314,26 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
       }
     }
 
+    // 상태 업데이트 - 로딩 중단 및 완료 상태로 변경
+    setState(() {
+      isLoading = false;
+      if (successCount > 0) {
+        _isCompleted = true;
+      }
+      _updateSaveButtonState();
+    });
+
     // Show result notification
     if (successCount > 0) {
-      Get.back();
       Get.snackbar(
         '성공',
         '${successCount}개의 예산이 설정되었습니다.',
         snackPosition: SnackPosition.TOP,
       );
+
+      // 대화상자를 닫지 않고 완료 버튼 표시하도록 변경
+      // Get.back(); <- 이 줄 제거
     } else {
-      setState(() {
-        isLoading = false;
-        _updateSaveButtonState();
-      });
       Get.snackbar(
         '오류',
         '예산 설정에 실패했습니다.',
@@ -446,6 +467,8 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                     onChanged: (value) {
                                       setState(() {
                                         _useDefaultAmount = value;
+                                        // 스위치 변경 시 완료 상태 리셋
+                                        _isCompleted = false;
                                         if (value && defaultAmountController.text.isNotEmpty) {
                                           // Copy default amount to all selected categories
                                           for (var categoryId in selectedCategories.keys) {
@@ -512,6 +535,13 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                       FilteringTextInputFormatter.digitsOnly,
                                     ],
                                     onChanged: (value) {
+                                      // 입력값이 변경되면 완료 상태 리셋
+                                      if (_isCompleted) {
+                                        setState(() {
+                                          _isCompleted = false;
+                                        });
+                                      }
+
                                       if (value.isNotEmpty) {
                                         final formatted = _formatCurrency(value);
                                         if (formatted != value) {
@@ -587,6 +617,8 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                         }
                                         selectedCategories.clear();
                                         categoryAmountControllers.clear();
+                                        // 카테고리 전체 해제 시 완료 상태 리셋
+                                        _isCompleted = false;
                                         _updateSaveButtonState();
                                       });
                                     },
@@ -612,6 +644,8 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                           // Auto-select newly added category
                                           setState(() {
                                             selectedCategories[categoryId] = 0.0;
+                                            // 새 카테고리 추가 시 완료 상태 리셋
+                                            _isCompleted = false;
 
                                             final controller = TextEditingController();
                                             categoryAmountControllers[categoryId] = controller;
@@ -726,6 +760,13 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                 onSelected: () => _toggleCategorySelection(category),
                                 onDelete: () => _showDeleteCategoryDialog(context, category),
                                 onAmountChanged: (value) {
+                                  // 개별 카테고리 금액 변경 시 완료 상태 리셋
+                                  if (_isCompleted) {
+                                    setState(() {
+                                      _isCompleted = false;
+                                    });
+                                  }
+
                                   if (value.isNotEmpty) {
                                     final formatted = _formatCurrency(value);
                                     if (formatted != value) {
@@ -806,10 +847,18 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                       flex: 2,
                       child: ElevatedButton(
                         onPressed: _isSaveButtonEnabled
-                            ? _saveBudgets
+                            ? () {
+                          if (_isCompleted) {
+                            // 완료 상태면 다이얼로그 닫기
+                            Get.back();
+                          } else {
+                            // 아니면 예산 저장
+                            _saveBudgets();
+                          }
+                        }
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: _isCompleted ? Colors.green : AppColors.primary,
                           disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -828,9 +877,11 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                           ),
                         )
                             : Text(
-                          selectedCategories.isNotEmpty
+                          _isCompleted
+                              ? '완료'
+                              : (selectedCategories.isNotEmpty
                               ? '${selectedCategories.length}개 카테고리 예산 설정'
-                              : '예산 설정하기',
+                              : '예산 설정하기'),
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
