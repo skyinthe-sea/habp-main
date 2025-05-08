@@ -2116,6 +2116,10 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
 
               return Container(
                 width: 320,
+                // 최대 높이 제약 추가 - 화면 높이의 70%로 제한
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                ),
                 padding: const EdgeInsets.all(0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -2231,64 +2235,101 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                       ),
                     ),
 
-                    // Content
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Stack(
-                        children: [
-                          // Success overlay
-                          if (showSuccess)
-                            Positioned.fill(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.shade50,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 5),
-                                        ),
-                                      ],
-                                      border: Border.all(color: Colors.green.shade200, width: 1),
+                    // Content - Flexible로 감싸서 남은 공간을 차지하게 함
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Stack(
+                          children: [
+                            // Success overlay
+                            if (showSuccess)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade50,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.1),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 5),
+                                          ),
+                                        ],
+                                        border: Border.all(color: Colors.green.shade200, width: 1),
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.shade100,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.check,
+                                              color: Colors.green.shade700,
+                                              size: 36,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            '저장 완료!',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green.shade700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            '설정이 성공적으로 적용되었습니다',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.green.shade800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
+                                  ),
+                                ),
+                              ),
+
+                            // Loading overlay
+                            if (isLoading)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.8),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Center(
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.shade100,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.check,
-                                            color: Colors.green.shade700,
-                                            size: 36,
+                                        SizedBox(
+                                          width: 40,
+                                          height: 40,
+                                          child: CircularProgressIndicator(
+                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.cate4),
+                                            strokeWidth: 3,
                                           ),
                                         ),
                                         const SizedBox(height: 16),
                                         Text(
-                                          '저장 완료!',
+                                          '저장 중...',
                                           style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green.shade700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          '설정이 성공적으로 적용되었습니다',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.green.shade800,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.cate4,
                                           ),
                                         ),
                                       ],
@@ -2296,330 +2337,267 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                   ),
                                 ),
                               ),
-                            ),
 
-                          // Loading overlay
-                          if (isLoading)
-                            Positioned.fill(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(16),
+                            // Main content
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Amount input
+                                const Text(
+                                  '새 금액',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                                child: Center(
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: amountController,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                                    ThousandsFormatter(),
+                                  ],
+                                  onChanged: (value) {
+                                    // 콤마를 제거한 순수 숫자 값 얻기
+                                    final plainValue = value.replaceAll(',', '');
+
+                                    // 유효성 검사
+                                    setState(() {
+                                      isValidAmount = plainValue.isEmpty || (int.tryParse(plainValue) != null && int.parse(plainValue) > 0);
+                                    });
+
+                                    // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
+                                    if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                                      showNumberFormatAlert(context);
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: '금액 입력',
+                                    filled: true,
+                                    fillColor: Colors.grey[50],
+                                    prefixIcon: Icon(Icons.attach_money, color: AppColors.cate4),
+                                    prefixText: '₩ ',
+                                    prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: isValidAmount ? Colors.grey[200]! : Colors.red[300]!
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: isValidAmount ? AppColors.cate4 : Colors.red[400]!,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    errorText: !isValidAmount && amountController.text.isNotEmpty
+                                        ? '유효한 금액을 입력해주세요'
+                                        : null,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Date selection
+                                const Text(
+                                  '적용 시작일',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '설정한 날짜부터 새 금액이 적용됩니다.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+
+                                // Calendar for selecting effective from date
+                                // 캘린더 높이를 화면 크기에 따라 조정
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[50],
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.grey[200]!),
+                                  ),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      SizedBox(
-                                        width: 40,
-                                        height: 40,
-                                        child: CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.cate4),
-                                          strokeWidth: 3,
+                                      // Month header with navigation
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              DateFormat('yyyy년 M월').format(effectiveFromDate),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                IconButton(
+                                                  icon: const Icon(Icons.chevron_left),
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      effectiveFromDate = DateTime(
+                                                        effectiveFromDate.year,
+                                                        effectiveFromDate.month - 1,
+                                                        1,
+                                                      );
+                                                    });
+                                                  },
+                                                  iconSize: 24,
+                                                  padding: EdgeInsets.zero,
+                                                  constraints: const BoxConstraints(),
+                                                ),
+                                                const SizedBox(width: 16),
+                                                IconButton(
+                                                  icon: const Icon(Icons.chevron_right),
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      effectiveFromDate = DateTime(
+                                                        effectiveFromDate.year,
+                                                        effectiveFromDate.month + 1,
+                                                        1,
+                                                      );
+                                                    });
+                                                  },
+                                                  iconSize: 24,
+                                                  padding: EdgeInsets.zero,
+                                                  constraints: const BoxConstraints(),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        '저장 중...',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.cate4,
+
+                                      // 캘린더 크기를 기기 화면에 맞춰 조절
+                                      SizedBox(
+                                        // 최대 265, 최소 180으로 조정 (작은 화면에서도 동작)
+                                        height: MediaQuery.of(context).size.height < 600 ? 180 :
+                                        MediaQuery.of(context).size.height < 700 ? 220 : 265,
+                                        child: TableCalendar(
+                                          firstDay: DateTime.utc(2020, 1, 1),
+                                          lastDay: DateTime.utc(2030, 12, 31),
+                                          focusedDay: effectiveFromDate,
+                                          selectedDayPredicate: (day) {
+                                            return isSameDay(selectedDate, day);
+                                          },
+                                          onDaySelected: (selectedDay, focusedDay) {
+                                            setState(() {
+                                              selectedDate = selectedDay;
+                                              effectiveFromDate = focusedDay;
+                                            });
+                                          },
+                                          onPageChanged: (focusedDay) {
+                                            setState(() {
+                                              effectiveFromDate = focusedDay;
+                                            });
+                                          },
+                                          calendarStyle: CalendarStyle(
+                                            cellMargin: const EdgeInsets.all(2),
+                                            cellPadding: const EdgeInsets.all(3),
+                                            todayDecoration: BoxDecoration(
+                                              color: AppColors.cate4.withOpacity(0.7),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            selectedDecoration: BoxDecoration(
+                                              color: AppColors.cate4,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            defaultTextStyle: const TextStyle(fontSize: 13),
+                                            weekendTextStyle: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.red.shade300,
+                                            ),
+                                            selectedTextStyle: const TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            todayTextStyle: const TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.white,
+                                            ),
+                                            outsideTextStyle: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.withOpacity(0.5),
+                                            ),
+                                          ),
+                                          headerVisible: false,
+                                          calendarFormat: CalendarFormat.month,
+                                          availableCalendarFormats: const {
+                                            CalendarFormat.month: '월',
+                                          },
+                                          // 작은 화면에서 행 높이 줄이기
+                                          rowHeight: MediaQuery.of(context).size.height < 700 ? 32 : 42,
+                                          daysOfWeekHeight: 20,
+                                          daysOfWeekStyle: DaysOfWeekStyle(
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade100,
+                                            ),
+                                            weekdayStyle: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            weekendStyle: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.red.shade300,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      // Info text at bottom
+                                      Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline,
+                                              size: 16,
+                                              color: Colors.grey[600],
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                '선택한 날짜: ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 적용',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-
-                          // Main content
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Amount input
-                              const Text(
-                                '새 금액',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: amountController,
-                                keyboardType: TextInputType.numberWithOptions(decimal: false),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
-                                  ThousandsFormatter(),
-                                ],
-                                onChanged: (value) {
-                                  // 콤마를 제거한 순수 숫자 값 얻기
-                                  final plainValue = value.replaceAll(',', '');
-
-                                  // 유효성 검사
-                                  setState(() {
-                                    _isValidAmount = plainValue.isEmpty || (int.tryParse(plainValue) != null && int.parse(plainValue) > 0);
-                                  });
-
-                                  // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-                                  if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
-                                    showNumberFormatAlert(context);
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                  hintText: '금액 입력',
-                                  filled: true,
-                                  fillColor: Colors.grey[50],
-                                  prefixIcon: Icon(Icons.money_off, color: AppColors.cate4),
-                                  prefixText: '₩ ',
-                                  prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                        color: _isValidAmount ? Colors.grey[200]! : Colors.red[300]!
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: _isValidAmount ? AppColors.cate4 : Colors.red[400]!,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  errorText: !_isValidAmount && amountController.text.isNotEmpty
-                                      ? '유효한 금액을 입력해주세요'
-                                      : null,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-
-                              // Date selection
-                              const Text(
-                                '적용 시작일',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '설정한 날짜부터 새 금액이 적용됩니다.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-
-                              // Calendar for selecting effective from date
-                              // Calendar container with LayoutBuilder and ScrollView
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.grey[200]!),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Month header with navigation
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            DateFormat('yyyy년 M월').format(effectiveFromDate),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          Row(
-                                            children: [
-                                              IconButton(
-                                                icon: const Icon(Icons.chevron_left),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    effectiveFromDate = DateTime(
-                                                      effectiveFromDate.year,
-                                                      effectiveFromDate.month - 1,
-                                                      1,
-                                                    );
-                                                  });
-                                                },
-                                                iconSize: 24,
-                                                padding: EdgeInsets.zero,
-                                                constraints: const BoxConstraints(),
-                                              ),
-                                              const SizedBox(width: 16),
-                                              IconButton(
-                                                icon: const Icon(Icons.chevron_right),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    effectiveFromDate = DateTime(
-                                                      effectiveFromDate.year,
-                                                      effectiveFromDate.month + 1,
-                                                      1,
-                                                    );
-                                                  });
-                                                },
-                                                iconSize: 24,
-                                                padding: EdgeInsets.zero,
-                                                constraints: const BoxConstraints(),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    // Calendar with adaptive height and scroll capability
-                                    Container(
-                                      height: 265, // Fixed height
-                                      child: SingleChildScrollView(
-                                        physics: const BouncingScrollPhysics(),
-                                        child: LayoutBuilder(
-                                          builder: (context, constraints) {
-                                            // Calculate rows in month (for current focused month)
-                                            final int daysInMonth = DateTime(
-                                                effectiveFromDate.year,
-                                                effectiveFromDate.month + 1,
-                                                0
-                                            ).day;
-                                            final int firstDayOfMonthWeekday = DateTime(
-                                                effectiveFromDate.year,
-                                                effectiveFromDate.month,
-                                                1
-                                            ).weekday % 7; // 0-6 with 0 being Sunday
-
-                                            // Calculate number of rows (weeks) in the month
-                                            final int totalDaysToShow = firstDayOfMonthWeekday + daysInMonth;
-                                            final int rowsNeeded = (totalDaysToShow / 7).ceil();
-
-                                            // Decide if we need compact mode
-                                            final bool useCompactMode = rowsNeeded > 5;
-
-                                            return TableCalendar(
-                                              firstDay: DateTime.utc(2020, 1, 1),
-                                              lastDay: DateTime.utc(2030, 12, 31),
-                                              focusedDay: effectiveFromDate,
-                                              selectedDayPredicate: (day) {
-                                                return isSameDay(selectedDate, day);
-                                              },
-                                              onDaySelected: (selectedDay, focusedDay) {
-                                                setState(() {
-                                                  selectedDate = selectedDay;
-                                                  effectiveFromDate = focusedDay;
-                                                });
-                                              },
-                                              onPageChanged: (focusedDay) {
-                                                setState(() {
-                                                  effectiveFromDate = focusedDay;
-                                                });
-                                              },
-                                              calendarStyle: CalendarStyle(
-                                                // Smaller cells in compact mode
-                                                cellMargin: useCompactMode ? EdgeInsets.all(2) : EdgeInsets.all(4),
-                                                cellPadding: useCompactMode ? EdgeInsets.all(3) : EdgeInsets.all(5),
-                                                todayDecoration: BoxDecoration(
-                                                  color: AppColors.cate4.withOpacity(0.7),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                selectedDecoration: BoxDecoration(
-                                                  color: AppColors.cate4,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                // Smaller text in compact mode
-                                                defaultTextStyle: TextStyle(
-                                                  fontSize: useCompactMode ? 13 : 14,
-                                                ),
-                                                weekendTextStyle: TextStyle(
-                                                  fontSize: useCompactMode ? 13 : 14,
-                                                  color: Colors.red.shade300,
-                                                ),
-                                                selectedTextStyle: TextStyle(
-                                                  fontSize: useCompactMode ? 13 : 14,
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                todayTextStyle: TextStyle(
-                                                  fontSize: useCompactMode ? 13 : 14,
-                                                  color: Colors.white,
-                                                ),
-                                                outsideTextStyle: TextStyle(
-                                                  fontSize: useCompactMode ? 12 : 13,
-                                                  color: Colors.grey.withOpacity(0.5),
-                                                ),
-                                              ),
-                                              headerVisible: false,
-                                              calendarFormat: CalendarFormat.month,
-                                              availableCalendarFormats: const {
-                                                CalendarFormat.month: '월',
-                                              },
-                                              // Use smaller row height for compact mode
-                                              rowHeight: useCompactMode ? 42 : 47,
-                                              daysOfWeekHeight: useCompactMode ? 20 : 25,
-                                              daysOfWeekStyle: DaysOfWeekStyle(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey.shade100,
-                                                ),
-                                                weekdayStyle: TextStyle(
-                                                  fontSize: useCompactMode ? 12 : 13,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                                weekendStyle: TextStyle(
-                                                  fontSize: useCompactMode ? 12 : 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.red.shade300,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Info text at bottom
-                                    Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.info_outline,
-                                            size: 16,
-                                            color: Colors.grey[600],
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              '선택한 날짜: ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 적용',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
 
-                    // Actions
+                    // Actions - 스크롤 영역 바깥에 고정
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                       child: Row(
