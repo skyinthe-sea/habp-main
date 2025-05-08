@@ -636,25 +636,25 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
                   ThousandsFormatter(),
                 ],
-                onChanged: (value) {
-                  // 콤마를 제거한 순수 숫자 값 얻기
-                  final plainValue = value.replaceAll(',', '');
-
-                  setState(() {
-                    _isValidAmount = plainValue.isEmpty ||
-                        (double.tryParse(plainValue) != null &&
-                            double.parse(plainValue) > 0);
-                  });
-
-                  // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-                  if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
-                    // 키보드가 열려 있으면 닫기
-                    FocusManager.instance.primaryFocus?.unfocus();
-
-                    // 경고 메시지 표시
-                    showNumberFormatAlert(context);
-                  }
-                },
+                // onChanged: (value) {
+                //   // 콤마를 제거한 순수 숫자 값 얻기
+                //   final plainValue = value.replaceAll(',', '');
+                //
+                //   setState(() {
+                //     _isValidAmount = plainValue.isEmpty ||
+                //         (double.tryParse(plainValue) != null &&
+                //             double.parse(plainValue) > 0);
+                //   });
+                //
+                //   // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
+                //   if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                //     // 키보드가 열려 있으면 닫기
+                //     FocusManager.instance.primaryFocus?.unfocus();
+                //
+                //     // 경고 메시지 표시
+                //     showNumberFormatAlert(context);
+                //   }
+                // },
                 decoration: InputDecoration(
                   hintText: '숫자만 입력',
                   filled: true,
@@ -2345,36 +2345,36 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                     FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
                                     ThousandsFormatter(),
                                   ],
-                                  onChanged: (value) {
-                                    // 콤마를 제거한 순수 숫자 값 얻기
-                                    final plainValue = value.replaceAll(',', '');
-
-                                    // 유효성 검사
-                                    setState(() {
-                                      isValidAmount = plainValue.isEmpty || (int.tryParse(plainValue) != null && int.parse(plainValue) > 0);
-                                    });
-
-                                    // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-                                    if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
-                                      // 경고 메시지 표시
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Row(
-                                            children: [
-                                              Icon(Icons.warning_amber_rounded, color: Colors.white),
-                                              SizedBox(width: 10),
-                                              Text('숫자만 입력 가능합니다'),
-                                            ],
-                                          ),
-                                          backgroundColor: Colors.red.shade700,
-                                          behavior: SnackBarBehavior.floating,
-                                          duration: Duration(seconds: 2),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                          margin: EdgeInsets.all(10),
-                                        ),
-                                      );
-                                    }
-                                  },
+                                  // onChanged: (value) {
+                                  //   // 콤마를 제거한 순수 숫자 값 얻기
+                                  //   final plainValue = value.replaceAll(',', '');
+                                  //
+                                  //   // 유효성 검사
+                                  //   setState(() {
+                                  //     isValidAmount = plainValue.isEmpty || (int.tryParse(plainValue) != null && int.parse(plainValue) > 0);
+                                  //   });
+                                  //
+                                  //   // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
+                                  //   if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                                  //     // 경고 메시지 표시
+                                  //     ScaffoldMessenger.of(context).showSnackBar(
+                                  //       SnackBar(
+                                  //         content: Row(
+                                  //           children: [
+                                  //             Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                  //             SizedBox(width: 10),
+                                  //             Text('숫자만 입력 가능합니다'),
+                                  //           ],
+                                  //         ),
+                                  //         backgroundColor: Colors.red.shade700,
+                                  //         behavior: SnackBarBehavior.floating,
+                                  //         duration: Duration(seconds: 2),
+                                  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  //         margin: EdgeInsets.all(10),
+                                  //       ),
+                                  //     );
+                                  //   }
+                                  // },
                                   decoration: InputDecoration(
                                     hintText: '금액 입력',
                                     filled: true,

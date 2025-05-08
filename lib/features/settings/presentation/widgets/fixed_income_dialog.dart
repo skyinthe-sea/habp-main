@@ -630,25 +630,25 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
                   ThousandsFormatter(),
                 ],
-                onChanged: (value) {
-                  // 콤마를 제거한 순수 숫자 값 얻기
-                  final plainValue = value.replaceAll(',', '');
-
-                  setState(() {
-                    _isValidAmount = plainValue.isEmpty ||
-                        (double.tryParse(plainValue) != null &&
-                            double.parse(plainValue) > 0);
-                  });
-
-                  // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-                  if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
-                    // 키보드가 열려 있으면 닫기
-                    FocusManager.instance.primaryFocus?.unfocus();
-
-                    // 경고 메시지 표시
-                    showNumberFormatAlert(context);
-                  }
-                },
+                // onChanged: (value) {
+                //   // 콤마를 제거한 순수 숫자 값 얻기
+                //   final plainValue = value.replaceAll(',', '');
+                //
+                //   setState(() {
+                //     _isValidAmount = plainValue.isEmpty ||
+                //         (double.tryParse(plainValue) != null &&
+                //             double.parse(plainValue) > 0);
+                //   });
+                //
+                //   // 숫자와 콤마 외의 문자가 입력된 경우에만 경고 표시
+                //   if (value.isNotEmpty && !RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                //     // 키보드가 열려 있으면 닫기
+                //     FocusManager.instance.primaryFocus?.unfocus();
+                //
+                //     // 경고 메시지 표시
+                //     showNumberFormatAlert(context);
+                //   }
+                // },
                 decoration: InputDecoration(
                   hintText: '숫자만 입력',
                   filled: true,
@@ -2339,20 +2339,20 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                     FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
                                     ThousandsFormatter(),
                                   ],
-                                  onChanged: (value) {
-                                    // 콤마를 제거한 순수 숫자 값 얻기
-                                    final plainValue = value.replaceAll(',', '');
-
-                                    // 유효성 검사
-                                    setState(() {
-                                      isValidAmount = plainValue.isEmpty || (int.tryParse(plainValue) != null && int.parse(plainValue) > 0);
-                                    });
-
-                                    // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-                                    if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
-                                      showNumberFormatAlert(context);
-                                    }
-                                  },
+                                  // onChanged: (value) {
+                                  //   // 콤마를 제거한 순수 숫자 값 얻기
+                                  //   final plainValue = value.replaceAll(',', '');
+                                  //
+                                  //   // 유효성 검사 - 반드시 콤마가 제거된 값으로만 검사
+                                  //   setState(() {
+                                  //     isValidAmount = plainValue.isEmpty || (double.tryParse(plainValue) != null && double.parse(plainValue) > 0);
+                                  //   });
+                                  //
+                                  //   // 숫자와 콤마 외의 문자가 입력된 경우에만 경고 표시
+                                  //   if (value.isNotEmpty && !RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                                  //     showNumberFormatAlert(context);
+                                  //   }
+                                  // },
                                   decoration: InputDecoration(
                                     hintText: '금액 입력',
                                     filled: true,
@@ -2624,7 +2624,91 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                   return;
                                 }
 
-                                // ... (나머지 코드는 변경 없음)
+                                // Check if there's a change
+                                if (amount == defaultAmount && selectedDate.day == defaultDay) {
+                                  Get.snackbar('알림', '변경된 내용이 없습니다');
+                                  return;
+                                }
+
+                                // Show loading indicator
+                                setState(() {
+                                  isLoading = true;
+                                });
+
+                                // Update the setting
+                                final success = await _controller.updateFixedTransactionSetting(
+                                  categoryId: category.id,
+                                  amount: amount,
+                                  effectiveFrom: selectedDate,
+                                );
+
+                                // Show result
+                                if (success) {
+                                  // Reload data
+                                  await _controller.loadFixedIncomeCategories();
+
+                                  // Find the updated category from the controller
+                                  CategoryWithSettings? updatedCategory;
+                                  for (var cat in _controller.incomeCategories) {
+                                    if (cat.id == category.id) {
+                                      updatedCategory = cat;
+                                      break;
+                                    }
+                                  }
+
+                                  // Update the parent state
+                                  if (_selectedCategory != null && _selectedCategory!.id == category.id && updatedCategory != null) {
+                                    // Update our parent widget's state to show the new setting immediately
+                                    this.setState(() {
+                                      _selectedCategory = updatedCategory;
+                                      _selectedHistoricalSettings = _getHistoricalSettings(updatedCategory!);
+                                    });
+                                  }
+
+                                  // Reload transaction history
+                                  await _loadTransactionHistory();
+
+                                  // Update dialog state with new values and show success indicator
+                                  setState(() {
+                                    defaultAmount = amount;
+                                    defaultDay = selectedDate.day;
+                                    amountController.text = amount.toStringAsFixed(0);
+                                    showSuccess = true;
+                                    isLoading = false;
+                                  });
+
+                                  // Show external snackbar
+                                  Get.snackbar(
+                                    '성공',
+                                    '${category.name}의 설정이 ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 ${NumberFormat('#,###').format(amount)}원으로 변경되었습니다.',
+                                    backgroundColor: Colors.green[100],
+                                    borderRadius: 12,
+                                    margin: const EdgeInsets.all(12),
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    duration: const Duration(seconds: 2),
+                                  );
+
+                                  // Close the dialog after success message
+                                  Future.delayed(const Duration(seconds: 1), () {
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                  });
+                                } else {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+
+                                  Get.snackbar(
+                                    '오류',
+                                    '설정 업데이트에 실패했습니다.',
+                                    backgroundColor: Colors.red[100],
+                                    borderRadius: 12,
+                                    margin: const EdgeInsets.all(12),
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    duration: const Duration(seconds: 2),
+                                  );
+                                }
                               },
                               child: const Text(
                                 '저장',
