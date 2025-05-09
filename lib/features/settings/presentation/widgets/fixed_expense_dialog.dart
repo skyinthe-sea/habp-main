@@ -793,6 +793,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                         shape: BoxShape.circle,
                       ),
                     ),
+                    availableGestures: AvailableGestures.none,
                     headerVisible: false,
                     calendarFormat: CalendarFormat.month,
                     availableCalendarFormats: const {
@@ -1676,6 +1677,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                       shape: BoxShape.circle,
                     ),
                   ),
+                  availableGestures: AvailableGestures.none,
                   headerVisible: false,
                   calendarFormat: CalendarFormat.month,
                   availableCalendarFormats: const {
@@ -2539,6 +2541,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                               color: Colors.grey.withOpacity(0.5),
                                             ),
                                           ),
+                                          availableGestures: AvailableGestures.none,
                                           headerVisible: false,
                                           calendarFormat: CalendarFormat.month,
                                           availableCalendarFormats: const {

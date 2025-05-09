@@ -806,6 +806,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                             shape: BoxShape.circle,
                           ),
                         ),
+                        availableGestures: AvailableGestures.none,
                         headerVisible: false,
                         calendarFormat: CalendarFormat.month,
                         availableCalendarFormats: const {
@@ -1705,6 +1706,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                           CalendarFormat.month: '월',
                         },
                         // Make calendar more compact
+                        availableGestures: AvailableGestures.none,
                         rowHeight: 40,
                         daysOfWeekHeight: 20,
                       ),
@@ -2541,6 +2543,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                               color: Colors.grey.withOpacity(0.5),
                                             ),
                                           ),
+                                          availableGestures: AvailableGestures.none,
                                           headerVisible: false,
                                           calendarFormat: CalendarFormat.month,
                                           availableCalendarFormats: const {

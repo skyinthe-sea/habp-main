@@ -785,7 +785,6 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                           });
                         },
                         onPageChanged: (focusedDay) {
-                          // Update the displayed month when swiping
                           setState(() {
                             _effectiveFromDate = focusedDay;
                           });
@@ -805,9 +804,10 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         availableCalendarFormats: const {
                           CalendarFormat.month: '월',
                         },
-                        // Add these properties to make the calendar more compact
-                        rowHeight: 40, // Reduced row height
-                        daysOfWeekHeight: 20, // Reduced days of week height
+                        // 여기에 추가 👇
+                        availableGestures: AvailableGestures.none,
+                        rowHeight: 40,
+                        daysOfWeekHeight: 20,
                       ),
                     ),
                     Padding(
@@ -1699,6 +1699,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                           CalendarFormat.month: '월',
                         },
                         // Make calendar more compact
+                        availableGestures: AvailableGestures.none,
                         rowHeight: 40,
                         daysOfWeekHeight: 20,
                       ),
@@ -2524,6 +2525,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                           availableCalendarFormats: const {
                                             CalendarFormat.month: '월',
                                           },
+                                          availableGestures: AvailableGestures.none,
                                           // 작은 화면에서 행 높이 줄이기
                                           rowHeight: MediaQuery.of(context).size.height < 700 ? 32 : 42,
                                           daysOfWeekHeight: 20,
