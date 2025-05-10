@@ -162,6 +162,9 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       }
     }
 
+    // Check if there are only transaction records without fixed settings
+    final bool onlyTransactionRecords = category.settings.isEmpty && earliestTransaction != null;
+
     // Add the global setting from transaction record if available
     if (earliestTransaction != null) {
       historyItems.add(SettingHistoryItem(
@@ -174,6 +177,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
             : earliestTransaction['transaction_num'],
         effectiveFrom: DateTime.parse(earliestTransaction['transaction_date'].toString()),
         isGlobalSetting: true,
+        // If this is the only setting (no fixed_transaction_setting data), it should be the current setting
+        isCurrentSetting: onlyTransactionRecords,
       ));
     }
 
@@ -1440,7 +1445,9 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               final item = historyItems[index];
               final isFirstItem = index == 0;
               final isLastItem = index == historyItems.length - 1;
-              final isCurrentSetting = currentSetting?.id == item.id;
+              // Use the item's isCurrentSetting property if it's a global setting with transaction_record2 only,
+              // otherwise use the currentSetting check
+              final isCurrentSetting = item.isCurrentSetting || currentSetting?.id == item.id;
 
               // Don't allow deleting the global/initial setting
               if (item.isGlobalSetting) {
@@ -1490,11 +1497,30 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     },
                   );
                 },
-                onDismissed: (direction) {
+                onDismissed: (direction) async {
                   // Extract the ID from the prefix
                   final idString = item.id.split('_')[1];
                   final id = int.parse(idString);
-                  _deleteFixedTransactionSetting(id);
+
+                  // 항목을 삭제하고, 상태 업데이트를 위해 즉시 setState 호출
+                  setState(() {
+                    // 현재 항목을 리스트에서 즉시 제거
+                    historyItems.removeWhere((setting) => setting.id == item.id);
+                  });
+
+                  // 데이터베이스에서 실제 삭제 작업 수행
+                  try {
+                    await _deleteFixedTransactionSetting(id);
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("삭제 중 오류가 발생했습니다: $e"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 },
                 background: Container(
                   alignment: Alignment.centerLeft,
@@ -3365,6 +3391,7 @@ class SettingHistoryItem {
   final int day;
   final DateTime effectiveFrom;
   final bool isGlobalSetting;
+  final bool isCurrentSetting;
 
   SettingHistoryItem({
     required this.id,
@@ -3372,5 +3399,6 @@ class SettingHistoryItem {
     required this.day,
     required this.effectiveFrom,
     required this.isGlobalSetting,
+    this.isCurrentSetting = false,
   });
 }

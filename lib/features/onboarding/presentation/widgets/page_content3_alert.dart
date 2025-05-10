@@ -245,6 +245,16 @@ class _PageContent3AlertState extends State<PageContent3Alert>
         // Update in memory
         _expenseController.updateEntry(updatedEntry);
 
+        // Update in database - save new entry to DB with the updated values
+        await _onboardingService.saveIncomeInfo(
+          incomeType: _selectedIncomeType,
+          frequency: _selectedFrequency,
+          day: _selectedDay,
+          amount: amount.toDouble() * -1, // Store as negative for finance
+          type: ExpenseCategoryType.FINANCE,
+          isUpdate: true, // 수정 모드 활성화하여 기존 데이터 삭제
+        );
+
         _stopEditing();
         setState(() {});
       } catch (e) {

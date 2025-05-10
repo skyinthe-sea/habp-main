@@ -82,9 +82,10 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(top: 80.0, bottom: 80.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 80.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Flexible(
                     child: AnimatedBuilder(
@@ -92,30 +93,36 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
                       builder: (context, child) {
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: 10,
-                              runSpacing: 20,
-                              children: List.generate(_words.length, (index) {
-                                return AnimatedOpacity(
-                                  opacity: _wordAnimations[index].value,
-                                  duration: const Duration(milliseconds: 200), // Faster animation
-                                  child: AnimatedSlide(
-                                    offset: Offset(0, 1 - _wordAnimations[index].value),
+                            Container(
+                              width: double.infinity,
+                              alignment: Alignment.center,
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 10,
+                                runSpacing: 20,
+                                children: List.generate(_words.length, (index) {
+                                  return AnimatedOpacity(
+                                    opacity: _wordAnimations[index].value,
                                     duration: const Duration(milliseconds: 200), // Faster animation
-                                    child: Text(
-                                      _words[index],
-                                      style: TextStyle(
-                                        color: AppColors.white,
-                                        fontSize: standardFontSize,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Noto Sans JP',
+                                    child: AnimatedSlide(
+                                      offset: Offset(0, 1 - _wordAnimations[index].value),
+                                      duration: const Duration(milliseconds: 200), // Faster animation
+                                      child: Text(
+                                        _words[index],
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: AppColors.white,
+                                          fontSize: standardFontSize,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Noto Sans JP',
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              }),
+                                  );
+                                }),
+                              ),
                             ),
                           ],
                         );

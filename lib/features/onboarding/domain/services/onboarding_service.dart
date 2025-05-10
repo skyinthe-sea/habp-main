@@ -18,6 +18,7 @@ class OnboardingService {
     required int day,
     required double amount,
     required ExpenseCategoryType type,
+    bool isUpdate = false, // 수정인지 여부
   }) async {
     try {
       // 1. 활성 사용자 가져오기 (없으면 자동 생성)
@@ -32,6 +33,13 @@ class OnboardingService {
         type,
         frequency == '매월', // 매월이면 고정 소득으로 간주
       );
+
+      // 수정일 경우, 기존 거래 내역 삭제
+      if (isUpdate) {
+        final transactionRepository = await _getTransactionRepository(db);
+        final deletedCount = await transactionRepository.deleteTransactionsByCategoryId(category.id!);
+        debugPrint('기존 거래 내역 삭제 완료: $deletedCount개 항목');
+      }
 
       // 3. 거래 내역 생성
       final now = DateTime.now();
@@ -166,5 +174,14 @@ class TransactionRepository {
 
   Future<int> createTransaction(TransactionRecord transaction) async {
     return await _db.insert('transaction_record2', transaction.toMap());
+  }
+
+  // 카테고리 ID로 이전 트랜잭션 삭제
+  Future<int> deleteTransactionsByCategoryId(int categoryId) async {
+    return await _db.delete(
+      'transaction_record2',
+      where: 'category_id = ?',
+      whereArgs: [categoryId]
+    );
   }
 }

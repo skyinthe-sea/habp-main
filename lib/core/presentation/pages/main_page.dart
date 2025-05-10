@@ -52,12 +52,18 @@ class _MainPageState extends State<MainPage> {
         ),
         body: Column(
           children: [
-            // 애드몹 배너 광고 - 좌우 패딩 제거
-            Container(
-              width: MediaQuery.of(context).size.width, // 화면 너비 전체 사용
-              padding: EdgeInsets.zero, // 패딩 제거
-              margin: EdgeInsets.zero, // 마진 제거
-              child: Get.find<AdService>().getBannerAdWidget(),
+            // 애드몹 배너 광고 - 개선된 방식으로 표시
+            Builder(
+              builder: (context) {
+                // 키 추가를 통해 위젯 재사용 방지
+                return Container(
+                  key: const ValueKey('ad_container'),
+                  width: MediaQuery.of(context).size.width, // 화면 너비 전체 사용
+                  padding: EdgeInsets.zero, // 패딩 제거
+                  margin: EdgeInsets.zero, // 마진 제거
+                  child: Get.find<AdService>().getBannerAdWidget(),
+                );
+              }
             ),
 
             // 나머지 콘텐츠

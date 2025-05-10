@@ -246,6 +246,17 @@ class _PageContent1AlertState extends State<PageContent1Alert>
         // Update in memory
         _expenseController.updateEntry(updatedEntry);
 
+        // Update in database - save new entry to DB with the updated values
+        // isUpdate를 true로 설정하여 기존 데이터 삭제 후 업데이트
+        await _onboardingService.saveIncomeInfo(
+          incomeType: _selectedIncomeType,
+          frequency: _selectedFrequency,
+          day: _selectedDay,
+          amount: amount.toDouble(),
+          type: ExpenseCategoryType.INCOME,
+          isUpdate: true, // 수정 모드 활성화
+        );
+
         _stopEditing();
         setState(() {});
       } catch (e) {

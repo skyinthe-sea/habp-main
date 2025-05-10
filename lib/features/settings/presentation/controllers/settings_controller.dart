@@ -145,6 +145,7 @@ class SettingsController extends GetxController {
         effectiveFrom: effectiveFrom,
         createdAt: now,
         updatedAt: now,
+        categoryType: type, // Pass the category type for correct sign handling
       );
 
       final settingResult = await addSetting(setting);
@@ -262,6 +263,7 @@ class SettingsController extends GetxController {
         effectiveFrom: effectiveFrom, // 여기에 날짜와 금액 정보가 모두 포함됨
         createdAt: now,
         updatedAt: now,
+        categoryType: categoryType, // Pass the category type for correct sign handling
       );
 
       final result = await addFixedTransactionSetting.execute(setting);
@@ -343,7 +345,10 @@ class SettingsController extends GetxController {
       for (final category in categories) {
         if (category.id == categoryId && category.settings.isNotEmpty) {
           // 최신 설정 가져오기 (이미 날짜 기준 내림차순 정렬됨)
-          return category.settings.first.amount;
+          double amount = category.settings.first.amount;
+
+          // Return the absolute value for display purposes
+          return amount.abs();
         }
       }
     }

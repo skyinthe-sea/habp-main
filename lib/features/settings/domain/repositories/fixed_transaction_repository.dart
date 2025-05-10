@@ -107,6 +107,7 @@ class FixedTransactionRepositoryImpl implements FixedTransactionRepository {
         effectiveFrom: effectiveFrom,
         createdAt: now,
         updatedAt: now,
+        categoryType: type, // Pass the category type for correct sign handling
       );
 
       final settingResult = await addSetting(setting);

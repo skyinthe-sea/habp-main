@@ -10,6 +10,7 @@ class FixedTransactionSetting {
   final DateTime effectiveFrom;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? categoryType; // Add categoryType as an optional parameter
 
   FixedTransactionSetting({
     this.id = 0,
@@ -18,6 +19,7 @@ class FixedTransactionSetting {
     required this.effectiveFrom,
     required this.createdAt,
     required this.updatedAt,
+    this.categoryType, // Optional parameter for transaction sign handling
   });
 
   factory FixedTransactionSetting.fromMap(Map<String, dynamic> map) {
@@ -28,6 +30,7 @@ class FixedTransactionSetting {
       effectiveFrom: DateTime.parse(map['effective_from']),
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
+      categoryType: map['category_type'],
     );
   }
 
@@ -211,10 +214,11 @@ class FixedTransactionLocalDataSourceImpl implements FixedTransactionLocalDataSo
             // FixedTransactionSetting 생성
             final setting = FixedTransactionSetting(
               categoryId: categoryId,
-              amount: amount.abs(), // 절대값 사용
+              amount: amount, // Use the signed amount instead of absolute value
               effectiveFrom: DateTime(now.year, now.month, day),
               createdAt: DateTime.parse(transaction['created_at']),
               updatedAt: DateTime.parse(transaction['updated_at']),
+              categoryType: type, // Include category type
             );
 
             settings.add(setting);
@@ -321,6 +325,34 @@ class FixedTransactionLocalDataSourceImpl implements FixedTransactionLocalDataSo
       // 생성/수정 시간 업데이트
       settingMap['created_at'] = now.toIso8601String();
       settingMap['updated_at'] = now.toIso8601String();
+
+      // Get the category type if not provided
+      String? categoryType = setting.categoryType;
+      if (categoryType == null) {
+        final List<Map<String, dynamic>> categoryResult = await db.query(
+          'category',
+          columns: ['type'],
+          where: 'id = ?',
+          whereArgs: [setting.categoryId],
+        );
+
+        if (categoryResult.isNotEmpty) {
+          categoryType = categoryResult.first['type'] as String;
+        }
+      }
+
+      // Apply the correct sign based on category type
+      if (categoryType == 'EXPENSE' || categoryType == 'FINANCE') {
+        // If the amount is positive, make it negative for EXPENSE and FINANCE
+        if (settingMap['amount'] > 0) {
+          settingMap['amount'] = -settingMap['amount'];
+        }
+      } else if (categoryType == 'INCOME') {
+        // If the amount is negative, make it positive for INCOME
+        if (settingMap['amount'] < 0) {
+          settingMap['amount'] = -settingMap['amount'];
+        }
+      }
 
       return await db.insert('fixed_transaction_setting', settingMap);
     } catch (e) {

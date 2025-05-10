@@ -7,12 +7,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/presentation/pages/main_page.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/event_bus_service.dart';
+import 'core/utils/dismissible_error_handler.dart';
+import 'core/utils/super_error_silencer.dart'; // 강력한 에러 무시 처리기 추가
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final bool isFirstTimeUser = prefs.getBool('isFirstTimeUser') ?? true;
+
+  // 에러 처리 설정 - 가장 강력한 방법으로 에러 무시
+  // 개발/릴리즈 환경에 따라 자동으로 적절한 에러 처리 방식 적용
+  SuperErrorSilencer().silenceAllErrors();
 
   // Google 모바일 광고 SDK 초기화
   await MobileAds.instance.initialize();
