@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../controllers/quick_add_controller.dart';
+import '../widgets/autocomplete_text_field.dart';
 import 'date_selection_dialog.dart';
 import 'calculator_dialog.dart';
 
@@ -644,21 +645,10 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     ),
                   ),
                   const SizedBox(height: 6),
-                  TextField(
+                  AutocompleteTextField(
                     controller: _descriptionController,
-                    decoration: InputDecoration(
-                      hintText: '내용을 입력하세요',
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.primary),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                    ),
+                    hintText: '내용을 입력하세요',
+                    autocompleteService: controller.autocompleteService,
                   ),
                 ],
               ),

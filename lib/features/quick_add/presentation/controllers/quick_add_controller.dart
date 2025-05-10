@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../../../core/services/event_bus_service.dart';
 import '../models/quick_add_transaction.dart';
+import '../services/autocomplete_service.dart';
 
 /// Controller for the quick add transaction flow
 /// Manages state and database operations across multiple dialogs
@@ -28,6 +29,9 @@ class QuickAddController extends GetxController {
   final int userId = 1;
 
   late final EventBusService _eventBusService;
+
+  // 자동완성 서비스
+  final AutocompleteService autocompleteService = AutocompleteService();
 
   @override
   void onInit() {
@@ -135,6 +139,11 @@ class QuickAddController extends GetxController {
 
       isSuccess.value = true;
       Get.find<EventBusService>().emitTransactionChanged();
+
+      // 설명 저장 (자동완성용)
+      if (transaction.value.description.isNotEmpty) {
+        await autocompleteService.saveDescription(transaction.value.description);
+      }
 
       _eventBusService.emitTransactionChanged();
       return true;
