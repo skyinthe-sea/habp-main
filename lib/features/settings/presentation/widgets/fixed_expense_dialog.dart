@@ -179,6 +179,25 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
     });
   }
 
+  void showNumberFormatAlert(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.white),
+            const SizedBox(width: 10),
+            const Text('숫자만 입력 가능합니다'),
+          ],
+        ),
+        backgroundColor: AppColors.cate4,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(10),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ScaleTransition(
@@ -502,14 +521,13 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
     );
   }
 
-  // Calculate total monthly expense based on current month
+  // Calculate total monthly expense based on current date
   String _calculateTotalMonthlyExpense() {
     double total = 0;
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
+    final now = DateTime.now(); // Use current date instead of first day of month
 
     for (final category in _controller.expenseCategories) {
-      final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+      final effectiveSetting = _getEffectiveSettingForDate(category, now);
       if (effectiveSetting != null) {
         total += effectiveSetting.amount;
       }
@@ -518,315 +536,309 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
     return '₩ ${NumberFormat('#,###').format(total)}';
   }
 
-  // Create form with calendar
+  // Create form with calendar - now with proper scrolling
   Widget _buildCreateForm() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.cate4.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.add_circle_outline_rounded,
-                    color: AppColors.cate4,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '새 고정 지출 추가',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Name field
-            const Text(
-              '지출 이름',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                hintText: '예: 월세, 통신비, 구독료 등',
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.payment, color: Colors.grey[600]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey[200]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: AppColors.cate4, width: 2),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '지출 이름을 입력해주세요';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-
-            // Amount field
-            const Text(
-              '금액',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _amountController,
-              keyboardType: TextInputType.numberWithOptions(decimal: false),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
-                ThousandsFormatter(),
-              ],
-              // onChanged: (value) {
-              //   // 콤마를 제거한 순수 숫자 값 얻기
-              //   final plainValue = value.replaceAll(',', '');
-              //
-              //   setState(() {
-              //     _isValidAmount = plainValue.isEmpty ||
-              //         (double.tryParse(plainValue) != null &&
-              //             double.parse(plainValue) > 0);
-              //   });
-              //
-              //   // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-              //   if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
-              //     // 키보드가 열려 있으면 닫기
-              //     FocusManager.instance.primaryFocus?.unfocus();
-              //
-              //     // 경고 메시지 표시
-              //     ScaffoldMessenger.of(context).showSnackBar(
-              //       SnackBar(
-              //         content: Row(
-              //           children: [
-              //             Icon(Icons.warning_amber_rounded, color: Colors.white),
-              //             SizedBox(width: 10),
-              //             Text('숫자만 입력 가능합니다'),
-              //           ],
-              //         ),
-              //         backgroundColor: AppColors.cate4,
-              //         behavior: SnackBarBehavior.floating,
-              //         duration: Duration(seconds: 2),
-              //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              //         margin: EdgeInsets.all(10),
-              //       ),
-              //     );
-              //   }
-              // },
-              decoration: InputDecoration(
-                hintText: '숫자만 입력',
-                filled: true,
-                fillColor: Colors.grey[50],
-                prefixIcon: Icon(Icons.money_off, color: AppColors.cate4),
-                prefixText: '₩ ',
-                prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: _isValidAmount ? Colors.grey[200]! : Colors.red.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                      color: _isValidAmount ? AppColors.cate4 : Colors.red.shade500,
-                      width: 2
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                errorText: !_isValidAmount && _amountController.text.isNotEmpty
-                    ? '유효한 금액을 입력해주세요'
-                    : null,
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '금액을 입력해주세요';
-                }
-                final amount = double.tryParse(value.replaceAll(',', ''));
-                if (amount == null || amount <= 0) {
-                  return '유효한 금액을 입력해주세요';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-
-            // Effective from date
-            const Text(
-              '시작 날짜',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '설정한 날짜부터 지출이 등록됩니다.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Calendar for selecting effective from date
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Column(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          DateFormat('yyyy년 M월').format(_effectiveFromDate),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.chevron_left),
-                              onPressed: () {
-                                setState(() {
-                                  _effectiveFromDate = DateTime(
-                                    _effectiveFromDate.year,
-                                    _effectiveFromDate.month - 1,
-                                    _effectiveFromDate.day,
-                                  );
-                                });
-                              },
-                              iconSize: 24,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            const SizedBox(width: 16),
-                            IconButton(
-                              icon: const Icon(Icons.chevron_right),
-                              onPressed: () {
-                                setState(() {
-                                  _effectiveFromDate = DateTime(
-                                    _effectiveFromDate.year,
-                                    _effectiveFromDate.month + 1,
-                                    _effectiveFromDate.day,
-                                  );
-                                });
-                              },
-                              iconSize: 24,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                      ],
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.cate4.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.add_circle_outline_rounded,
+                      color: AppColors.cate4,
+                      size: 20,
                     ),
                   ),
-                  // Calendar for create form
-                  TableCalendar(
-                    firstDay: DateTime.utc(2020, 1, 1),
-                    lastDay: DateTime.utc(2030, 12, 31),
-                    focusedDay: _effectiveFromDate,
-                    selectedDayPredicate: (day) {
-                      return isSameDay(_selectedDate, day);
-                    },
-                    onDaySelected: (selectedDay, focusedDay) {
-                      setState(() {
-                        _selectedDate = selectedDay;
-                        _effectiveFromDate = focusedDay;
-                      });
-                    },
-                    onPageChanged: (focusedDay) {
-                      // Update the displayed month when swiping
-                      setState(() {
-                        _effectiveFromDate = focusedDay;
-                      });
-                    },
-                    calendarStyle: CalendarStyle(
-                      todayDecoration: BoxDecoration(
-                        color: AppColors.cate4.withOpacity(0.7),
-                        shape: BoxShape.circle,
-                      ),
-                      selectedDecoration: BoxDecoration(
-                        color: AppColors.cate4,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    availableGestures: AvailableGestures.none,
-                    headerVisible: false,
-                    calendarFormat: CalendarFormat.month,
-                    availableCalendarFormats: const {
-                      CalendarFormat.month: '월',
-                    },
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '선택한 날짜: ${DateFormat('yyyy년 M월 d일').format(_selectedDate)}부터 적용',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ),
-                      ],
+                  const SizedBox(width: 12),
+                  Text(
+                    '새 고정 지출 추가',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 24),
+
+              // Name field
+              const Text(
+                '지출 이름',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  hintText: '예: 월세, 통신비, 구독료 등',
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  prefixIcon: Icon(Icons.payment, color: Colors.grey[600]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey[200]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppColors.cate4, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '지출 이름을 입력해주세요';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Amount field
+              const Text(
+                '금액',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                  ThousandsFormatter(),
+                ],
+                // onChanged: (value) {
+                //   // 콤마를 제거한 순수 숫자 값 얻기
+                //   final plainValue = value.replaceAll(',', '');
+                //
+                //   setState(() {
+                //     _isValidAmount = plainValue.isEmpty ||
+                //         (double.tryParse(plainValue) != null &&
+                //             double.parse(plainValue) > 0);
+                //   });
+                //
+                //   // 숫자와 콤마 외의 문자가 입력된 경우에만 경고 표시
+                //   if (value.isNotEmpty && !RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                //     // 키보드가 열려 있으면 닫기
+                //     FocusManager.instance.primaryFocus?.unfocus();
+                //
+                //     // 경고 메시지 표시
+                //     showNumberFormatAlert(context);
+                //   }
+                // },
+                decoration: InputDecoration(
+                  hintText: '숫자만 입력',
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  prefixIcon: Icon(Icons.money_off, color: AppColors.cate4),
+                  prefixText: '₩ ',
+                  prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: _isValidAmount ? Colors.grey[200]! : Colors.red.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                        color: _isValidAmount ? AppColors.cate4 : Colors.red.shade500,
+                        width: 2
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  errorText: !_isValidAmount && _amountController.text.isNotEmpty
+                      ? '유효한 금액을 입력해주세요'
+                      : null,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '금액을 입력해주세요';
+                  }
+                  final amount = double.tryParse(value.replaceAll(',', ''));
+                  if (amount == null || amount <= 0) {
+                    return '유효한 금액을 입력해주세요';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Effective from date
+              const Text(
+                '시작 날짜',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '설정한 날짜부터 지출이 등록됩니다.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Calendar for selecting effective from date
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat('yyyy년 M월').format(_effectiveFromDate),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.chevron_left),
+                                onPressed: () {
+                                  setState(() {
+                                    _effectiveFromDate = DateTime(
+                                      _effectiveFromDate.year,
+                                      _effectiveFromDate.month - 1,
+                                      _effectiveFromDate.day,
+                                    );
+                                  });
+                                },
+                                iconSize: 24,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                              const SizedBox(width: 16),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_right),
+                                onPressed: () {
+                                  setState(() {
+                                    _effectiveFromDate = DateTime(
+                                      _effectiveFromDate.year,
+                                      _effectiveFromDate.month + 1,
+                                      _effectiveFromDate.day,
+                                    );
+                                  });
+                                },
+                                iconSize: 24,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Calendar for create form with fixed height to prevent overflow
+                    SizedBox(
+                      height: 300,
+                      child: TableCalendar(
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay: _effectiveFromDate,
+                        selectedDayPredicate: (day) {
+                          return isSameDay(_selectedDate, day);
+                        },
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _selectedDate = selectedDay;
+                            _effectiveFromDate = focusedDay;
+                          });
+                        },
+                        onPageChanged: (focusedDay) {
+                          setState(() {
+                            _effectiveFromDate = focusedDay;
+                          });
+                        },
+                        calendarStyle: CalendarStyle(
+                          todayDecoration: BoxDecoration(
+                            color: AppColors.cate4.withOpacity(0.7),
+                            shape: BoxShape.circle,
+                          ),
+                          selectedDecoration: BoxDecoration(
+                            color: AppColors.cate4,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        headerVisible: false,
+                        calendarFormat: CalendarFormat.month,
+                        availableCalendarFormats: const {
+                          CalendarFormat.month: '월',
+                        },
+                        // 여기에 추가 👇
+                        availableGestures: AvailableGestures.none,
+                        rowHeight: 40,
+                        daysOfWeekHeight: 20,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '선택한 날짜: ${DateFormat('yyyy년 M월 d일').format(_selectedDate)}부터 적용',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24), // Add extra padding at the bottom
+            ],
+          ),
         ),
       ),
     );
@@ -896,8 +908,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       );
     }
 
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
+    final now = DateTime.now(); // Use current date instead of first day of month
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -908,12 +919,12 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
           final category = _controller.expenseCategories[index];
 
           // Get current effective setting
-          final currentSetting = _getEffectiveSettingForDate(category, currentMonth);
+          final currentSetting = _getEffectiveSettingForDate(category, now);
 
           // Get next scheduled setting if available
           FixedTransactionSetting? nextSetting;
           final futureSettings = category.settings
-              .where((setting) => setting.effectiveFrom.isAfter(currentMonth))
+              .where((setting) => setting.effectiveFrom.isAfter(now))
               .toList();
 
           if (futureSettings.isNotEmpty) {
@@ -1440,9 +1451,8 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
 
   // Get the amount for current month based on effective setting
   String _getCurrentMonthAmount(CategoryWithSettings category) {
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
-    final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+    final now = DateTime.now(); // Use current date instead of first day of month
+    final effectiveSetting = _getEffectiveSettingForDate(category, now);
 
     if (effectiveSetting != null) {
       return '₩ ${NumberFormat('#,###').format(effectiveSetting.amount)}';
@@ -1453,9 +1463,8 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
 
   // Get the date for current month based on effective setting
   String _getCurrentMonthDate(CategoryWithSettings category) {
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
-    final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+    final now = DateTime.now(); // Use current date instead of first day of month
+    final effectiveSetting = _getEffectiveSettingForDate(category, now);
 
     if (effectiveSetting != null) {
       return '매월 ${effectiveSetting.effectiveFrom.day}일';
@@ -1597,116 +1606,127 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
           const SizedBox(height: 8),
 
           // Calendar for selecting delete from date
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        DateFormat('yyyy년 M월').format(_deleteFromDate),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Row(
+          Expanded(
+            child: SingleChildScrollView(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.chevron_left),
-                            onPressed: () {
-                              setState(() {
-                                _deleteFromDate = DateTime(
-                                  _deleteFromDate.year,
-                                  _deleteFromDate.month - 1,
-                                  _deleteFromDate.day,
-                                );
-                              });
-                            },
-                            iconSize: 24,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          Text(
+                            DateFormat('yyyy년 M월').format(_deleteFromDate),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                          const SizedBox(width: 16),
-                          IconButton(
-                            icon: const Icon(Icons.chevron_right),
-                            onPressed: () {
-                              setState(() {
-                                _deleteFromDate = DateTime(
-                                  _deleteFromDate.year,
-                                  _deleteFromDate.month + 1,
-                                  _deleteFromDate.day,
-                                );
-                              });
-                            },
-                            iconSize: 24,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.chevron_left),
+                                onPressed: () {
+                                  setState(() {
+                                    _deleteFromDate = DateTime(
+                                      _deleteFromDate.year,
+                                      _deleteFromDate.month - 1,
+                                      _deleteFromDate.day,
+                                    );
+                                  });
+                                },
+                                iconSize: 24,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                              const SizedBox(width: 16),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_right),
+                                onPressed: () {
+                                  setState(() {
+                                    _deleteFromDate = DateTime(
+                                      _deleteFromDate.year,
+                                      _deleteFromDate.month + 1,
+                                      _deleteFromDate.day,
+                                    );
+                                  });
+                                },
+                                iconSize: 24,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                TableCalendar(
-                  firstDay: DateTime.utc(2020, 1, 1),
-                  lastDay: DateTime.utc(2030, 12, 31),
-                  focusedDay: _deleteFromDate,
-                  selectedDayPredicate: (day) {
-                    return isSameDay(_deleteFromDate, day);
-                  },
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _deleteFromDate = selectedDay;
-                    });
-                  },
-                  calendarStyle: CalendarStyle(
-                    todayDecoration: BoxDecoration(
-                      color: Colors.red.shade200,
-                      shape: BoxShape.circle,
                     ),
-                    selectedDecoration: BoxDecoration(
-                      color: Colors.red.shade600,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  availableGestures: AvailableGestures.none,
-                  headerVisible: false,
-                  calendarFormat: CalendarFormat.month,
-                  availableCalendarFormats: const {
-                    CalendarFormat.month: '월',
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '삭제 시작일: ${DateFormat('yyyy년 M월 d일').format(_deleteFromDate)}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
+                    // Fixed height calendar to prevent overflow
+                    SizedBox(
+                      height: 280,
+                      child: TableCalendar(
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay: _deleteFromDate,
+                        selectedDayPredicate: (day) {
+                          return isSameDay(_deleteFromDate, day);
+                        },
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _deleteFromDate = selectedDay;
+                          });
+                        },
+                        calendarStyle: CalendarStyle(
+                          todayDecoration: BoxDecoration(
+                            color: Colors.red.shade200,
+                            shape: BoxShape.circle,
+                          ),
+                          selectedDecoration: BoxDecoration(
+                            color: Colors.red.shade600,
+                            shape: BoxShape.circle,
                           ),
                         ),
+                        headerVisible: false,
+                        calendarFormat: CalendarFormat.month,
+                        availableCalendarFormats: const {
+                          CalendarFormat.month: '월',
+                        },
+                        // Make calendar more compact
+                        availableGestures: AvailableGestures.none,
+                        rowHeight: 40,
+                        daysOfWeekHeight: 20,
                       ),
-                    ],
-                  ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '삭제 시작일: ${DateFormat('yyyy년 M월 d일').format(_deleteFromDate)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
 
@@ -1739,47 +1759,6 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 ),
               ],
             ),
-          ),
-
-          const Spacer(),
-
-          // Buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isDeleteMode = false;
-                    });
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: BorderSide(color: Colors.grey[300]!),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('취소'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _confirmDelete(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade600,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('삭제하기'),
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -1899,7 +1878,6 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       );
     } else if (_isCreateMode) {
       return Container(
-        height: 80,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -2013,7 +1991,6 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       );
     } else {
       return Container(
-        height: 80,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -2365,13 +2342,13 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                   //   // 콤마를 제거한 순수 숫자 값 얻기
                                   //   final plainValue = value.replaceAll(',', '');
                                   //
-                                  //   // 유효성 검사
+                                  //   // 유효성 검사 - 반드시 콤마가 제거된 값으로만 검사
                                   //   setState(() {
-                                  //     isValidAmount = plainValue.isEmpty || (int.tryParse(plainValue) != null && int.parse(plainValue) > 0);
+                                  //     isValidAmount = plainValue.isEmpty || (double.tryParse(plainValue) != null && double.parse(plainValue) > 0);
                                   //   });
                                   //
-                                  //   // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-                                  //   if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
+                                  //   // 숫자와 콤마 외의 문자가 입력된 경우에만 경고 표시
+                                  //   if (value.isNotEmpty && !RegExp(r'^[0-9,]*$').hasMatch(value)) {
                                   //     showNumberFormatAlert(context);
                                   //   }
                                   // },
@@ -2541,12 +2518,12 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                               color: Colors.grey.withOpacity(0.5),
                                             ),
                                           ),
-                                          availableGestures: AvailableGestures.none,
                                           headerVisible: false,
                                           calendarFormat: CalendarFormat.month,
                                           availableCalendarFormats: const {
                                             CalendarFormat.month: '월',
                                           },
+                                          availableGestures: AvailableGestures.none,
                                           // 작은 화면에서 행 높이 줄이기
                                           rowHeight: MediaQuery.of(context).size.height < 700 ? 32 : 42,
                                           daysOfWeekHeight: 20,
@@ -2752,26 +2729,6 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
           ),
         );
       },
-    );
-  }
-
-  // Helper function to show number format alert
-  void showNumberFormatAlert(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.white),
-            SizedBox(width: 10),
-            Text('숫자만 입력 가능합니다'),
-          ],
-        ),
-        backgroundColor: AppColors.cate4,
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.all(10),
-      ),
     );
   }
 

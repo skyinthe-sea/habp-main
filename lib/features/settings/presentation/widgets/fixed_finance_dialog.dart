@@ -525,14 +525,13 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
     );
   }
 
-  // Calculate total monthly finance based on current month
+  // Calculate total monthly finance based on current date
   String _calculateTotalMonthlyFinance() {
     double total = 0;
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
+    final now = DateTime.now(); // Use current date instead of first day of month
 
     for (final category in _controller.financeCategories) {
-      final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+      final effectiveSetting = _getEffectiveSettingForDate(category, now);
       if (effectiveSetting != null) {
         total += effectiveSetting.amount;
       }
@@ -636,25 +635,6 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
                   ThousandsFormatter(),
                 ],
-                // onChanged: (value) {
-                //   // 콤마를 제거한 순수 숫자 값 얻기
-                //   final plainValue = value.replaceAll(',', '');
-                //
-                //   setState(() {
-                //     _isValidAmount = plainValue.isEmpty ||
-                //         (double.tryParse(plainValue) != null &&
-                //             double.parse(plainValue) > 0);
-                //   });
-                //
-                //   // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-                //   if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
-                //     // 키보드가 열려 있으면 닫기
-                //     FocusManager.instance.primaryFocus?.unfocus();
-                //
-                //     // 경고 메시지 표시
-                //     showNumberFormatAlert(context);
-                //   }
-                // },
                 decoration: InputDecoration(
                   hintText: '숫자만 입력',
                   filled: true,
@@ -914,8 +894,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
       );
     }
 
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
+    final now = DateTime.now(); // Use current date instead of first day of month
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -926,12 +905,12 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
           final category = _controller.financeCategories[index];
 
           // Get current effective setting
-          final currentSetting = _getEffectiveSettingForDate(category, currentMonth);
+          final currentSetting = _getEffectiveSettingForDate(category, now);
 
           // Get next scheduled setting if available
           FixedTransactionSetting? nextSetting;
           final futureSettings = category.settings
-              .where((setting) => setting.effectiveFrom.isAfter(currentMonth))
+              .where((setting) => setting.effectiveFrom.isAfter(now))
               .toList();
 
           if (futureSettings.isNotEmpty) {
@@ -1458,9 +1437,8 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
 
   // Get the amount for current month based on effective setting
   String _getCurrentMonthAmount(CategoryWithSettings category) {
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
-    final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+    final now = DateTime.now(); // Use current date instead of first day of month
+    final effectiveSetting = _getEffectiveSettingForDate(category, now);
 
     if (effectiveSetting != null) {
       return '₩ ${NumberFormat('#,###').format(effectiveSetting.amount)}';
@@ -1471,9 +1449,8 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
 
   // Get the date for current month based on effective setting
   String _getCurrentMonthDate(CategoryWithSettings category) {
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
-    final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+    final now = DateTime.now(); // Use current date instead of first day of month
+    final effectiveSetting = _getEffectiveSettingForDate(category, now);
 
     if (effectiveSetting != null) {
       return '매월 ${effectiveSetting.effectiveFrom.day}일';
@@ -2347,36 +2324,6 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                     FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
                                     ThousandsFormatter(),
                                   ],
-                                  // onChanged: (value) {
-                                  //   // 콤마를 제거한 순수 숫자 값 얻기
-                                  //   final plainValue = value.replaceAll(',', '');
-                                  //
-                                  //   // 유효성 검사
-                                  //   setState(() {
-                                  //     isValidAmount = plainValue.isEmpty || (int.tryParse(plainValue) != null && int.parse(plainValue) > 0);
-                                  //   });
-                                  //
-                                  //   // 숫자가 아닌 문자가 입력된 경우 즉시 경고 표시
-                                  //   if (!RegExp(r'^[0-9,]*$').hasMatch(value)) {
-                                  //     // 경고 메시지 표시
-                                  //     ScaffoldMessenger.of(context).showSnackBar(
-                                  //       SnackBar(
-                                  //         content: Row(
-                                  //           children: [
-                                  //             Icon(Icons.warning_amber_rounded, color: Colors.white),
-                                  //             SizedBox(width: 10),
-                                  //             Text('숫자만 입력 가능합니다'),
-                                  //           ],
-                                  //         ),
-                                  //         backgroundColor: Colors.red.shade700,
-                                  //         behavior: SnackBarBehavior.floating,
-                                  //         duration: Duration(seconds: 2),
-                                  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  //         margin: EdgeInsets.all(10),
-                                  //       ),
-                                  //     );
-                                  //   }
-                                  // },
                                   decoration: InputDecoration(
                                     hintText: '금액 입력',
                                     filled: true,
