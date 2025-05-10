@@ -92,7 +92,7 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
       hintText = '예금, 주식항목 등';
     } else {
       titleText = '지출 카테고리 추가';
-      hintText = '쇼핑, 술약속 등';
+      hintText = '쇼핑, 모임 등';
     }
 
     return Dialog(

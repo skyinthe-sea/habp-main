@@ -169,7 +169,57 @@ class FixedTransactionLocalDataSourceImpl implements FixedTransactionLocalDataSo
 
       // 각 카테고리에 대한 설정 가져오기
       for (var category in categories) {
-        final settings = await getSettingsForCategory(category['id']);
+        int categoryId = category['id'];
+
+        // 1. fixed_transaction_setting에서 설정 가져오기
+        final List<Map<String, dynamic>> settingsData = await db.query(
+          'fixed_transaction_setting',
+          where: 'category_id = ?',
+          whereArgs: [categoryId],
+          orderBy: 'effective_from DESC',
+        );
+
+        List<FixedTransactionSetting> settings = settingsData
+            .map((s) => FixedTransactionSetting.fromMap(s))
+            .toList();
+
+        // 2. 설정이 없는 경우 transaction_record2 테이블도 확인
+        if (settings.isEmpty) {
+          final List<Map<String, dynamic>> transactionData = await db.query(
+            'transaction_record2',
+            where: 'category_id = ?',
+            whereArgs: [categoryId],
+            orderBy: 'transaction_date DESC',
+            limit: 1,
+          );
+
+          if (transactionData.isNotEmpty) {
+            // transaction_record2에서 데이터를 찾았으면 설정으로 변환
+            final transaction = transactionData.first;
+            final now = DateTime.now();
+
+            // 거래 날짜 추출
+            final transactionDate = DateTime.parse(transaction['transaction_date']);
+            // transaction_num에 일자가 저장되어 있다면 그것을 사용
+            final day = int.tryParse(transaction['transaction_num'] ?? '') ?? transactionDate.day;
+
+            // 거래 금액 (소득인 경우 양수, 지출/재테크는 음수)
+            double amount = transaction['amount'];
+            if (type != 'INCOME' && amount > 0) amount = -amount;
+            if (type == 'INCOME' && amount < 0) amount = -amount;
+
+            // FixedTransactionSetting 생성
+            final setting = FixedTransactionSetting(
+              categoryId: categoryId,
+              amount: amount.abs(), // 절대값 사용
+              effectiveFrom: DateTime(now.year, now.month, day),
+              createdAt: DateTime.parse(transaction['created_at']),
+              updatedAt: DateTime.parse(transaction['updated_at']),
+            );
+
+            settings.add(setting);
+          }
+        }
 
         result.add(CategoryWithSettings(
           id: category['id'],

@@ -169,7 +169,9 @@ class MonthlySummaryCard extends StatelessWidget {
     bool hasPercentage = true,
   }) {
     // 금액 형식화
-    final formattedAmount = '₩${_formatAmount(amount)}';
+    final formattedAmount = cardType == 'balance' && amount < 0
+        ? '-₩${_formatAmount(amount.abs())}'
+        : '₩${_formatAmount(amount)}';
 
     // 카드 타입에 따른 색상 설정
     Color textColor;
