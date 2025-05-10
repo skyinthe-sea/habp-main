@@ -2537,9 +2537,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       );
 
       // 3. category 테이블에서 카테고리 자체를 삭제 (또는 is_deleted 플래그 설정)
-      await db.update(
+      await db.delete(
         'category',
-        {'is_deleted': 1, 'updated_at': DateTime.now().toIso8601String()},
         where: 'id = ?',
         whereArgs: [categoryId],
       );
