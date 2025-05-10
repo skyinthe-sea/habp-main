@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'dart:ui';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/database/db_helper.dart';
+import '../../../../core/services/event_bus_service.dart';
 import '../../../../core/util/thousands_formatter.dart';
 import '../../data/datasources/fixed_transaction_local_data_source.dart';
 import '../controllers/settings_controller.dart';
@@ -144,10 +145,53 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
   }
 
   // Get all historical settings for a category
-  List<FixedTransactionSetting> _getHistoricalSettings(CategoryWithSettings category) {
-    final List<FixedTransactionSetting> settings = List.from(category.settings);
-    settings.sort((a, b) => a.effectiveFrom.compareTo(b.effectiveFrom));
-    return settings;
+  List<SettingHistoryItem> _getHistoricalSettings(CategoryWithSettings category) {
+    final List<SettingHistoryItem> historyItems = [];
+
+    // Add the transaction record as the initial "global" setting if available
+    final transactionRecords = _categoryTransactionHistory[category.id] ?? [];
+
+    // Find the earliest transaction record
+    Map<String, dynamic>? earliestTransaction;
+    for (final record in transactionRecords) {
+      if (record.containsKey('transaction_date')) {
+        if (earliestTransaction == null || DateTime.parse(record['transaction_date'].toString())
+            .isBefore(DateTime.parse(earliestTransaction['transaction_date'].toString()))) {
+          earliestTransaction = record;
+        }
+      }
+    }
+
+    // Add the global setting from transaction record if available
+    if (earliestTransaction != null) {
+      historyItems.add(SettingHistoryItem(
+        id: 'global_${earliestTransaction['id']}',
+        amount: (earliestTransaction['amount'] is String)
+            ? double.parse(earliestTransaction['amount'])
+            : earliestTransaction['amount'],
+        day: (earliestTransaction['transaction_num'] is String)
+            ? int.parse(earliestTransaction['transaction_num'])
+            : earliestTransaction['transaction_num'],
+        effectiveFrom: DateTime.parse(earliestTransaction['transaction_date'].toString()),
+        isGlobalSetting: true,
+      ));
+    }
+
+    // Add all fixed transaction settings
+    for (final setting in category.settings) {
+      historyItems.add(SettingHistoryItem(
+        id: 'setting_${setting.id}',
+        amount: setting.amount,
+        day: setting.effectiveFrom.day,
+        effectiveFrom: setting.effectiveFrom,
+        isGlobalSetting: false,
+      ));
+    }
+
+    // Sort by effective from date
+    historyItems.sort((a, b) => a.effectiveFrom.compareTo(b.effectiveFrom));
+
+    return historyItems;
   }
 
   void _validateAmount(String value) {
@@ -166,7 +210,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
     setState(() {
       _isDetailViewMode = true;
       _selectedCategory = category;
-      _selectedHistoricalSettings = _getHistoricalSettings(category);
+      _selectedHistoricalSettings = _getHistoricalSettings(category).cast<FixedTransactionSetting>();
     });
   }
 
@@ -522,12 +566,38 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
   // Calculate total monthly income based on current month
   String _calculateTotalMonthlyIncome() {
     double total = 0;
-    final now = DateTime.now(); // Use current date instead of first day of month
+    final now = DateTime.now();
 
     for (final category in _controller.incomeCategories) {
+      // fixed_transaction_setting에 설정이 있는지 확인
       final effectiveSetting = _getEffectiveSettingForDate(category, now);
       if (effectiveSetting != null) {
         total += effectiveSetting.amount;
+      } else {
+        // transaction_record2에서 데이터 찾기
+        final transactionRecords = _categoryTransactionHistory[category.id] ?? [];
+        Map<String, dynamic>? earliestTransaction;
+
+        for (final record in transactionRecords) {
+          if (record.containsKey('transaction_date') && record.containsKey('transaction_num')) {
+            if (earliestTransaction == null) {
+              earliestTransaction = record;
+            } else {
+              final currentDate = DateTime.parse(record['transaction_date'].toString());
+              final earliestDate = DateTime.parse(earliestTransaction['transaction_date'].toString());
+              if (currentDate.isBefore(earliestDate)) {
+                earliestTransaction = record;
+              }
+            }
+          }
+        }
+
+        if (earliestTransaction != null) {
+          final amount = (earliestTransaction['amount'] is String)
+              ? double.parse(earliestTransaction['amount'])
+              : earliestTransaction['amount'];
+          total += amount;
+        }
       }
     }
 
@@ -906,7 +976,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       );
     }
 
-    final now = DateTime.now(); // Use current date instead of first day of month
+    final now = DateTime.now();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -916,10 +986,10 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
         itemBuilder: (context, index) {
           final category = _controller.incomeCategories[index];
 
-          // Get current effective setting
+          // 1. 먼저 fixed_transaction_setting에서 현재 유효한 설정을 찾음
           final currentSetting = _getEffectiveSettingForDate(category, now);
 
-          // Get next scheduled setting if available
+          // 2. 다음 예정된 설정이 있는지 확인
           FixedTransactionSetting? nextSetting;
           final futureSettings = category.settings
               .where((setting) => setting.effectiveFrom.isAfter(now))
@@ -930,15 +1000,53 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
             nextSetting = futureSettings.first;
           }
 
-          // Display amount and date
+          // 3. 표시할 금액과 날짜 정보 초기화
           double? displayAmount;
           String displayDate = '';
           bool hasScheduledChange = false;
 
+          // 4. fixed_transaction_setting에 설정이 있으면 해당 값 사용
           if (currentSetting != null) {
             displayAmount = currentSetting.amount;
             displayDate = '매월 ${currentSetting.effectiveFrom.day}일';
             hasScheduledChange = nextSetting != null;
+          }
+          // 5. fixed_transaction_setting에 설정이 없으면 transaction_record2 확인
+          else {
+            // transaction_record2 데이터 확인
+            final transactionRecords = _categoryTransactionHistory[category.id] ?? [];
+            Map<String, dynamic>? earliestTransaction;
+
+            for (final record in transactionRecords) {
+              if (record.containsKey('transaction_date')) {
+                // transaction_record2 테이블의 레코드인 경우만 확인
+                if (record.containsKey('transaction_num')) {
+                  if (earliestTransaction == null) {
+                    earliestTransaction = record;
+                  } else {
+                    final currentDate = DateTime.parse(record['transaction_date'].toString());
+                    final earliestDate = DateTime.parse(earliestTransaction['transaction_date'].toString());
+                    if (currentDate.isBefore(earliestDate)) {
+                      earliestTransaction = record;
+                    }
+                  }
+                }
+              }
+            }
+
+            // 기본 설정값이 있으면 사용
+            if (earliestTransaction != null) {
+              displayAmount = (earliestTransaction['amount'] is String)
+                  ? double.parse(earliestTransaction['amount'])
+                  : earliestTransaction['amount'];
+
+              final day = (earliestTransaction['transaction_num'] is String)
+                  ? int.parse(earliestTransaction['transaction_num'])
+                  : earliestTransaction['transaction_num'];
+
+              displayDate = '매월 ${day}일';
+              hasScheduledChange = nextSetting != null;
+            }
           }
 
           return Container(
@@ -1021,7 +1129,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  displayDate,
+                                  displayDate.isEmpty ? '날짜 미설정' : displayDate,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[700],
@@ -1144,12 +1252,24 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Category detail view with history
   Widget _buildCategoryDetailView() {
-    if (_selectedCategory == null || _selectedHistoricalSettings == null) {
+    if (_selectedCategory == null) {
       return const Center(child: Text('데이터를 찾을 수 없습니다.'));
     }
 
     final category = _selectedCategory!;
-    final settings = _selectedHistoricalSettings!;
+    final historyItems = _getHistoricalSettings(category);
+
+    // Find current effective setting
+    final now = DateTime.now();
+    SettingHistoryItem? currentSetting;
+
+    for (int i = historyItems.length - 1; i >= 0; i--) {
+      if (historyItems[i].effectiveFrom.isBefore(now) ||
+          historyItems[i].effectiveFrom.isAtSameMomentAs(now)) {
+        currentSetting = historyItems[i];
+        break;
+      }
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -1242,7 +1362,9 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     Expanded(
                       child: _buildInfoCard(
                         title: '금액',
-                        value: _getCurrentMonthAmount(category),
+                        value: currentSetting != null
+                            ? '₩ ${NumberFormat('#,###').format(currentSetting.amount)}'
+                            : '금액 미설정',
                         icon: Icons.attach_money,
                         iconColor: Colors.green.shade700,
                       ),
@@ -1251,7 +1373,9 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     Expanded(
                       child: _buildInfoCard(
                         title: '받는 날짜',
-                        value: _getCurrentMonthDate(category),
+                        value: currentSetting != null
+                            ? '매월 ${currentSetting.day}일'
+                            : '날짜 미설정',
                         icon: Icons.calendar_today,
                         iconColor: Colors.blue.shade700,
                       ),
@@ -1281,12 +1405,21 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                   color: Colors.grey[700],
                 ),
               ),
+              const Spacer(),
+              Text(
+                '오른쪽으로 스와이프하여 삭제',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey[600],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // Settings history timeline
-          settings.isEmpty
+          // Settings history timeline with swipe-to-delete
+          historyItems.isEmpty
               ? Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -1302,140 +1435,84 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               : ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: settings.length,
+            itemCount: historyItems.length,
             itemBuilder: (context, index) {
-              final setting = settings[index];
-              final isLastItem = index == settings.length - 1;
+              final item = historyItems[index];
               final isFirstItem = index == 0;
+              final isLastItem = index == historyItems.length - 1;
+              final isCurrentSetting = currentSetting?.id == item.id;
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Timeline
-                    SizedBox(
-                      width: 30,
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: isFirstItem
-                                  ? Colors.green.shade700
-                                  : Colors.green.shade300,
-                              shape: BoxShape.circle,
-                            ),
+              // Don't allow deleting the global/initial setting
+              if (item.isGlobalSetting) {
+                return _buildHistoryItem(
+                  item: item,
+                  isFirstItem: isFirstItem,
+                  isLastItem: isLastItem,
+                  isCurrentSetting: isCurrentSetting,
+                );
+              }
+
+              // For fixed transaction settings, allow swipe to delete
+              return Dismissible(
+                key: Key(item.id),
+                direction: DismissDirection.startToEnd,
+                confirmDismiss: (direction) async {
+                  return await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text('설정 삭제'),
+                        content: Text(
+                          '${DateFormat('yyyy년 M월 d일').format(item.effectiveFrom)}부터 적용된 설정을 삭제하시겠습니까?'
+                              '\n\n삭제 후에는 이전 설정이 적용됩니다.',
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('취소'),
+                            onPressed: () {
+                              Navigator.of(context).pop(false);
+                            },
                           ),
-                          if (!isLastItem)
-                            Container(
-                              width: 2,
-                              height: 70,
-                              color: Colors.green.shade200,
+                          TextButton(
+                            child: Text(
+                              '삭제',
+                              style: TextStyle(color: Colors.red.shade700),
                             ),
+                            onPressed: () {
+                              Navigator.of(context).pop(true);
+                            },
+                          ),
                         ],
-                      ),
-                    ),
-
-                    // Content
-                    Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isFirstItem
-                              ? Colors.green.shade50
-                              : Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isFirstItem
-                                ? Colors.green.shade200
-                                : Colors.grey.shade200,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Date header
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  DateFormat('yyyy년 M월 d일부터').format(setting.effectiveFrom),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: isFirstItem
-                                        ? Colors.green.shade700
-                                        : Colors.grey[700],
-                                  ),
-                                ),
-                                Text(
-                                  isFirstItem ? '최신 설정' : '',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.green.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Setting details
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '금액',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '₩ ${NumberFormat('#,###').format(setting.amount)}',
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '날짜',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '매월 ${setting.effectiveFrom.day}일',
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                      );
+                    },
+                  );
+                },
+                onDismissed: (direction) {
+                  // Extract the ID from the prefix
+                  final idString = item.id.split('_')[1];
+                  final id = int.parse(idString);
+                  _deleteFixedTransactionSetting(id);
+                },
+                background: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.delete_sweep,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+                child: _buildHistoryItem(
+                  item: item,
+                  isFirstItem: isFirstItem,
+                  isLastItem: isLastItem,
+                  isCurrentSetting: isCurrentSetting,
                 ),
               );
             },
@@ -1445,6 +1522,233 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
         ],
       ),
     );
+  }
+
+  Widget _buildHistoryItem({
+    required SettingHistoryItem item,
+    required bool isFirstItem,
+    required bool isLastItem,
+    required bool isCurrentSetting,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timeline
+          SizedBox(
+            width: 30,
+            child: Column(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: isCurrentSetting
+                        ? Colors.green.shade700
+                        : Colors.green.shade300,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                if (!isLastItem)
+                  Container(
+                    width: 2,
+                    height: 70,
+                    color: Colors.green.shade200,
+                  ),
+              ],
+            ),
+          ),
+
+          // Content
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isCurrentSetting
+                    ? Colors.green.shade50
+                    : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isCurrentSetting
+                      ? Colors.green.shade200
+                      : Colors.grey.shade200,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Date header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item.isGlobalSetting
+                            ? '전체 설정'
+                            : DateFormat('yyyy년 M월 d일부터').format(item.effectiveFrom),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isCurrentSetting
+                              ? Colors.green.shade700
+                              : Colors.grey[700],
+                        ),
+                      ),
+                      Text(
+                        isCurrentSetting ? '현재 설정' : '',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Setting details
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '금액',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '₩ ${NumberFormat('#,###').format(item.amount)}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '날짜',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '매월 ${item.day}일',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+// Add the method to delete a fixed transaction setting
+  Future<void> _deleteFixedTransactionSetting(int settingId) async {
+    try {
+      // 로딩 표시
+      Get.dialog(
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const CircularProgressIndicator(),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+
+      final dbHelper = DBHelper();
+      final db = await dbHelper.database;
+
+      // 설정 삭제
+      await db.delete(
+        'fixed_transaction_setting',
+        where: 'id = ?',
+        whereArgs: [settingId],
+      );
+
+      // 데이터 리로드
+      await _controller.loadFixedIncomeCategories();
+      await _loadTransactionHistory();
+
+      // 로딩 다이얼로그 닫기
+      Get.back();
+
+      // 선택된 카테고리 및 이력 업데이트
+      if (_selectedCategory != null) {
+        final categoryId = _selectedCategory!.id;
+        CategoryWithSettings? updatedCategory;
+
+        for (var cat in _controller.incomeCategories) {
+          if (cat.id == categoryId) {
+            updatedCategory = cat;
+            break;
+          }
+        }
+
+        if (updatedCategory != null) {
+          setState(() {
+            _selectedCategory = updatedCategory;
+            _selectedHistoricalSettings = null; // 다시 _getHistoricalSettings로 구성됨
+          });
+        }
+      }
+
+      // 이벤트 발생 - EventBusService 사용
+      Get.find<EventBusService>().emitFixedIncomeChanged();
+
+      // 성공 메시지 표시
+      Get.snackbar(
+        '삭제 완료',
+        '설정이 성공적으로 삭제되었습니다.',
+        backgroundColor: Colors.green[100],
+        borderRadius: 12,
+        margin: const EdgeInsets.all(12),
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      // 로딩 다이얼로그 닫기
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      // 오류 메시지 표시
+      Get.snackbar(
+        '오류',
+        '설정 삭제 중 문제가 발생했습니다: $e',
+        backgroundColor: Colors.red[100],
+        borderRadius: 12,
+        margin: const EdgeInsets.all(12),
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 
   // Get the amount for current month based on effective setting
@@ -1840,9 +2144,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               const SizedBox(width: 12),
               OutlinedButton(
                 onPressed: () {
-                  setState(() {
-                    _isDeleteMode = true;
-                  });
+                  _confirmDeleteAllData();  // 기존의 _isDeleteMode = true 대신 새로운 메서드 호출
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -2049,6 +2351,244 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
             ],
           ],
         ),
+      );
+    }
+  }
+
+  void _confirmDeleteAllData() {
+    if (_selectedCategory == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          '${_selectedCategory!.name} 완전히 삭제',
+          style: TextStyle(
+            color: Colors.red.shade700,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '이 고정 소득 항목을 완전히 삭제하시겠습니까?',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        size: 18,
+                        color: Colors.red.shade700,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '주의:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• 이 항목의 모든 과거 기록이 삭제됩니다',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '• 모든 설정 이력이 삭제됩니다',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '• 이 작업은 되돌릴 수 없습니다',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              '취소',
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteAllCategoryData();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              '완전히 삭제',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      ),
+    );
+  }
+
+  Future<void> _deleteAllCategoryData() async {
+    if (_selectedCategory == null) return;
+
+    try {
+      // 로딩 표시
+      Get.dialog(
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 50,
+                  height: 50,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.red.shade700),
+                    strokeWidth: 3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '삭제 중...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+
+      final dbHelper = DBHelper();
+      final db = await dbHelper.database;
+      final categoryId = _selectedCategory!.id;
+
+      // 1. fixed_transaction_setting 테이블에서 모든 설정 삭제
+      await db.delete(
+        'fixed_transaction_setting',
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
+
+      // 2. transaction_record2 테이블에서 모든 거래 기록 삭제
+      await db.delete(
+        'transaction_record2',
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
+
+      // 3. category 테이블에서 카테고리 자체를 삭제 (또는 is_deleted 플래그 설정)
+      await db.update(
+        'category',
+        {'is_deleted': 1, 'updated_at': DateTime.now().toIso8601String()},
+        where: 'id = ?',
+        whereArgs: [categoryId],
+      );
+
+      // 4. 데이터 다시 로드
+      await _controller.loadFixedIncomeCategories();
+      await _loadTransactionHistory();
+
+      // 로딩 다이얼로그 닫기
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      // 상세 보기 화면 닫기
+      setState(() {
+        _isDetailViewMode = false;
+        _selectedCategory = null;
+        _selectedHistoricalSettings = null;
+        _isDeleteMode = false;
+      });
+
+      // 이벤트 발생 - EventBusService 사용
+      Get.find<EventBusService>().emitFixedIncomeChanged();
+
+      // 성공 메시지 표시
+      Get.snackbar(
+        '삭제 완료',
+        '${_selectedCategory?.name ?? "고정 소득"} 항목이 완전히 삭제되었습니다.',
+        backgroundColor: Colors.green[100],
+        borderRadius: 12,
+        margin: const EdgeInsets.all(12),
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      // 로딩 다이얼로그 닫기
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      // 오류 메시지 표시
+      Get.snackbar(
+        '오류',
+        '삭제 중 문제가 발생했습니다: $e',
+        backgroundColor: Colors.red[100],
+        borderRadius: 12,
+        margin: const EdgeInsets.all(12),
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
       );
     }
   }
@@ -2659,7 +3199,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                     // Update our parent widget's state to show the new setting immediately
                                     this.setState(() {
                                       _selectedCategory = updatedCategory;
-                                      _selectedHistoricalSettings = _getHistoricalSettings(updatedCategory!);
+                                      _selectedHistoricalSettings = _getHistoricalSettings(updatedCategory!).cast<FixedTransactionSetting>();
                                     });
                                   }
 
@@ -2818,4 +3358,20 @@ extension FixedIncomeDialogExtension on GetInterface {
       barrierColor: Colors.black.withOpacity(0.5),
     );
   }
+}
+
+class SettingHistoryItem {
+  final String id;
+  final double amount;
+  final int day;
+  final DateTime effectiveFrom;
+  final bool isGlobalSetting;
+
+  SettingHistoryItem({
+    required this.id,
+    required this.amount,
+    required this.day,
+    required this.effectiveFrom,
+    required this.isGlobalSetting,
+  });
 }

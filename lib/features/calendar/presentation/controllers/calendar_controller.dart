@@ -47,6 +47,15 @@ class CalendarController extends GetxController {
       fetchDaySummary(selectedDay.value);
     });
 
+    // 고정 소득 변경 이벤트 구독 추가
+    // === 이 부분을 추가해야 함 (시작) ===
+    ever(_eventBusService.fixedIncomeChanged, (_) {
+      debugPrint('고정 소득 변경 이벤트 감지됨: 캘린더 데이터 새로고침');
+      fetchMonthEvents(focusedDay.value);
+      fetchDaySummary(selectedDay.value);
+    });
+    // === 이 부분을 추가해야 함 (끝) ===
+
     // 필터 변경 이벤트 구독
     ever(filterController.filterChanged, (_) {
       debugPrint('필터 변경 이벤트 감지됨: 캘린더 데이터 필터링');

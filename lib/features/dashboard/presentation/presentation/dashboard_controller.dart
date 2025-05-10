@@ -103,6 +103,11 @@ class DashboardController extends GetxController {
       _refreshAllData();
     });
 
+    ever(_eventBusService.fixedIncomeChanged, (_) {
+      debugPrint('고정 소득 변경 이벤트 감지됨: 대시보드 데이터 새로고침');
+      _refreshAllData();
+    });
+
     // 선택된 월 변경 이벤트 구독
     ever(selectedMonth, (_) {
       debugPrint('선택된 월 변경됨: ${getMonthYearString()}');
