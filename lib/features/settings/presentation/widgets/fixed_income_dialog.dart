@@ -522,11 +522,10 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
   // Calculate total monthly income based on current month
   String _calculateTotalMonthlyIncome() {
     double total = 0;
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
+    final now = DateTime.now(); // Use current date instead of first day of month
 
     for (final category in _controller.incomeCategories) {
-      final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+      final effectiveSetting = _getEffectiveSettingForDate(category, now);
       if (effectiveSetting != null) {
         total += effectiveSetting.amount;
       }
@@ -907,8 +906,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       );
     }
 
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
+    final now = DateTime.now(); // Use current date instead of first day of month
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -919,12 +917,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
           final category = _controller.incomeCategories[index];
 
           // Get current effective setting
-          final currentSetting = _getEffectiveSettingForDate(category, currentMonth);
+          final currentSetting = _getEffectiveSettingForDate(category, now);
 
           // Get next scheduled setting if available
           FixedTransactionSetting? nextSetting;
           final futureSettings = category.settings
-              .where((setting) => setting.effectiveFrom.isAfter(currentMonth))
+              .where((setting) => setting.effectiveFrom.isAfter(now))
               .toList();
 
           if (futureSettings.isNotEmpty) {
@@ -1451,9 +1449,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Get the amount for current month based on effective setting
   String _getCurrentMonthAmount(CategoryWithSettings category) {
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
-    final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+    final now = DateTime.now(); // Use current date instead of first day of month
+    final effectiveSetting = _getEffectiveSettingForDate(category, now);
 
     if (effectiveSetting != null) {
       return '₩ ${NumberFormat('#,###').format(effectiveSetting.amount)}';
@@ -1464,9 +1461,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Get the date for current month based on effective setting
   String _getCurrentMonthDate(CategoryWithSettings category) {
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month, 1);
-    final effectiveSetting = _getEffectiveSettingForDate(category, currentMonth);
+    final now = DateTime.now(); // Use current date instead of first day of month
+    final effectiveSetting = _getEffectiveSettingForDate(category, now);
 
     if (effectiveSetting != null) {
       return '매월 ${effectiveSetting.effectiveFrom.day}일';
