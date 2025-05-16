@@ -219,19 +219,17 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
             ),
           ),
           floatingActionButton: FloatingActionButton(
-            mini: true, // <-- 크기를 작게 만듭니다.
-            backgroundColor: AppColors.primary.withOpacity(0.7), // <-- 배경색에 투명도(70% 불투명)를 적용합니다.
+            heroTag: 'asset_fab',
+            backgroundColor: AppColors.primary,
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (context) => AddAssetDialog(controller: _controller),
               );
             },
-            // mini 사이즈에 맞춰 아이콘 크기도 조절하고 싶다면 Transform.scale 또는 SizedBox로 감싸고 Icon size 조정
             child: const Icon(
-              Icons.settings,
+              Icons.add,
               color: Colors.white,
-              // size: 18, // 필요하다면 아이콘 크기를 직접 조절할 수도 있습니다.
             ),
           ),
         );

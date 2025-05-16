@@ -99,8 +99,8 @@ class CategoryBudgetGrid extends StatelessWidget {
         );
       },
       onLongPress: () {
-        // 카테고리 삭제 다이얼로그 표시
-        _showDeleteCategoryDialog(context, budgetStatus);
+        // 카테고리 수정/삭제 옵션 표시
+        _showCategoryOptionsDialog(context, budgetStatus);
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -240,6 +240,146 @@ class CategoryBudgetGrid extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // 카테고리 옵션 다이얼로그 (수정/삭제)
+  void _showCategoryOptionsDialog(BuildContext context, BudgetStatus budgetStatus) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              budgetStatus.categoryName,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppColors.primary),
+              title: const Text('예산 수정'),
+              onTap: () {
+                Navigator.pop(context);
+                _showEditCategoryDialog(context, budgetStatus);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('카테고리 삭제'),
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteCategoryDialog(context, budgetStatus);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 예산 수정 다이얼로그
+  void _showEditCategoryDialog(BuildContext context, BudgetStatus budgetStatus) {
+    final budgetController = TextEditingController(
+      text: budgetStatus.budgetAmount.toInt().toString(),
+    );
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          '예산 수정',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: budgetController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: '예산 금액',
+            hintText: '예산 금액을 입력하세요',
+            suffixText: '원',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              '취소',
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          StatefulBuilder(
+            builder: (context, setDialogState) {
+              return TextButton(
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                  setDialogState(() {
+                    isSaving = true;
+                  });
+
+                  // 예산 업데이트
+                  final result = await controller.addBudget(
+                    categoryId: budgetStatus.categoryId,
+                    amount: double.tryParse(budgetController.text) ?? 0,
+                  );
+
+                  Navigator.of(context).pop();
+
+                  if (result) {
+                    Get.snackbar(
+                      '성공',
+                      '예산이 수정되었습니다.',
+                      snackPosition: SnackPosition.TOP,
+                    );
+                  } else {
+                    Get.snackbar(
+                      '오류',
+                      '예산 수정에 실패했습니다.',  
+                      snackPosition: SnackPosition.TOP,
+                    );
+                  }
+                },
+                child: isSaving
+                    ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  ),
+                )
+                    : Text(
+                  '저장',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

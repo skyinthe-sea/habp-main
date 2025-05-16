@@ -129,7 +129,7 @@ class CategorySelectionDialog extends StatelessWidget {
               ),
             ),
 
-            // 카테고리 삭제 안내 문구
+            // 카테고리 수정/삭제 안내 문구
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
@@ -142,7 +142,7 @@ class CategorySelectionDialog extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      '카테고리를 길게 누르면 삭제할 수 있습니다.',
+                      '카테고리를 길게 누르면 수정 또는 삭제할 수 있습니다.',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey.shade600,
@@ -255,55 +255,44 @@ class CategorySelectionDialog extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onLongPress: () {
-          // 카테고리 삭제 확인 다이얼로그 표시
-          showDialog(
+          // 카테고리 수정/삭제 옵션 표시
+          showModalBottomSheet(
             context: context,
-            builder: (BuildContext dialogContext) {
-              return AlertDialog(
-                title: const Text('카테고리 삭제'),
-                content: Text('\'$categoryName\' 카테고리를 삭제하시겠습니까?'),
-                actions: [
-                  TextButton(
-                    child: const Text('취소'),
-                    onPressed: () {
-                      Navigator.of(dialogContext).pop();
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            builder: (bottomSheetContext) => Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    categoryName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ListTile(
+                    leading: Icon(Icons.edit, color: mainColor),
+                    title: const Text('카테고리 수정'),
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+                      _showEditCategoryDialog(context, categoryId, categoryName, controller);
                     },
                   ),
-                  TextButton(
-                    child: const Text('확인'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                    onPressed: () async {
-                      Navigator.of(dialogContext).pop();
-                      final success = await controller.deleteCategory(categoryId);
-                      if (success) {
-                        Get.snackbar(
-                          '삭제 완료',
-                          '\'$categoryName\' 카테고리가 삭제되었습니다.',
-                          snackPosition: SnackPosition.TOP,
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                          duration: const Duration(seconds: 2),
-                        );
-                      } else {
-                        Get.snackbar(
-                          '삭제 실패',
-                          '해당 카테고리는 삭제할 수 없습니다.',
-                          snackPosition: SnackPosition.TOP,
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                          duration: const Duration(seconds: 2),
-                        );
-                      }
+                  ListTile(
+                    leading: const Icon(Icons.delete, color: Colors.red),
+                    title: const Text('카테고리 삭제'),
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+                      _showDeleteConfirmDialog(context, categoryId, categoryName, controller);
                     },
                   ),
                 ],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              );
-            },
+              ),
+            ),
           );
         },
         onTap: () {
@@ -441,5 +430,122 @@ class CategorySelectionDialog extends StatelessWidget {
       default:
         return '';
     }
+  }
+
+  // 카테고리 수정 다이얼로그
+  void _showEditCategoryDialog(BuildContext context, int categoryId, String categoryName, QuickAddController controller) {
+    final nameController = TextEditingController(text: categoryName);
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text('카테고리 수정'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: '카테고리 이름',
+            hintText: '카테고리 이름을 입력하세요',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (nameController.text.trim().isEmpty) {
+                Get.snackbar(
+                  '오류',
+                  '카테고리 이름을 입력해주세요.',
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+                return;
+              }
+              
+              Navigator.pop(dialogContext);
+              
+              final success = await controller.updateCategory(categoryId, nameController.text.trim());
+              if (success) {
+                Get.snackbar(
+                  '수정 완료',
+                  '카테고리가 수정되었습니다.',
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
+                );
+              } else {
+                Get.snackbar(
+                  '수정 실패',
+                  '카테고리 수정에 실패했습니다.',
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+              }
+            },
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 카테고리 삭제 확인 다이얼로그
+  void _showDeleteConfirmDialog(BuildContext context, int categoryId, String categoryName, QuickAddController controller) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text('카테고리 삭제'),
+        content: Text('\'$categoryName\' 카테고리를 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              
+              final success = await controller.deleteCategory(categoryId);
+              if (success) {
+                Get.snackbar(
+                  '삭제 완료',
+                  '\'$categoryName\' 카테고리가 삭제되었습니다.',
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
+                );
+              } else {
+                Get.snackbar(
+                  '삭제 실패',
+                  '해당 카테고리는 삭제할 수 없습니다.',
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
   }
 }

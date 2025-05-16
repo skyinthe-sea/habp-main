@@ -8,6 +8,8 @@ import '../../../features/expense/domain/usecases/add_expense.dart';
 import '../../../features/expense/domain/usecases/delete_category.dart';
 import '../../../features/expense/domain/usecases/get_budget_status.dart';
 import '../../../features/expense/domain/usecases/get_variable_categories.dart';
+import '../../../features/expense/domain/usecases/update_budget.dart';
+import '../../../features/expense/domain/usecases/update_category.dart';
 import '../../../features/expense/presentation/controllers/expense_controller.dart';
 import '../../database/db_helper.dart';
 
@@ -37,6 +39,8 @@ class MainController extends GetxController {
     final addCategoryUseCase = AddCategory(repository);
     final deleteCategoryUseCase = DeleteCategory(repository);
     final addExpenseUseCase = AddExpense(repository);
+    final updateBudgetUseCase = UpdateBudget(repository);
+    final updateCategoryUseCase = UpdateCategory(repository);
 
     expenseController = ExpenseController(
       getBudgetStatusUseCase: getBudgetStatusUseCase,
@@ -45,6 +49,8 @@ class MainController extends GetxController {
       addCategoryUseCase: addCategoryUseCase,
       deleteCategoryUseCase: deleteCategoryUseCase,
       addExpenseUseCase: addExpenseUseCase,
+      updateBudgetUseCase: updateBudgetUseCase,
+      updateCategoryUseCase: updateCategoryUseCase,
     );
 
     // GetX DI에 등록

@@ -24,4 +24,15 @@ abstract class ExpenseRepository {
     required String description,
     required String transactionDate,
   });
+  Future<bool> updateBudget({
+    required int userId,
+    required int categoryId,
+    required double amount,
+    required String periodStart,
+    required String periodEnd,
+  });
+  Future<bool> updateCategory({
+    required int categoryId,
+    required String name,
+  });
 }

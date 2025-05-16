@@ -70,4 +70,32 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       transactionDate: transactionDate,
     );
   }
+
+  @override
+  Future<bool> updateBudget({
+    required int userId,
+    required int categoryId,
+    required double amount,
+    required String periodStart,
+    required String periodEnd,
+  }) async {
+    return await localDataSource.updateBudget(
+      userId: userId,
+      categoryId: categoryId,
+      amount: amount,
+      periodStart: periodStart,
+      periodEnd: periodEnd,
+    );
+  }
+
+  @override
+  Future<bool> updateCategory({
+    required int categoryId,
+    required String name,
+  }) async {
+    return await localDataSource.updateCategory(
+      categoryId: categoryId,
+      name: name,
+    );
+  }
 }

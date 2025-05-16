@@ -31,6 +31,19 @@ abstract class ExpenseLocalDataSource {
     required String description,
     required String transactionDate,
   });
+
+  Future<bool> updateBudget({
+    required int userId,
+    required int categoryId,
+    required double amount,
+    required String periodStart,
+    required String periodEnd,
+  });
+
+  Future<bool> updateCategory({
+    required int categoryId,
+    required String name,
+  });
 }
 
 class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
@@ -270,6 +283,83 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
       return true;
     } catch (e) {
       debugPrint('지출 추가 중 오류: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> updateBudget({
+    required int userId,
+    required int categoryId,
+    required double amount,
+    required String periodStart,
+    required String periodEnd,
+  }) async {
+    final db = await dbHelper.database;
+
+    try {
+      final now = DateTime.now().toIso8601String();
+
+      // 기존 예산이 있는지 확인
+      final existingBudget = await db.query(
+        'budget',
+        where:
+            'user_id = ? AND category_id = ? AND start_date = ? AND end_date = ?',
+        whereArgs: [userId, categoryId, periodStart, periodEnd],
+      );
+
+      if (existingBudget.isNotEmpty) {
+        // 기존 예산 업데이트
+        await db.update(
+          'budget',
+          {
+            'amount': amount,
+            'updated_at': now,
+          },
+          where: 'id = ?',
+          whereArgs: [existingBudget.first['id']],
+        );
+        return true;
+      } else {
+        // 예산이 없으면 새로 추가
+        return await addBudget(
+          userId: userId,
+          categoryId: categoryId,
+          amount: amount,
+          periodStart: periodStart,
+          periodEnd: periodEnd,
+        );
+      }
+    } catch (e) {
+      debugPrint('예산 업데이트 중 오류: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> updateCategory({
+    required int categoryId,
+    required String name,
+  }) async {
+    final db = await dbHelper.database;
+
+    try {
+      final now = DateTime.now().toIso8601String();
+
+      // 카테고리 이름 업데이트
+      final count = await db.update(
+        'category',
+        {
+          'name': name,
+          'updated_at': now,
+        },
+        where: 'id = ?',
+        whereArgs: [categoryId],
+      );
+
+      return count > 0;
+    } catch (e) {
+      debugPrint('카테고리 업데이트 중 오류: $e');
       return false;
     }
   }

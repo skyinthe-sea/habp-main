@@ -239,6 +239,70 @@ class QuickAddController extends GetxController {
     }
   }
 
+  /// 카테고리 수정 메서드
+  Future<bool> updateCategory(int categoryId, String newName) async {
+    isLoading.value = true;
+
+    try {
+      final db = await _dbHelper.database;
+
+      // 카테고리 확인
+      final category = await db.query(
+        'category',
+        where: 'id = ?',
+        whereArgs: [categoryId],
+        limit: 1,
+      );
+
+      if (category.isEmpty) {
+        return false;
+      }
+
+      final categoryData = category.first;
+      final categoryType = categoryData['type'] as String;
+
+      // 이미 동일한 이름의 카테고리가 있는지 확인 (자기 자신 제외)
+      final existingCategory = await db.query(
+        'category',
+        where: 'name = ? AND type = ? AND id != ? AND is_deleted = 0',
+        whereArgs: [newName, categoryType, categoryId],
+        limit: 1,
+      );
+
+      if (existingCategory.isNotEmpty) {
+        Get.snackbar(
+          '오류',
+          '이미 동일한 이름의 카테고리가 존재합니다.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+
+      // 카테고리 업데이트
+      await db.update(
+        'category',
+        {
+          'name': newName,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [categoryId],
+      );
+
+      // 카테고리 목록 갱신
+      await loadCategoriesForType(categoryType);
+      _eventBusService.emitTransactionChanged();
+      return true;
+    } catch (e) {
+      debugPrint('카테고리 수정 중 오류: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   /// 카테고리 소프트 삭제 메서드 (카테고리는 플래그 변경, 예산은 실제 삭제)
   Future<bool> deleteCategory(int categoryId) async {
     isLoading.value = true;

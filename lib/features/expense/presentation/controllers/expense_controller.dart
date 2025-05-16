@@ -12,6 +12,8 @@ import '../../domain/usecases/get_variable_categories.dart';
 import '../../domain/usecases/add_budget.dart';
 import '../../domain/usecases/add_category.dart';
 import '../../domain/usecases/delete_category.dart';
+import '../../domain/usecases/update_budget.dart';
+import '../../domain/usecases/update_category.dart';
 
 class ExpenseController extends GetxController {
   final GetBudgetStatus getBudgetStatusUseCase;
@@ -20,6 +22,8 @@ class ExpenseController extends GetxController {
   final AddCategory addCategoryUseCase;
   final DeleteCategory deleteCategoryUseCase;
   final AddExpense addExpenseUseCase;
+  final UpdateBudget updateBudgetUseCase;
+  final UpdateCategory updateCategoryUseCase;
 
   ExpenseController({
     required this.getBudgetStatusUseCase,
@@ -28,6 +32,8 @@ class ExpenseController extends GetxController {
     required this.addCategoryUseCase,
     required this.deleteCategoryUseCase,
     required this.addExpenseUseCase,
+    required this.updateBudgetUseCase,
+    required this.updateCategoryUseCase,
   });
 
   // 상태 변수
@@ -387,6 +393,74 @@ class ExpenseController extends GetxController {
       return false;
     } catch (e) {
       debugPrint('지출 추가 중 오류: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateBudget({
+    required int categoryId,
+    required double amount,
+  }) async {
+    try {
+      // 기간에서 연도와 월 추출 (형식: YYYY-MM)
+      final year = int.parse(selectedPeriod.value.split('-')[0]);
+      final month = int.parse(selectedPeriod.value.split('-')[1]);
+
+      // 해당 월의 시작일과 종료일 계산
+      final startDate = DateTime(year, month, 1).toIso8601String();
+      final endDate = DateTime(year, month + 1, 0).toIso8601String();
+
+      final result = await updateBudgetUseCase(
+        userId: userId,
+        categoryId: categoryId,
+        amount: amount,
+        periodStart: startDate,
+        periodEnd: endDate,
+      );
+
+      if (result) {
+        // 예산 목록 다시 불러오기
+        await fetchBudgetStatus();
+
+        // 이벤트 버스를 통해 변경 알림
+        _eventBusService.emitTransactionChanged();
+
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('예산 업데이트 중 오류: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateCategory({
+    required int categoryId,
+    required String name,
+  }) async {
+    try {
+      if (name.trim().isEmpty) {
+        return false;
+      }
+
+      final result = await updateCategoryUseCase(
+        categoryId: categoryId,
+        name: name.trim(),
+      );
+
+      if (result) {
+        // 카테고리 및 예산 목록 다시 불러오기
+        await fetchVariableCategories();
+        await fetchBudgetStatus();
+
+        // 이벤트 버스를 통해 변경 알림
+        _eventBusService.emitTransactionChanged();
+
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('카테고리 업데이트 중 오류: $e');
       return false;
     }
   }

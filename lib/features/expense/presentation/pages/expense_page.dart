@@ -10,6 +10,8 @@ import '../../domain/usecases/delete_category.dart';
 import '../../domain/usecases/get_budget_status.dart';
 import '../../domain/usecases/get_variable_categories.dart';
 import '../../domain/usecases/add_budget.dart';
+import '../../domain/usecases/update_budget.dart';
+import '../../domain/usecases/update_category.dart';
 import '../controllers/expense_controller.dart';
 import '../widgets/period_selector.dart';
 import '../widgets/overall_budget_card.dart';
@@ -77,6 +79,8 @@ class _ExpensePageState extends State<ExpensePage>
     final budgetStatusUseCase = GetBudgetStatus(repository);
     final variableCategoriesUseCase = GetVariableCategories(repository);
     final addBudgetUseCase = AddBudget(repository);
+    final updateBudgetUseCase = UpdateBudget(repository);
+    final updateCategoryUseCase = UpdateCategory(repository);
 
     // Register controller permanently
     return Get.put(
@@ -87,6 +91,8 @@ class _ExpensePageState extends State<ExpensePage>
           addCategoryUseCase: AddCategory(repository),
           deleteCategoryUseCase: DeleteCategory(repository),
           addExpenseUseCase: AddExpense(repository),
+          updateBudgetUseCase: updateBudgetUseCase,
+          updateCategoryUseCase: updateCategoryUseCase,
         ),
         permanent: true);
   }
