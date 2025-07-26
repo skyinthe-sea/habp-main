@@ -1,2 +1,0 @@
-/Users/imjunseob/habp/android/app/.cxx/RelWithDebInfo/5rz3a668/x86/CMakeFiles/edit_cache.dir
-/Users/imjunseob/habp/android/app/.cxx/RelWithDebInfo/5rz3a668/x86/CMakeFiles/rebuild_cache.dir

@@ -19,7 +19,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -69,7 +69,6 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                 controller: _tabController,
                 tabs: const [
                   Tab(text: '정보'),
-                  Tab(text: '개발팀'),
                   Tab(text: '라이선스'),
                 ],
                 labelColor: AppColors.primary,
@@ -85,7 +84,6 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                 controller: _tabController,
                 children: [
                   _buildAboutTab(),
-                  _buildTeamTab(),
                   _buildLicenseTab(),
                 ],
               ),
@@ -306,114 +304,6 @@ class _AppInfoDialogState extends State<AppInfoDialog>
     );
   }
 
-  // 개발팀 탭
-  Widget _buildTeamTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '개발팀 소개',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '수기가계부는 개인 재정 관리의 어려움을 해결하기 위해 만들어진 앱입니다. '
-                '저희 팀은 사용자의 재정 건강을 개선하고 재정 목표 달성을 돕기 위해 노력하고 있습니다.',
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.grey[700],
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // 팀원 목록
-          const Text(
-            '팀원',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildTeamMember(
-            name: '임준섭',
-            role: '프로젝트 리더 & UX 디자이너',
-            description: '사용자 경험과 인터페이스 디자인 전문가. 복잡한 재정 앱을 직관적이고 사용하기 쉽게 만드는 데 집중.',
-          ),
-          _buildTeamMember(
-            name: '김태수',
-            role: '앱 개발자',
-            description: 'Flutter 프레임워크 전문가. 안드로이드와 iOS 모두에서 최적의 성능을 내는 크로스플랫폼 앱 개발.',
-          ),
-          _buildTeamMember(
-            name: '정석현',
-            role: '백엔드 개발자',
-            description: '데이터베이스 및 서버 인프라 전문가. 사용자 데이터의 안전한 저장과 처리를 담당.',
-          ),
-          _buildTeamMember(
-            name: '정한솔',
-            role: '데이터 분석가',
-            description: '사용자의 지출 패턴을 분석하고 유용한 인사이트를 제공하는 알고리즘 개발.',
-          ),
-          const SizedBox(height: 24),
-
-          // 문의하기
-          const Text(
-            '문의하기',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.grey.shade200),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildContactItem(
-                    icon: Icons.email,
-                    title: '이메일',
-                    content: 'myclick90@gmail.com',
-                    onTap: () => _launchUrl('mailto:support@example.com'),
-                  ),
-                  // const Divider(height: 24),
-                  // _buildContactItem(
-                  //   icon: Icons.web,
-                  //   title: '웹사이트',
-                  //   content: 'www.example.com',
-                  //   onTap: () => _launchUrl('https://www.example.com'),
-                  // ),
-                  const Divider(height: 24),
-                  _buildContactItem(
-                    icon: Icons.question_answer,
-                    title: '고객센터',
-                    content: '평일 10:00 - 18:00',
-                    onTap: null,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // 라이선스 탭
   Widget _buildLicenseTab() {
@@ -567,133 +457,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
     );
   }
 
-  // 팀원 카드 위젯
-  Widget _buildTeamMember({
-    required String name,
-    required String role,
-    required String description,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 프로필 이미지
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                name.substring(0, 1),
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  role,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // 연락처 아이템 위젯
-  Widget _buildContactItem({
-    required IconData icon,
-    required String title,
-    required String content,
-    required VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primary),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  content,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            if (onTap != null) ...[
-              const Spacer(),
-              Icon(
-                Icons.launch,
-                size: 16,
-                color: Colors.grey[600],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 
   // 라이선스 아이템 위젯
   Widget _buildLicenseItem({
