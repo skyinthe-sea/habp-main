@@ -22,4 +22,9 @@ class CalendarRepositoryImpl implements CalendarRepository {
   Future<DaySummary> getDaySummary(DateTime date) async {
     return await localDataSource.getDaySummary(date);
   }
+
+  @override
+  Future<void> updateTransaction(CalendarTransaction transaction) async {
+    return await localDataSource.updateTransaction(transaction);
+  }
 }

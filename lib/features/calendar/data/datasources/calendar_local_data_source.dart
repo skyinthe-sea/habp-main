@@ -7,6 +7,7 @@ abstract class CalendarLocalDataSource {
   Future<List<CalendarTransaction>> getMonthTransactions(DateTime month);
   Future<Map<DateTime, List<CalendarTransaction>>> getMonthTransactionsGroupedByDay(DateTime month);
   Future<DaySummary> getDaySummary(DateTime date);
+  Future<void> updateTransaction(CalendarTransaction transaction);
 }
 
 class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
@@ -495,6 +496,41 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
     } catch (e) {
       debugPrint('일별 요약 가져오기 오류: $e');
       return DaySummary(date: date);
+    }
+  }
+
+  @override
+  Future<void> updateTransaction(CalendarTransaction transaction) async {
+    try {
+      // 고정 거래는 수정 불가
+      if (transaction.isFixed) {
+        throw Exception('고정 거래는 수정할 수 없습니다.');
+      }
+
+      final db = await dbHelper.database;
+      final now = DateTime.now().toIso8601String();
+
+      // transaction_record 테이블의 일반 거래만 업데이트
+      final result = await db.update(
+        'transaction_record',
+        {
+          'amount': transaction.amount,
+          'description': transaction.description,
+          'transaction_date': transaction.transactionDate.toIso8601String(),
+          'updated_at': now,
+        },
+        where: 'id = ?',
+        whereArgs: [transaction.id],
+      );
+
+      if (result == 0) {
+        throw Exception('거래 내역을 찾을 수 없습니다.');
+      }
+
+      debugPrint('거래 수정 완료: ID ${transaction.id}');
+    } catch (e) {
+      debugPrint('거래 수정 오류: $e');
+      rethrow;
     }
   }
 }

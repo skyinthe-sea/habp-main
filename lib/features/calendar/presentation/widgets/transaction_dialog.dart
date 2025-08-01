@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../controllers/calendar_controller.dart';
 import '../controllers/calendar_filter_controller.dart';
 import '../../domain/entities/calendar_transaction.dart';
+import 'edit_transaction_dialog.dart';
 
 class TransactionDialog extends StatelessWidget {
   final CalendarController controller;
@@ -18,6 +19,36 @@ class TransactionDialog extends StatelessWidget {
     required this.filterController,
     required this.date,
   }) : super(key: key);
+
+  // 거래 항목 클릭 핸들러
+  void _onTransactionTap(CalendarTransaction transaction) {
+    // 고정 거래는 수정 불가
+    if (transaction.isFixed) {
+      Get.snackbar(
+        '수정 불가',
+        '고정 거래는 수정할 수 없습니다.',
+        backgroundColor: AppColors.warning.withOpacity(0.1),
+        colorText: AppColors.warning,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    // 일반 거래만 수정 가능
+    Get.dialog(
+      EditTransactionDialog(
+        transaction: transaction,
+        onUpdate: (updatedTransaction) async {
+          // 실제 데이터베이스 업데이트
+          await controller.updateTransactionRecord(updatedTransaction);
+        },
+      ),
+      barrierDismissible: true,
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -491,20 +522,24 @@ class TransactionDialog extends StatelessWidget {
     final isIncome = transaction.amount > 0;
     final isFinance = transaction.categoryType == 'FINANCE';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.withOpacity(0.1),
-            width: 1,
+    return GestureDetector(
+      onTap: () => _onTransactionTap(transaction),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey.withOpacity(0.1),
+              width: 1,
+            ),
           ),
+          // 고정 거래는 약간 투명하게 표시
+          color: isFixed ? Colors.grey.withOpacity(0.05) : Colors.transparent,
         ),
-      ),
-      child: Row(
-        children: [
-          // 카테고리 아이콘
-          Container(
+        child: Row(
+          children: [
+            // 카테고리 아이콘
+            Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
@@ -585,17 +620,32 @@ class TransactionDialog extends StatelessWidget {
           ),
 
           // 금액
-          Text(
-            (isIncome || (isFinance && transaction.amount > 0) ? '+' : '-') + '$formattedAmount원',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: isIncome || (isFinance && transaction.amount > 0)
-                  ? Colors.green[600]
-                  : (isFinance ? Colors.blue[600] : Colors.red[600]),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                (isIncome || (isFinance && transaction.amount > 0) ? '+' : '-') + '$formattedAmount원',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: (isIncome || (isFinance && transaction.amount > 0)
+                      ? Colors.green[600]
+                      : (isFinance ? Colors.blue[600] : Colors.red[600]))!
+                      .withOpacity(isFixed ? 0.6 : 1.0), // 고정 거래는 투명도 적용
+                ),
+              ),
+              if (!isFixed) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.edit,
+                  size: 12,
+                  color: AppColors.primary.withOpacity(0.6),
+                ),
+              ],
+            ],
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

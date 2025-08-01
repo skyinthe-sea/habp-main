@@ -5,17 +5,20 @@ import '../../domain/entities/calendar_transaction.dart';
 import '../../domain/entities/day_summary.dart';
 import '../../domain/usecases/get_month_transactions.dart';
 import '../../domain/usecases/get_day_summary.dart';
+import '../../domain/usecases/update_transaction.dart';
 import 'calendar_filter_controller.dart';
 
 class CalendarController extends GetxController {
 
   final GetMonthTransactions getMonthTransactions;
   final GetDaySummary getDaySummary;
+  final UpdateTransaction updateTransaction;
   final CalendarFilterController filterController;
 
   CalendarController({
     required this.getMonthTransactions,
     required this.getDaySummary,
+    required this.updateTransaction,
     required this.filterController, // 필터 컨트롤러 추가
   });
 
@@ -182,5 +185,29 @@ class CalendarController extends GetxController {
       }
     }
     return finance;
+  }
+
+  // 거래 수정
+  Future<void> updateTransactionRecord(CalendarTransaction transaction) async {
+    try {
+      isLoading.value = true;
+      
+      // 거래 수정 실행
+      await updateTransaction.call(transaction);
+      
+      // 데이터 새로고침
+      await fetchMonthEvents(focusedDay.value);
+      await fetchDaySummary(selectedDay.value);
+      
+      // 이벤트 버스로 변경 알림
+      _eventBusService.emitTransactionChanged();
+      
+      debugPrint('거래 수정 완료: ${transaction.description}');
+    } catch (e) {
+      debugPrint('거래 수정 오류: $e');
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
   }
 }
