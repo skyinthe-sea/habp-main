@@ -539,35 +539,65 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
   }
 
   Widget _buildSaveButton() {
-    return SizedBox(
+    // 거래 타입에 따른 버튼 그라데이션 색상 설정
+    List<Color> gradientColors;
+    switch (widget.transaction.categoryType) {
+      case 'INCOME':
+        gradientColors = [Colors.green[500]!, Colors.green[600]!];
+        break;
+      case 'EXPENSE':
+        gradientColors = [Colors.red[500]!, Colors.red[600]!];
+        break;
+      case 'FINANCE':
+        gradientColors = [Colors.blue[500]!, Colors.blue[600]!];
+        break;
+      default:
+        gradientColors = [AppColors.primary, AppColors.primaryDark];
+    }
+
+    return Container(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _saveChanges,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: _isLoading ? [Colors.grey[400]!, Colors.grey[500]!] : gradientColors,
         ),
-        child: _isLoading
-            ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Text(
-                '수정 완료',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: _isLoading ? [] : [
+          BoxShadow(
+            color: gradientColors[1].withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _isLoading ? null : _saveChanges,
+          borderRadius: BorderRadius.circular(12),
+          child: Center(
+            child: _isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    '수정 완료',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ),
       ),
     );
   }
