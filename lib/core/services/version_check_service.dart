@@ -13,8 +13,8 @@ class VersionCheckService extends GetxService {
   late PackageInfo _packageInfo;
   
   // 스토어 URL (실제 앱 출시 시 업데이트)
-  final String _androidStoreUrl = 'market://details?id=com.naui.habp';
-  final String _iosStoreUrl = 'itms-apps://itunes.apple.com/app/id123456789';
+  final String _androidStoreUrl = 'market://details?id=ljs.salamander.habp';
+  final String _iosStoreUrl = 'itms-apps://itunes.apple.com/app/id6745023427';
   
   // API 엔드포인트 (실제 서버 URL로 변경 필요)
   final String _apiUrl = 'https://example.com/api/version';
@@ -133,8 +133,8 @@ class VersionCheckService extends GetxService {
       } else {
         // 스토어 열기 실패 시 대체 URL 시도
         final fallbackUrl = Platform.isAndroid
-            ? 'https://play.google.com/store/apps/details?id=com.naui.habp'
-            : 'https://apps.apple.com/app/id123456789';
+            ? 'https://play.google.com/store/apps/details?id=ljs.salamander.habp'
+            : 'https://apps.apple.com/kr/app/%EC%88%98%EA%B8%B0%EA%B0%80%EA%B3%84%EB%B6%80/id6745023427';
         
         final fallbackUri = Uri.parse(fallbackUrl);
         if (await canLaunchUrl(fallbackUri)) {
@@ -159,39 +159,176 @@ class VersionCheckService extends GetxService {
     showDialog(
       context: context,
       barrierDismissible: !forceUpdate,
-      builder: (context) => AlertDialog(
-        title: Text('업데이트 안내 (v$latestVersion)'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(message),
-            const SizedBox(height: 16),
-            Text(
-              forceUpdate 
-                  ? '앱 사용을 계속하려면 업데이트가 필요합니다.'
-                  : '지금 업데이트하시겠습니까?',
-              style: TextStyle(
-                fontWeight: forceUpdate ? FontWeight.bold : FontWeight.normal,
-                color: forceUpdate ? Colors.red.shade700 : null,
-              ),
-            ),
-          ],
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
-        actions: [
-          if (!forceUpdate)
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('나중에'),
-            ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              openStore();
-            },
-            child: const Text('업데이트'),
+        elevation: 10,
+        backgroundColor: Colors.white,
+        child: Container(
+          padding: const EdgeInsets.all(0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 헤더 부분 (그라데이션)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFFE495C0).withOpacity(0.8),
+                      const Color(0xFFE495C0).withOpacity(0.6),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      forceUpdate ? Icons.system_update_alt : Icons.system_update,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '업데이트 안내',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'v$latestVersion',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // 내용 부분
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      message,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey[800],
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: forceUpdate 
+                            ? Colors.red.shade50 
+                            : const Color(0xFFE495C0).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            forceUpdate ? Icons.warning : Icons.info_outline,
+                            color: forceUpdate 
+                                ? Colors.red.shade700 
+                                : const Color(0xFFE495C0),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              forceUpdate 
+                                  ? '앱 사용을 계속하려면 업데이트가 필요합니다.'
+                                  : '지금 업데이트하시겠습니까?',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: forceUpdate 
+                                    ? Colors.red.shade700 
+                                    : Colors.grey[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // 버튼 부분
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Row(
+                  children: [
+                    if (!forceUpdate)
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            '나중에',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (!forceUpdate) const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          openStore();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE495C0),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          '업데이트',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

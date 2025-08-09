@@ -8,6 +8,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../../../core/routes/app_router.dart';
 import '../../../../core/services/event_bus_service.dart';
+import '../../../../core/services/version_check_service.dart';
 import '../../data/datasources/fixed_transaction_local_data_source.dart';
 import '../../domain/repositories/fixed_transaction_repository.dart';
 import '../../domain/usecases/get_fixed_categories_by_type.dart';
@@ -306,22 +307,23 @@ class _SettingsDialogState extends State<SettingsDialog>
                                   ],
                                 ),
                               ),
-                              _buildSettingItem(
-                                icon: Icons.backup,
-                                title: '백업 및 복원',
-                                subtitle: '데이터를 백업하고 복원할 수 있습니다',
-                                onTap: () {
-                                  Get.snackbar(
-                                    '준비중',
-                                    '백업 및 복원 기능은 곧 제공될 예정입니다',
-                                    backgroundColor: Colors.black87,
-                                    colorText: Colors.white,
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    margin: const EdgeInsets.all(16),
-                                    duration: const Duration(seconds: 2),
-                                  );
-                                },
-                              ),
+                              // TODO: 백업 및 복원 기능 개발 완료 시 주석 해제
+                              // _buildSettingItem(
+                              //   icon: Icons.backup,
+                              //   title: '백업 및 복원',
+                              //   subtitle: '데이터를 백업하고 복원할 수 있습니다',
+                              //   onTap: () {
+                              //     Get.snackbar(
+                              //       '준비중',
+                              //       '백업 및 복원 기능은 곧 제공될 예정입니다',
+                              //       backgroundColor: Colors.black87,
+                              //       colorText: Colors.white,
+                              //       snackPosition: SnackPosition.BOTTOM,
+                              //       margin: const EdgeInsets.all(16),
+                              //       duration: const Duration(seconds: 2),
+                              //     );
+                              //   },
+                              // ),
                               _buildSettingItem(
                                 icon: Icons.delete_outline,
                                 title: '데이터 초기화',
@@ -374,16 +376,32 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 icon: Icons.star_outline,
                                 title: '앱 평가하기',
                                 subtitle: '스토어에서 앱을 평가해주세요',
-                                onTap: () {
-                                  Get.snackbar(
-                                    '준비중',
-                                    '앱 평가 기능은 곧 제공될 예정입니다',
-                                    backgroundColor: Colors.black87,
-                                    colorText: Colors.white,
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    margin: const EdgeInsets.all(16),
-                                    duration: const Duration(seconds: 2),
-                                  );
+                                onTap: () async {
+                                  try {
+                                    final versionService = Get.find<VersionCheckService>();
+                                    final success = await versionService.openStore();
+                                    if (!success) {
+                                      Get.snackbar(
+                                        '오류',
+                                        '스토어를 열 수 없습니다. 나중에 다시 시도해주세요.',
+                                        backgroundColor: Colors.red,
+                                        colorText: Colors.white,
+                                        snackPosition: SnackPosition.BOTTOM,
+                                        margin: const EdgeInsets.all(16),
+                                        duration: const Duration(seconds: 2),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    Get.snackbar(
+                                      '오류',
+                                      '스토어 연결 중 오류가 발생했습니다.',
+                                      backgroundColor: Colors.red,
+                                      colorText: Colors.white,
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      margin: const EdgeInsets.all(16),
+                                      duration: const Duration(seconds: 2),
+                                    );
+                                  }
                                 },
                               ),
                             ],

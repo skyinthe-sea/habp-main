@@ -4,6 +4,7 @@ import 'package:habp/features/expense/presentation/pages/expense_page.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../constants/app_colors.dart';
 import '../../services/ad_service.dart';
+import '../../services/version_check_service.dart';
 import '../controllers/main_controller.dart';
 import '../../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../../features/quick_add/presentation/widgets/quick_add_button.dart';
@@ -25,6 +26,36 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     // MainController 주입
     controller = Get.put(MainController());
+    
+    // 버전 체크 (앱 실행 시)
+    _checkAppVersion();
+  }
+  
+  void _checkAppVersion() async {
+    try {
+      // VersionCheckService가 등록되어 있지 않다면 등록
+      if (!Get.isRegistered<VersionCheckService>()) {
+        final versionService = VersionCheckService();
+        await versionService.init();
+        Get.put(versionService);
+      }
+      
+      // 버전 체크 실행
+      final versionService = Get.find<VersionCheckService>();
+      final result = await versionService.checkVersion();
+      
+      // 업데이트가 필요한 경우 다이얼로그 표시
+      if (result['needsUpdate'] == true) {
+        versionService.showUpdateDialog(
+          context: context,
+          latestVersion: result['latestVersion'],
+          message: result['updateMessage'],
+          forceUpdate: result['forceUpdate'] ?? false,
+        );
+      }
+    } catch (e) {
+      debugPrint('버전 체크 실패: $e');
+    }
   }
 
   @override
