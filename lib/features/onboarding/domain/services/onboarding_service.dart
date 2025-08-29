@@ -141,15 +141,46 @@ class CategoryRepository {
   CategoryRepository(this._db);
 
   Future<ExpenseCategory> getOrCreateCategory(String name, ExpenseCategoryType type, bool isFixed) async {
-    // 이미 존재하는지 확인
-    final List<Map<String, dynamic>> maps = await _db.query(
+    final typeString = type.toString().split('.').last;
+    
+    // 이미 활성 카테고리가 존재하는지 확인
+    final List<Map<String, dynamic>> activeMaps = await _db.query(
       'category',
-      where: 'name = ? AND type = ?',
-      whereArgs: [name, type.toString().split('.').last],
+      where: 'name = ? AND type = ? AND is_deleted = ?',
+      whereArgs: [name, typeString, 0],
     );
 
-    if (maps.isNotEmpty) {
-      return ExpenseCategory.fromMap(maps.first);
+    if (activeMaps.isNotEmpty) {
+      return ExpenseCategory.fromMap(activeMaps.first);
+    }
+
+    // 삭제된 카테고리가 있는지 확인
+    final List<Map<String, dynamic>> deletedMaps = await _db.query(
+      'category',
+      where: 'name = ? AND type = ? AND is_deleted = ?',
+      whereArgs: [name, typeString, 1],
+    );
+
+    if (deletedMaps.isNotEmpty) {
+      // 삭제된 카테고리를 재활성화
+      final now = DateTime.now();
+      final categoryId = deletedMaps.first['id'] as int;
+      
+      await _db.update(
+        'category',
+        {
+          'is_deleted': 0,
+          'updated_at': now.toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [categoryId],
+      );
+
+      return ExpenseCategory.fromMap({
+        ...deletedMaps.first,
+        'is_deleted': 0,
+        'updated_at': now.toIso8601String(),
+      });
     }
 
     // 존재하지 않으면 새로 생성

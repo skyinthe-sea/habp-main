@@ -172,16 +172,16 @@ class QuickAddController extends GetxController {
       final db = await _dbHelper.database;
       final now = DateTime.now().toIso8601String();
 
-      // 이미 동일한 이름의 카테고리가 있는지 확인
-      final existingCategory = await db.query(
+      // 이미 동일한 이름의 활성 카테고리가 있는지 확인 (삭제된 것은 제외)
+      final existingActiveCategory = await db.query(
         'category',
-        where: 'name = ? AND type = ?',
-        whereArgs: [name, type],
+        where: 'name = ? AND type = ? AND is_deleted = ?',
+        whereArgs: [name, type, 0],
         limit: 1,
       );
 
-      if (existingCategory.isNotEmpty) {
-        final category = existingCategory.first;
+      if (existingActiveCategory.isNotEmpty) {
+        final category = existingActiveCategory.first;
         final isFixedCategory = category['is_fixed'] as int;
 
         // 고정 카테고리인 경우 (is_fixed = 1)
@@ -205,6 +205,43 @@ class QuickAddController extends GetxController {
             name: category['name'] as String,
             type: category['type'] as String,
             isFixed: isFixedCategory,
+          ),
+        );
+      }
+
+      // 삭제된 카테고리가 있는지 확인
+      final existingDeletedCategory = await db.query(
+        'category',
+        where: 'name = ? AND type = ? AND is_deleted = ?',
+        whereArgs: [name, type, 1],
+        limit: 1,
+      );
+
+      // 삭제된 카테고리가 있으면 재활성화
+      if (existingDeletedCategory.isNotEmpty) {
+        final categoryId = existingDeletedCategory.first['id'] as int;
+        
+        await db.update(
+          'category',
+          {
+            'is_deleted': 0,
+            'updated_at': now,
+          },
+          where: 'id = ?',
+          whereArgs: [categoryId],
+        );
+
+        // 카테고리 목록 갱신
+        await loadCategoriesForType(type);
+        _eventBusService.emitTransactionChanged();
+
+        return CategoryResult(
+          status: CategoryStatus.created,
+          category: CategoryModel(
+            id: categoryId,
+            name: name,
+            type: type,
+            isFixed: isFixed,
           ),
         );
       }

@@ -1200,28 +1200,35 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                             ),
                           ),
 
-                          // Amount
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              if (displayAmount != null)
-                                Text(
-                                  '₩ ${NumberFormat('#,###').format(displayAmount)}',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.cate4,
+                          // Amount - 더 많은 공간 확보
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                if (displayAmount != null)
+                                  Text(
+                                    '₩ ${NumberFormat('#,###').format(displayAmount)}',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.cate4,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.visible,
+                                    textAlign: TextAlign.end,
+                                  )
+                                else
+                                  Text(
+                                    '금액 미설정',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[500],
+                                    ),
+                                    textAlign: TextAlign.end,
                                   ),
-                                )
-                              else
-                                Text(
-                                  '금액 미설정',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -1379,29 +1386,25 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 ),
                 const SizedBox(height: 8),
 
-                // Display the current effective setting
-                Row(
+                // Display the current effective setting in column layout
+                Column(
                   children: [
-                    Expanded(
-                      child: _buildInfoCard(
-                        title: '금액',
-                        value: currentSetting != null
-                            ? '₩ ${NumberFormat('#,###').format(currentSetting.amount)}'
-                            : '금액 미설정',
-                        icon: Icons.money_off,
-                        iconColor: AppColors.cate4,
-                      ),
+                    _buildInfoCard(
+                      title: '금액',
+                      value: currentSetting != null
+                          ? '₩ ${NumberFormat('#,###').format(currentSetting.amount)}'
+                          : '금액 미설정',
+                      icon: Icons.money_off,
+                      iconColor: AppColors.cate4,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildInfoCard(
-                        title: '받는 날짜',
-                        value: currentSetting != null
-                            ? '매월 ${currentSetting.day}일'
-                            : '날짜 미설정',
-                        icon: Icons.calendar_today,
-                        iconColor: Colors.blue.shade700,
-                      ),
+                    const SizedBox(height: 12),
+                    _buildInfoCard(
+                      title: '받는 날짜',
+                      value: currentSetting != null
+                          ? '매월 ${currentSetting.day}일'
+                          : '날짜 미설정',
+                      icon: Icons.calendar_today,
+                      iconColor: Colors.blue.shade700,
                     ),
                   ],
                 ),
