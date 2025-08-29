@@ -109,6 +109,63 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
     super.dispose();
   }
 
+  // Helper method to show delete confirmation dialog
+  Future<bool?> _showDeleteConfirmDialog(SettingHistoryItem item) async {
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('설정 삭제'),
+          content: Text(
+            '${DateFormat('yyyy년 M월 d일').format(item.effectiveFrom)}부터 적용된 설정을 삭제하시겠습니까?'
+                '\n\n삭제 후에는 이전 설정이 적용됩니다.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: Text(
+                '삭제',
+                style: TextStyle(color: Colors.red.shade700),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Helper method to perform the actual delete operation
+  Future<void> _performDeleteSetting(SettingHistoryItem item, List<SettingHistoryItem> historyItems) async {
+    try {
+      // Extract the ID from the prefix
+      final idString = item.id.split('_')[1];
+      final id = int.parse(idString);
+
+      // 데이터베이스에서 실제 삭제 작업 수행
+      await _deleteFixedTransactionSetting(id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("삭제 중 오류가 발생했습니다: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   // Load transaction history for each category
   Future<void> _loadTransactionHistory() async {
     setState(() {
@@ -1486,63 +1543,10 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 key: Key(item.id),
                 direction: DismissDirection.startToEnd,
                 confirmDismiss: (direction) async {
-                  return await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        title: const Text('설정 삭제'),
-                        content: Text(
-                          '${DateFormat('yyyy년 M월 d일').format(item.effectiveFrom)}부터 적용된 설정을 삭제하시겠습니까?'
-                              '\n\n삭제 후에는 이전 설정이 적용됩니다.',
-                        ),
-                        actions: <Widget>[
-                          TextButton(
-                            child: const Text('취소'),
-                            onPressed: () {
-                              Navigator.of(context).pop(false);
-                            },
-                          ),
-                          TextButton(
-                            child: Text(
-                              '삭제',
-                              style: TextStyle(color: Colors.red.shade700),
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).pop(true);
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                  return await _showDeleteConfirmDialog(item);
                 },
                 onDismissed: (direction) async {
-                  // Extract the ID from the prefix
-                  final idString = item.id.split('_')[1];
-                  final id = int.parse(idString);
-
-                  // 항목을 삭제하고, 상태 업데이트를 위해 즉시 setState 호출
-                  setState(() {
-                    // 현재 항목을 리스트에서 즉시 제거
-                    historyItems.removeWhere((setting) => setting.id == item.id);
-                  });
-
-                  // 데이터베이스에서 실제 삭제 작업 수행
-                  try {
-                    await _deleteFixedTransactionSetting(id);
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("삭제 중 오류가 발생했습니다: $e"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
+                  await _performDeleteSetting(item, historyItems);
                 },
                 background: Container(
                   alignment: Alignment.centerLeft,
@@ -1556,11 +1560,22 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     color: Colors.red.shade700,
                   ),
                 ),
-                child: _buildHistoryItem(
-                  item: item,
-                  isFirstItem: isFirstItem,
-                  isLastItem: isLastItem,
-                  isCurrentSetting: isCurrentSetting,
+                child: GestureDetector(
+                  onLongPress: () async {
+                    final shouldDelete = await _showDeleteConfirmDialog(item);
+                    if (shouldDelete == true) {
+                      setState(() {
+                        historyItems.removeWhere((setting) => setting.id == item.id);
+                      });
+                      await _performDeleteSetting(item, historyItems);
+                    }
+                  },
+                  child: _buildHistoryItem(
+                    item: item,
+                    isFirstItem: isFirstItem,
+                    isLastItem: isLastItem,
+                    isCurrentSetting: isCurrentSetting,
+                  ),
                 ),
               );
             },
