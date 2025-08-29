@@ -437,25 +437,25 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
           // Header content
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+            padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.attach_money_rounded,
                         color: Colors.white,
-                        size: 24,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -464,18 +464,18 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                               ? (_selectedCategory?.name ?? '고정 소득 상세')
                               : '고정 소득 관리',
                           style: const TextStyle(
-                            fontSize: 22,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           _isDetailViewMode
                               ? '소득 변경 이력 및 관리'
                               : '매월 반복되는 소득을 관리하세요',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Colors.white70,
                           ),
                         ),
@@ -483,14 +483,14 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Income stats summary - Only show when not in detail view
                 if (!_isDetailViewMode && !_isCreateMode)
                   FadeTransition(
                     opacity: _fadeAnimation,
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
@@ -505,16 +505,16 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                 Text(
                                   '등록된 고정 소득',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 10,
                                     color: Colors.white.withOpacity(0.7),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 Text(
                                   '${_controller.incomeCategories.length}개',
                                   style: const TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -523,13 +523,13 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                             ),
                           ),
                           Container(
-                            height: 36,
+                            height: 30,
                             width: 1,
                             color: Colors.white.withOpacity(0.3),
                           ),
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.only(left: 12),
+                              padding: const EdgeInsets.only(left: 10),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -537,16 +537,16 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                   Text(
                                     '총 월 소득',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       color: Colors.white.withOpacity(0.7),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 4),
                                   Text(
                                     _calculateTotalMonthlyIncome(),
                                     style: const TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
@@ -559,7 +559,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                       ),
                     ),
                   ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
               ],
             ),
           ),
@@ -922,48 +922,48 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
     if (_controller.incomeCategories.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(40),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 80,
-                height: 80,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.account_balance_wallet_outlined,
-                  size: 40,
+                  size: 32,
                   color: Colors.grey[400],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Text(
                 '등록된 고정 소득이 없습니다',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[700],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 '새로운 고정 소득을 추가해보세요',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   color: Colors.grey[500],
                 ),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('고정 소득 추가하기'),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('고정 소득 추가하기', style: TextStyle(fontSize: 14)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade700,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -984,7 +984,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
     final now = DateTime.now();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: ListView.builder(
         itemCount: _controller.incomeCategories.length,
         padding: EdgeInsets.zero,
@@ -1055,7 +1055,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
           }
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 16),
+            margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -1087,13 +1087,13 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       child: Row(
                         children: [
                           // Category icon
                           Container(
-                            width: 50,
-                            height: 50,
+                            width: 42,
+                            height: 42,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
@@ -1103,22 +1103,22 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                   Colors.green.shade700,
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.green.shade300.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
+                                  color: Colors.green.shade300.withOpacity(0.25),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: const Icon(
                               Icons.attach_money_rounded,
                               color: Colors.white,
-                              size: 26,
+                              size: 22,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
 
                           // Title and date
                           Expanded(
@@ -1128,26 +1128,26 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                 Text(
                                   category.name,
                                   style: const TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 3),
                                 Text(
                                   displayDate.isEmpty ? '날짜 미설정' : displayDate,
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 12,
                                     color: Colors.grey[700],
                                   ),
                                 ),
 
                                 // Show notification of scheduled change if available
                                 if (hasScheduledChange) ...[
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
+                                      horizontal: 6,
+                                      vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.amber.shade100,
@@ -1162,14 +1162,14 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                       children: [
                                         Icon(
                                           Icons.schedule,
-                                          size: 14,
+                                          size: 12,
                                           color: Colors.amber.shade800,
                                         ),
-                                        const SizedBox(width: 4),
+                                        const SizedBox(width: 3),
                                         Text(
                                           '예정된 변경 있음',
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 10,
                                             color: Colors.amber.shade800,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -1219,7 +1219,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     // View details button
                     Container(
                       width: double.infinity,
-                      height: 42,
+                      height: 36,
                       decoration: BoxDecoration(
                         color: Colors.grey.shade50,
                         borderRadius: const BorderRadius.only(
@@ -1238,13 +1238,14 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         children: [
                           Icon(
                             Icons.history,
-                            size: 16,
+                            size: 14,
                             color: Colors.green.shade700,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             '기록 및 설정 보기',
                             style: TextStyle(
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: Colors.green.shade700,
                             ),

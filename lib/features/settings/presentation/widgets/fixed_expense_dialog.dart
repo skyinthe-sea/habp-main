@@ -455,25 +455,25 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
 
           // Header content
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+            padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.money_off_rounded,
                         color: Colors.white,
-                        size: 24,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -482,18 +482,18 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                               ? (_selectedCategory?.name ?? '고정 지출 상세')
                               : '고정 지출 관리',
                           style: const TextStyle(
-                            fontSize: 22,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           _isDetailViewMode
                               ? '지출 변경 이력 및 관리'
                               : '매월 반복되는 지출을 관리하세요',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Colors.white70,
                           ),
                         ),
@@ -501,14 +501,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Income stats summary - Only show when not in detail view
                 if (!_isDetailViewMode && !_isCreateMode)
                   FadeTransition(
                     opacity: _fadeAnimation,
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
@@ -523,16 +523,16 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                 Text(
                                   '등록된 고정 지출',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 10,
                                     color: Colors.white.withOpacity(0.7),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 Text(
                                   '${_controller.expenseCategories.length}개',
                                   style: const TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -541,13 +541,13 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                             ),
                           ),
                           Container(
-                            height: 36,
+                            height: 30,
                             width: 1,
                             color: Colors.white.withOpacity(0.3),
                           ),
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.only(left: 12),
+                              padding: const EdgeInsets.only(left: 10),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -555,16 +555,16 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                   Text(
                                     '총 월 지출',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       color: Colors.white.withOpacity(0.7),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 4),
                                   Text(
                                     _calculateTotalMonthlyIncome(),
                                     style: const TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
@@ -577,7 +577,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                       ),
                     ),
                   ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
               ],
             ),
           ),
@@ -1002,7 +1002,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
     final now = DateTime.now();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: ListView.builder(
         itemCount: _controller.expenseCategories.length,
         padding: EdgeInsets.zero,
@@ -1073,7 +1073,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
           }
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 16),
+            margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -1105,13 +1105,13 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       child: Row(
                         children: [
                           // Category icon
                           Container(
-                            width: 50,
-                            height: 50,
+                            width: 42,
+                            height: 42,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
@@ -1121,22 +1121,22 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                   AppColors.cate4,
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.cate4.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
+                                  color: AppColors.cate4.withOpacity(0.25),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: const Icon(
                               Icons.money_off_rounded,
                               color: Colors.white,
-                              size: 26,
+                              size: 22,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
 
                           // Title and date
                           Expanded(
@@ -1146,26 +1146,26 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                 Text(
                                   category.name,
                                   style: const TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 3),
                                 Text(
                                   displayDate.isEmpty ? '날짜 미설정' : displayDate,
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 12,
                                     color: Colors.grey[700],
                                   ),
                                 ),
 
                                 // Show notification of scheduled change if available
                                 if (hasScheduledChange) ...[
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
+                                      horizontal: 6,
+                                      vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.amber.shade100,
@@ -1180,14 +1180,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                       children: [
                                         Icon(
                                           Icons.schedule,
-                                          size: 14,
+                                          size: 12,
                                           color: Colors.amber.shade800,
                                         ),
-                                        const SizedBox(width: 4),
+                                        const SizedBox(width: 3),
                                         Text(
                                           '예정된 변경 있음',
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 10,
                                             color: Colors.amber.shade800,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -1237,7 +1237,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     // View details button
                     Container(
                       width: double.infinity,
-                      height: 42,
+                      height: 36,
                       decoration: BoxDecoration(
                         color: Colors.grey.shade50,
                         borderRadius: const BorderRadius.only(
@@ -1256,13 +1256,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                         children: [
                           Icon(
                             Icons.history,
-                            size: 16,
+                            size: 14,
                             color: AppColors.cate4,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             '기록 및 설정 보기',
                             style: TextStyle(
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: AppColors.cate4,
                             ),
