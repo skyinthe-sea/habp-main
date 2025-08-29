@@ -27,4 +27,9 @@ class CalendarRepositoryImpl implements CalendarRepository {
   Future<void> updateTransaction(CalendarTransaction transaction) async {
     return await localDataSource.updateTransaction(transaction);
   }
+
+  @override
+  Future<void> deleteTransaction(CalendarTransaction transaction) async {
+    return await localDataSource.deleteTransaction(transaction);
+  }
 }

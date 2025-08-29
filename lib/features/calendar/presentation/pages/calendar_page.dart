@@ -8,6 +8,7 @@ import '../../data/repositories/calendar_repository_impl.dart';
 import '../../domain/usecases/get_month_transactions.dart';
 import '../../domain/usecases/get_day_summary.dart';
 import '../../domain/usecases/update_transaction.dart';
+import '../../domain/usecases/delete_transaction.dart';
 import '../controllers/calendar_controller.dart';
 import '../controllers/calendar_filter_controller.dart';
 import '../widgets/month_calendar_fullscreen.dart';
@@ -58,12 +59,14 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
     final getMonthTransactionsUseCase = GetMonthTransactions(repository);
     final getDaySummaryUseCase = GetDaySummary(repository);
     final updateTransactionUseCase = UpdateTransaction(repository);
+    final deleteTransactionUseCase = DeleteTransaction(repository);
 
     // Initialize controller
     final controller = CalendarController(
       getMonthTransactions: getMonthTransactionsUseCase,
       getDaySummary: getDaySummaryUseCase,
       updateTransaction: updateTransactionUseCase,
+      deleteTransaction: deleteTransactionUseCase,
       filterController: _filterController,
     );
 

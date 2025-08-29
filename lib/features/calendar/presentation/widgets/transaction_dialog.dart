@@ -49,6 +49,189 @@ class TransactionDialog extends StatelessWidget {
     );
   }
 
+  // 거래 항목 롱프레스 핸들러 (삭제용)
+  void _onTransactionLongPress(CalendarTransaction transaction) {
+    // 고정 거래는 삭제 불가
+    if (transaction.isFixed) {
+      Get.snackbar(
+        '삭제 불가',
+        '고정 거래는 삭제할 수 없습니다.',
+        backgroundColor: AppColors.warning.withOpacity(0.1),
+        colorText: AppColors.warning,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    // 삭제 확인 다이얼로그 표시
+    _showDeleteConfirmDialog(transaction);
+  }
+
+  // 삭제 확인 다이얼로그
+  void _showDeleteConfirmDialog(CalendarTransaction transaction) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.delete_forever,
+              color: Colors.red[600],
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              '거래 내역 삭제',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '다음 거래 내역을 삭제하시겠습니까?',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _getCategoryColorLight(transaction.categoryType),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getCategoryIcon(transaction.categoryType, transaction.categoryName),
+                      color: _getCategoryColor(transaction.categoryType),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          transaction.description,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          transaction.categoryName,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    NumberFormat('#,###').format(transaction.amount.abs()) + '원',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: transaction.categoryType == 'INCOME' 
+                          ? Colors.green[600] 
+                          : Colors.red[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '이 작업은 되돌릴 수 없습니다.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.red[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              '취소',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back(); // 다이얼로그 닫기
+              try {
+                await controller.deleteTransactionRecord(transaction);
+                Get.snackbar(
+                  '삭제 완료',
+                  '거래 내역이 삭제되었습니다.',
+                  backgroundColor: Colors.green.withOpacity(0.1),
+                  colorText: Colors.green[700],
+                  margin: const EdgeInsets.all(16),
+                  borderRadius: 8,
+                  duration: const Duration(seconds: 2),
+                  icon: Icon(Icons.check_circle, color: Colors.green[700]),
+                );
+              } catch (e) {
+                Get.snackbar(
+                  '삭제 실패',
+                  e.toString(),
+                  backgroundColor: Colors.red.withOpacity(0.1),
+                  colorText: Colors.red[700],
+                  margin: const EdgeInsets.all(16),
+                  borderRadius: 8,
+                  duration: const Duration(seconds: 3),
+                  icon: Icon(Icons.error, color: Colors.red[700]),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              '삭제',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -524,6 +707,7 @@ class TransactionDialog extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => _onTransactionTap(transaction),
+      onLongPress: () => _onTransactionLongPress(transaction),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
         decoration: BoxDecoration(

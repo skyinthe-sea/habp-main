@@ -8,6 +8,7 @@ abstract class CalendarLocalDataSource {
   Future<Map<DateTime, List<CalendarTransaction>>> getMonthTransactionsGroupedByDay(DateTime month);
   Future<DaySummary> getDaySummary(DateTime date);
   Future<void> updateTransaction(CalendarTransaction transaction);
+  Future<void> deleteTransaction(CalendarTransaction transaction);
 }
 
 class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
@@ -530,6 +531,34 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
       debugPrint('거래 수정 완료: ID ${transaction.id}');
     } catch (e) {
       debugPrint('거래 수정 오류: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteTransaction(CalendarTransaction transaction) async {
+    try {
+      // 고정 거래는 삭제 불가
+      if (transaction.isFixed) {
+        throw Exception('고정 거래는 삭제할 수 없습니다.');
+      }
+
+      final db = await dbHelper.database;
+
+      // transaction_record 테이블에서 일반 거래 삭제
+      final result = await db.delete(
+        'transaction_record',
+        where: 'id = ?',
+        whereArgs: [transaction.id],
+      );
+
+      if (result == 0) {
+        throw Exception('삭제할 거래 내역을 찾을 수 없습니다.');
+      }
+
+      debugPrint('거래 삭제 완료: ID ${transaction.id} - ${transaction.description}');
+    } catch (e) {
+      debugPrint('거래 삭제 오류: $e');
       rethrow;
     }
   }
