@@ -88,198 +88,154 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
-        child: Column(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
           children: [
-            // 설정 헤더
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary.withOpacity(0.8),
-                    AppColors.primary.withOpacity(0.6),
-                  ],
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // 자산 관리 섹션
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+              child: Row(
                 children: [
-                  const Text(
-                    '설정',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  Icon(
+                    Icons.account_balance,
+                    size: 16,
+                    color: Colors.grey[700],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    '수기가계부',
+                    '자산 관리',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
                     ),
                   ),
                 ],
               ),
             ),
+            _buildSettingItem(
+              icon: Icons.account_balance_outlined,
+              title: '자산',
+              subtitle: '보유 자산을 관리하고 현황을 확인합니다',
+              color: Colors.blue.shade700,
+              onTap: () {
+                Get.to(() => const AssetPage());
+              },
+            ),
 
-            // 설정 목록
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+            // 고정 거래 관리 섹션
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Row(
                 children: [
-                  // 자산 관리 섹션
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.account_balance,
-                          size: 16,
-                          color: Colors.grey[700],
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '자산 관리',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
+                  Icon(
+                    Icons.repeat,
+                    size: 16,
+                    color: Colors.grey[700],
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '고정 거래 관리',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
                     ),
-                  ),
-                  _buildSettingItem(
-                    icon: Icons.account_balance_outlined,
-                    title: '자산',
-                    subtitle: '보유 자산을 관리하고 현황을 확인합니다',
-                    color: Colors.blue.shade700,
-                    onTap: () {
-                      Get.to(() => const AssetPage());
-                    },
-                  ),
-
-                  // 고정 거래 관리 섹션
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.repeat,
-                          size: 16,
-                          color: Colors.grey[700],
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '고정 거래 관리',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildSettingItem(
-                    icon: Icons.attach_money,
-                    title: '고정 소득',
-                    subtitle: '매월 반복되는 소득 항목을 관리합니다',
-                    color: Colors.green.shade700,
-                    onTap: () => Get.showFixedIncomeDialog(),
-                  ),
-                  _buildSettingItem(
-                    icon: Icons.money_off,
-                    title: '고정 지출',
-                    subtitle: '매월 반복되는 지출 항목을 관리합니다',
-                    color: AppColors.cate4,
-                    onTap: () => Get.showFixedExpenseDialog(),
-                  ),
-                  _buildSettingItem(
-                    icon: Icons.account_balance,
-                    title: '고정 재테크',
-                    subtitle: '매월 반복되는 재테크 항목을 관리합니다',
-                    color: Colors.blue.shade700,
-                    onTap: () => Get.showFixedFinanceDialog(),
-                  ),
-
-                  // 기타 설정 섹션
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.more_horiz,
-                          size: 16,
-                          color: Colors.grey[700],
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '기타',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildSettingItem(
-                    icon: Icons.help_outline,
-                    title: '도움말',
-                    subtitle: '앱 사용 가이드와 자주 묻는 질문',
-                    onTap: () {
-                      Get.showHelpDialog();
-                    },
-                  ),
-                  _buildSettingItem(
-                    icon: Icons.info_outline,
-                    title: '앱 정보',
-                    subtitle: '버전, 개발팀, 라이센스 정보',
-                    onTap: () {
-                      Get.showAppInfoDialog();
-                    },
-                  ),
-                  _buildSettingItem(
-                    icon: Icons.star_outline,
-                    title: '앱 평가하기',
-                    subtitle: '스토어에서 앱을 평가해주세요',
-                    onTap: () async {
-                      try {
-                        final versionService = Get.find<VersionCheckService>();
-                        final success = await versionService.openStore();
-                        if (!success) {
-                          Get.snackbar(
-                            '오류',
-                            '스토어를 열 수 없습니다. 나중에 다시 시도해주세요.',
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                            snackPosition: SnackPosition.BOTTOM,
-                            margin: const EdgeInsets.all(16),
-                            duration: const Duration(seconds: 2),
-                          );
-                        }
-                      } catch (e) {
-                        Get.snackbar(
-                          '오류',
-                          '스토어 연결 중 오류가 발생했습니다.',
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                          snackPosition: SnackPosition.BOTTOM,
-                          margin: const EdgeInsets.all(16),
-                          duration: const Duration(seconds: 2),
-                        );
-                      }
-                    },
                   ),
                 ],
               ),
+            ),
+            _buildSettingItem(
+              icon: Icons.attach_money,
+              title: '고정 소득',
+              subtitle: '매월 반복되는 소득 항목을 관리합니다',
+              color: Colors.green.shade700,
+              onTap: () => Get.showFixedIncomeDialog(),
+            ),
+            _buildSettingItem(
+              icon: Icons.money_off,
+              title: '고정 지출',
+              subtitle: '매월 반복되는 지출 항목을 관리합니다',
+              color: AppColors.cate4,
+              onTap: () => Get.showFixedExpenseDialog(),
+            ),
+            _buildSettingItem(
+              icon: Icons.account_balance,
+              title: '고정 재테크',
+              subtitle: '매월 반복되는 재테크 항목을 관리합니다',
+              color: Colors.blue.shade700,
+              onTap: () => Get.showFixedFinanceDialog(),
+            ),
+
+            // 기타 설정 섹션
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.more_horiz,
+                    size: 16,
+                    color: Colors.grey[700],
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '기타',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _buildSettingItem(
+              icon: Icons.help_outline,
+              title: '도움말',
+              subtitle: '앱 사용 가이드와 자주 묻는 질문',
+              onTap: () {
+                Get.showHelpDialog();
+              },
+            ),
+            _buildSettingItem(
+              icon: Icons.info_outline,
+              title: '앱 정보',
+              subtitle: '버전, 개발팀, 라이센스 정보',
+              onTap: () {
+                Get.showAppInfoDialog();
+              },
+            ),
+            _buildSettingItem(
+              icon: Icons.star_outline,
+              title: '앱 평가하기',
+              subtitle: '스토어에서 앱을 평가해주세요',
+              onTap: () async {
+                try {
+                  final versionService = Get.find<VersionCheckService>();
+                  final success = await versionService.openStore();
+                  if (!success) {
+                    Get.snackbar(
+                      '오류',
+                      '스토어를 열 수 없습니다. 나중에 다시 시도해주세요.',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                      snackPosition: SnackPosition.BOTTOM,
+                      margin: const EdgeInsets.all(16),
+                      duration: const Duration(seconds: 2),
+                    );
+                  }
+                } catch (e) {
+                  Get.snackbar(
+                    '오류',
+                    '스토어 연결 중 오류가 발생했습니다.',
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                    snackPosition: SnackPosition.BOTTOM,
+                    margin: const EdgeInsets.all(16),
+                    duration: const Duration(seconds: 2),
+                  );
+                }
+              },
             ),
 
             // 하단 앱 버전

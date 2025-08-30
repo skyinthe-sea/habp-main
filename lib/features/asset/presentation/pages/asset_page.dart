@@ -123,6 +123,22 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
 
         return Scaffold(
           backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 1,
+            title: const Text(
+              '자산',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+              onPressed: () => Get.back(),
+            ),
+          ),
           body: SafeArea(
             child: GetBuilder<AssetController>(
               init: _controller,
