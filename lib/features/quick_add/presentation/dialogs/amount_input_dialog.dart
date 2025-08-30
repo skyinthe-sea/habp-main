@@ -470,8 +470,8 @@ class _AmountInputDialogState extends State<AmountInputDialog>
     final controller = Get.find<QuickAddController>();
 
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
       backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
       child: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
@@ -482,7 +482,9 @@ class _AmountInputDialogState extends State<AmountInputDialog>
         },
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -494,10 +496,12 @@ class _AmountInputDialogState extends State<AmountInputDialog>
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Dialog title and back button
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -733,8 +737,9 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                 )),
               ),
 
-              const SizedBox(height: 8),
-            ],
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
       ),

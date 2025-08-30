@@ -96,13 +96,13 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
     }
 
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      elevation: 0,
       backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        width: double.infinity,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -114,9 +114,11 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // 헤더
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -282,7 +284,8 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                 ),
               ],
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
