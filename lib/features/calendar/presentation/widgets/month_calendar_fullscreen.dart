@@ -56,9 +56,9 @@ class MonthCalendarFullscreen extends StatelessWidget {
                   onPageChanged: controller.onPageChanged,
                   calendarFormat: CalendarFormat.month,
                   startingDayOfWeek: StartingDayOfWeek.sunday,
-                  // Design improvements: Increase height for better visibility
-                  daysOfWeekHeight: 32,
-                  rowHeight: 90, // Slightly reduced from 100 to fit better on small screens
+                  // Compact design for better fit
+                  daysOfWeekHeight: 26,
+                  rowHeight: 70, // Reduced height to prevent bottom cutoff
                   calendarStyle: CalendarStyle(
                     // Selected date style - empty style (handled in custom builder)
                     selectedDecoration: const BoxDecoration(
@@ -85,13 +85,13 @@ class MonthCalendarFullscreen extends StatelessWidget {
                     // Other month date style
                     outsideTextStyle: TextStyle(
                       color: Colors.grey.shade400,
-                      fontSize: 13,
+                      fontSize: 11,
                     ),
 
                     // Default date style
                     defaultTextStyle: TextStyle(
                       color: Colors.grey[800],
-                      fontSize: 15,
+                      fontSize: 13,
                     ),
 
                     // Date cell size
@@ -103,12 +103,12 @@ class MonthCalendarFullscreen extends StatelessWidget {
                     weekdayStyle: TextStyle(
                       color: Colors.grey[700],
                       fontWeight: FontWeight.w500,
-                      fontSize: 13,
+                      fontSize: 11,
                     ),
                     weekendStyle: TextStyle(
                       color: Colors.red[400],
                       fontWeight: FontWeight.w500,
-                      fontSize: 13,
+                      fontSize: 11,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade50,
@@ -143,9 +143,9 @@ class MonthCalendarFullscreen extends StatelessWidget {
 
                       // Vertical layout for markers
                       return Positioned(
-                        top: 30, // Position below date text
-                        left: 4,
-                        right: 4,
+                        top: 24, // Position below date text (reduced from 30)
+                        left: 2,
+                        right: 2,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -178,20 +178,20 @@ class MonthCalendarFullscreen extends StatelessWidget {
                     // Selected date style customization - square design
                     selectedBuilder: (context, date, _) {
                       return Container(
-                        margin: const EdgeInsets.all(4),
+                        margin: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.1),
                           border: Border.all(color: AppColors.primary, width: 1.5),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                           shape: BoxShape.rectangle,
                         ),
                         child: Column(
                           children: [
                             // Date at the top
                             Container(
-                              width: 30,
-                              height: 30,
-                              margin: const EdgeInsets.only(top: 6),
+                              width: 24,
+                              height: 24,
+                              margin: const EdgeInsets.only(top: 4),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withOpacity(0.2),
@@ -202,7 +202,7 @@ class MonthCalendarFullscreen extends StatelessWidget {
                                 style: const TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -215,18 +215,18 @@ class MonthCalendarFullscreen extends StatelessWidget {
                     // Today's date style customization - square design
                     todayBuilder: (context, date, _) {
                       return Container(
-                        margin: const EdgeInsets.all(4),
+                        margin: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade400, width: 1),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Column(
                           children: [
                             // Date at the top with circular background
                             Container(
-                              width: 30,
-                              height: 30,
-                              margin: const EdgeInsets.only(top: 6),
+                              width: 24,
+                              height: 24,
+                              margin: const EdgeInsets.only(top: 4),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 color: Colors.grey.shade200,
@@ -237,7 +237,7 @@ class MonthCalendarFullscreen extends StatelessWidget {
                                 style: const TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -256,20 +256,20 @@ class MonthCalendarFullscreen extends StatelessWidget {
                       }
 
                       return Container(
-                        margin: const EdgeInsets.all(4),
+                        margin: const EdgeInsets.all(3),
                         child: Column(
                           children: [
                             // Date at the top
                             Container(
-                              width: 30,
-                              height: 30,
-                              margin: const EdgeInsets.only(top: 6),
+                              width: 24,
+                              height: 24,
+                              margin: const EdgeInsets.only(top: 4),
                               alignment: Alignment.center,
                               child: Text(
                                 '${date.day}',
                                 style: TextStyle(
                                   color: textColor,
-                                  fontSize: 15,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -282,20 +282,20 @@ class MonthCalendarFullscreen extends StatelessWidget {
                     // Other month date style customization
                     outsideBuilder: (context, date, _) {
                       return Container(
-                        margin: const EdgeInsets.all(4),
+                        margin: const EdgeInsets.all(3),
                         child: Column(
                           children: [
                             // Date at the top
                             Container(
-                              width: 30,
-                              height: 30,
-                              margin: const EdgeInsets.only(top: 6),
+                              width: 24,
+                              height: 24,
+                              margin: const EdgeInsets.only(top: 4),
                               alignment: Alignment.center,
                               child: Text(
                                 '${date.day}',
                                 style: TextStyle(
                                   color: Colors.grey.shade400,
-                                  fontSize: 15,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -310,7 +310,7 @@ class MonthCalendarFullscreen extends StatelessWidget {
 
               // Add extra space at the bottom for small devices
               const SliverToBoxAdapter(
-                child: SizedBox(height: 80),
+                child: SizedBox(height: 40),
               ),
             ],
           );
@@ -323,18 +323,18 @@ class MonthCalendarFullscreen extends StatelessWidget {
   Widget _buildVerticalIndicator(String text, Color baseColor) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 3),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      margin: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
       decoration: BoxDecoration(
         color: baseColor.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(3),
       ),
       child: Center(
         child: Text(
           text,
           style: TextStyle(
             color: baseColor,
-            fontSize: 10,
+            fontSize: 8,
             fontWeight: FontWeight.w600,
           ),
           textAlign: TextAlign.center,
@@ -379,7 +379,7 @@ class MonthCalendarFullscreen extends StatelessWidget {
           Text(
             '${year}년 ${monthNames[month - 1]}',
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.primary,
             ),
