@@ -292,12 +292,12 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           const SizedBox(height: 12),
           _buildPolicyButton(
             '개인정보 처리방침',
-            'https://example.com/privacy-policy',
+            'https://doc-hosting.flycricket.io/sugigagyebu-privacy-policy/20e1f1f2-7680-4e8f-8251-53c7ac83e8f7/privacy',
           ),
           const SizedBox(height: 8),
           _buildPolicyButton(
             '이용약관',
-            'https://example.com/terms-of-service',
+            'https://doc-hosting.flycricket.io/sugigagyebu-terms-of-use/73d9c4a4-0948-41fc-a8b0-20a01a367248/terms',
           ),
         ],
       ),
