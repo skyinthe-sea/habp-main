@@ -7,6 +7,7 @@ import '../controllers/quick_add_controller.dart';
 import 'add_category_dialog.dart';
 import 'category_type_dialog.dart';
 import 'date_selection_dialog.dart';
+import 'amount_input_dialog.dart';
 
 class CategorySelectionDialog extends StatelessWidget {
   const CategorySelectionDialog({Key? key}) : super(key: key);
@@ -299,13 +300,16 @@ class CategorySelectionDialog extends StatelessWidget {
           // Set the selected category
           controller.setCategory(categoryId, categoryName);
 
+          // Set default date to today (simplified flow)
+          controller.setTransactionDate(DateTime.now());
+
           // Close this dialog and show the next one
           Navigator.of(context).pop();
 
-          // Show date selection dialog with animation
+          // Show amount input dialog directly (skip date selection)
           showGeneralDialog(
             context: context,
-            pageBuilder: (_, __, ___) => const DateSelectionDialog(),
+            pageBuilder: (_, __, ___) => const AmountInputDialog(),
             transitionBuilder: (context, animation, secondaryAnimation, child) {
               final curve = CurvedAnimation(
                 parent: animation,

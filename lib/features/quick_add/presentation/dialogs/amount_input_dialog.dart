@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../controllers/quick_add_controller.dart';
 import '../widgets/autocomplete_text_field.dart';
 import 'date_selection_dialog.dart';
+import 'category_selection_dialog.dart';
 import 'calculator_dialog.dart';
 
 /// Final dialog in the quick add flow
@@ -68,12 +70,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
       }
     });
 
-    // Set focus to amount field after a short delay
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        FocusScope.of(context).requestFocus(_amountFocusNode);
-      }
-    });
+    // Auto-focus removed - user can tap to focus when needed
 
     // Listen for changes to enable/disable save button
     _amountController.addListener(_updateSaveButtonState);
@@ -150,6 +147,156 @@ class _AmountInputDialogState extends State<AmountInputDialog>
         });
       }
     });
+  }
+
+  /// 날짜 선택 다이얼로그 표시
+  void _showDateSelectionDialog(BuildContext context, QuickAddController controller) async {
+    // 키보드 닫기
+    FocusScope.of(context).unfocus();
+
+    DateTime selectedDate = controller.transaction.value.transactionDate;
+
+    final result = await showDialog<DateTime>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.all(16),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 제목
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '날짜 변경',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => Navigator.of(context).pop(),
+                        color: Colors.grey,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 달력
+                  TableCalendar(
+                    firstDay: DateTime.utc(2020, 1, 1),
+                    lastDay: DateTime.utc(2030, 12, 31),
+                    focusedDay: selectedDate,
+                    calendarFormat: CalendarFormat.month,
+                    startingDayOfWeek: StartingDayOfWeek.sunday,
+                    selectedDayPredicate: (day) {
+                      return isSameDay(selectedDate, day);
+                    },
+                    onDaySelected: (selected, focused) {
+                      setState(() {
+                        selectedDate = selected;
+                      });
+                    },
+                    headerStyle: HeaderStyle(
+                      titleCentered: true,
+                      formatButtonVisible: false,
+                      titleTextStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      leftChevronIcon: const Icon(
+                        Icons.chevron_left,
+                        color: AppColors.primary,
+                      ),
+                      rightChevronIcon: const Icon(
+                        Icons.chevron_right,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    calendarStyle: CalendarStyle(
+                      markersMaxCount: 0,
+                      todayDecoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      selectedDecoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // 버튼들
+                  Row(
+                    children: [
+                      // 오늘 버튼
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            setState(() {
+                              selectedDate = DateTime.now();
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                          ),
+                          child: const Text('오늘'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // 확인 버튼
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(selectedDate);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('확인'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    // 결과가 있으면 날짜 업데이트
+    if (result != null) {
+      controller.setTransactionDate(result);
+    }
   }
 
   /// 계산기 다이얼로그 표시
@@ -337,63 +484,29 @@ class _AmountInputDialogState extends State<AmountInputDialog>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Column(
+      child: Row(
         children: [
-          // First row: 100, 1,000, 5,000
-          Row(
-            children: [
-              // Subtraction side (left)
-              _buildOperationButton(amount: 100, isAddition: false),
-              const SizedBox(width: 8),
-              _buildOperationButton(amount: 1000, isAddition: false),
-              const SizedBox(width: 8),
-              _buildOperationButton(amount: 5000, isAddition: false),
+          // Subtraction side (left) - 1,000, 10,000, 100,000
+          _buildOperationButton(amount: 1000, isAddition: false),
+          const SizedBox(width: 8),
+          _buildOperationButton(amount: 10000, isAddition: false),
+          const SizedBox(width: 8),
+          _buildOperationButton(amount: 100000, isAddition: false),
 
-              // Center divider
-              Container(
-                height: 40,
-                width: 1,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                color: Colors.grey.shade300,
-              ),
-
-              // Addition side (right)
-              _buildOperationButton(amount: 100, isAddition: true),
-              const SizedBox(width: 8),
-              _buildOperationButton(amount: 1000, isAddition: true),
-              const SizedBox(width: 8),
-              _buildOperationButton(amount: 5000, isAddition: true),
-            ],
+          // Center divider
+          Container(
+            height: 40,
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            color: Colors.grey.shade300,
           ),
 
-          const SizedBox(height: 8),
-
-          // Second row: 10,000, 50,000, 100,000
-          Row(
-            children: [
-              // Subtraction side (left)
-              _buildOperationButton(amount: 10000, isAddition: false),
-              const SizedBox(width: 8),
-              _buildOperationButton(amount: 50000, isAddition: false),
-              const SizedBox(width: 8),
-              _buildOperationButton(amount: 100000, isAddition: false),
-
-              // Center divider
-              Container(
-                height: 40,
-                width: 1,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                color: Colors.grey.shade300,
-              ),
-
-              // Addition side (right)
-              _buildOperationButton(amount: 10000, isAddition: true),
-              const SizedBox(width: 8),
-              _buildOperationButton(amount: 50000, isAddition: true),
-              const SizedBox(width: 8),
-              _buildOperationButton(amount: 100000, isAddition: true),
-            ],
-          ),
+          // Addition side (right) - 1,000, 10,000, 100,000
+          _buildOperationButton(amount: 1000, isAddition: true),
+          const SizedBox(width: 8),
+          _buildOperationButton(amount: 10000, isAddition: true),
+          const SizedBox(width: 8),
+          _buildOperationButton(amount: 100000, isAddition: true),
         ],
       ),
     );
@@ -520,10 +633,10 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                       // Go back to the previous dialog
                       Navigator.of(context).pop();
 
-                      // Show the date selection dialog again
+                      // Show the category selection dialog again
                       showGeneralDialog(
                         context: context,
-                        pageBuilder: (_, __, ___) => const DateSelectionDialog(),
+                        pageBuilder: (_, __, ___) => const CategorySelectionDialog(),
                         transitionBuilder: (context, animation, secondaryAnimation, child) {
                           final curve = CurvedAnimation(
                             parent: animation,
@@ -596,11 +709,43 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Obx(() => Text(
-                            DateFormat('yyyy년 MM월 dd일').format(
-                                controller.transaction.value.transactionDate),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
+                          child: Obx(() => Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _showDateSelectionDialog(context, controller),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8, 
+                                  horizontal: 12
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.primary.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 16,
+                                      color: AppColors.primary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      DateFormat('yyyy년 MM월 dd일').format(
+                                          controller.transaction.value.transactionDate),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           )),
                         ),
