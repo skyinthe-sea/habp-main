@@ -7,8 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/presentation/pages/main_page.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/event_bus_service.dart';
-import 'core/utils/dismissible_error_handler.dart';
 import 'core/utils/super_error_silencer.dart'; // 강력한 에러 무시 처리기 추가
+import 'core/controllers/theme_controller.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 
 void main() async {
@@ -26,6 +26,9 @@ void main() async {
   // 서비스 초기화 및 등록
   await Get.putAsync(() => EventBusService().init());
   await Get.putAsync(() => AdService().init());
+  
+  // 테마 컨트롤러 초기화
+  Get.put(ThemeController());
 
   await initializeDateFormatting('ko_KR');
 
@@ -39,15 +42,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return GetMaterialApp(
       title: '나의 장부',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: const Color(0xFFE495C0),
-        primarySwatch: Colors.pink,
-        fontFamily: 'Noto Sans JP',
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: themeController.lightTheme,
+      darkTheme: themeController.darkTheme,
+      themeMode: ThemeMode.system, // 시스템 설정을 따르되, 컨트롤러에서 오버라이드
       // 단순화된 라우팅 - 온보딩 또는 메인 페이지만 직접 지정
       home: isFirstTimeUser
           ? const OnboardingPage() // 온보딩 페이지 클래스로 변경

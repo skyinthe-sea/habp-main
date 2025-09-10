@@ -1,6 +1,8 @@
 // lib/features/dashboard/presentation/widgets/monthly_summary_card.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/controllers/theme_controller.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../presentation/dashboard_controller.dart';
 
 class MonthlySummaryCard extends StatelessWidget {
@@ -15,9 +17,13 @@ class MonthlySummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Obx(() {
       if (controller.isLoading.value || controller.isAssetsLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+        return Center(child: CircularProgressIndicator(
+          color: themeController.primaryColor,
+        ));
       }
 
       // Get all values from controller
@@ -113,14 +119,18 @@ class MonthlySummaryCard extends StatelessWidget {
   }
 
   Widget _buildMonthSelector() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: themeController.isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -131,7 +141,10 @@ class MonthlySummaryCard extends StatelessWidget {
         children: [
           // 이전 달로 이동
           IconButton(
-            icon: const Icon(Icons.chevron_left, color: Colors.grey),
+            icon: Icon(
+              Icons.chevron_left, 
+              color: themeController.textSecondaryColor,
+            ),
             onPressed: controller.goToPreviousMonth,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -143,14 +156,17 @@ class MonthlySummaryCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: themeController.isDarkMode
+                    ? Colors.grey.shade700
+                    : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 controller.getMonthYearString(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: themeController.textPrimaryColor,
                 ),
               ),
             ),
@@ -158,8 +174,10 @@ class MonthlySummaryCard extends StatelessWidget {
 
           // 다음 달로 이동 - 현재 달 이후는 비활성화
           IconButton(
-            icon: const Icon(Icons.chevron_right,
-                color: Colors.grey),
+            icon: Icon(
+              Icons.chevron_right,
+              color: themeController.textSecondaryColor,
+            ),
             onPressed: controller.selectedMonth.value.year == DateTime.now().year &&
                 controller.selectedMonth.value.month == DateTime.now().month ?
             null : controller.goToNextMonth,
@@ -180,6 +198,8 @@ class MonthlySummaryCard extends StatelessWidget {
     required String cardType, // 'income', 'expense', 'assets', 'balance'
     bool hasPercentage = true,
   }) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     // 금액 형식화
     final formattedAmount = cardType == 'balance' && amount < 0
         ? '-₩${_formatAmount(amount.abs())}'
@@ -190,31 +210,60 @@ class MonthlySummaryCard extends StatelessWidget {
     Color iconBgColor;
     Color iconColor;
 
-    switch (cardType) {
-      case 'income':
-        textColor = Colors.green.shade700;
-        iconBgColor = const Color(0xFFE6F4EA);
-        iconColor = Colors.green.shade600;
-        break;
-      case 'expense':
-        textColor = Colors.red.shade700;
-        iconBgColor = const Color(0xFFFEE8EC);
-        iconColor = Colors.red.shade600;
-        break;
-      case 'assets':
-        textColor = Colors.blue.shade700;
-        iconBgColor = const Color(0xFFE3F2FD);
-        iconColor = Colors.blue;
-        break;
-      case 'balance':
-        textColor = amount >= 0 ? Colors.green.shade700 : Colors.red.shade700;
-        iconBgColor = const Color(0xFFF5F5F5);
-        iconColor = Colors.grey;
-        break;
-      default:
-        textColor = Colors.grey.shade800;
-        iconBgColor = Colors.grey.shade100;
-        iconColor = Colors.grey;
+    if (themeController.isDarkMode) {
+      switch (cardType) {
+        case 'income':
+          textColor = AppColors.darkSuccess;
+          iconBgColor = AppColors.darkSuccess.withOpacity(0.2);
+          iconColor = AppColors.darkSuccess;
+          break;
+        case 'expense':
+          textColor = AppColors.darkError;
+          iconBgColor = AppColors.darkError.withOpacity(0.2);
+          iconColor = AppColors.darkError;
+          break;
+        case 'assets':
+          textColor = AppColors.darkInfo;
+          iconBgColor = AppColors.darkInfo.withOpacity(0.2);
+          iconColor = AppColors.darkInfo;
+          break;
+        case 'balance':
+          textColor = amount >= 0 ? AppColors.darkSuccess : AppColors.darkError;
+          iconBgColor = Colors.grey.shade800;
+          iconColor = Colors.grey.shade400;
+          break;
+        default:
+          textColor = Colors.grey.shade400;
+          iconBgColor = Colors.grey.shade800;
+          iconColor = Colors.grey.shade400;
+      }
+    } else {
+      switch (cardType) {
+        case 'income':
+          textColor = Colors.green.shade700;
+          iconBgColor = const Color(0xFFE6F4EA);
+          iconColor = Colors.green.shade600;
+          break;
+        case 'expense':
+          textColor = Colors.red.shade700;
+          iconBgColor = const Color(0xFFFEE8EC);
+          iconColor = Colors.red.shade600;
+          break;
+        case 'assets':
+          textColor = Colors.blue.shade700;
+          iconBgColor = const Color(0xFFE3F2FD);
+          iconColor = Colors.blue;
+          break;
+        case 'balance':
+          textColor = amount >= 0 ? Colors.green.shade700 : Colors.red.shade700;
+          iconBgColor = const Color(0xFFF5F5F5);
+          iconColor = Colors.grey;
+          break;
+        default:
+          textColor = Colors.grey.shade800;
+          iconBgColor = Colors.grey.shade100;
+          iconColor = Colors.grey;
+      }
     }
 
     // 세로 방향 레이아웃으로 변경
@@ -223,11 +272,13 @@ class MonthlySummaryCard extends StatelessWidget {
       height: 80, // 고정된 높이로 모든 카드 통일
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: themeController.isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -243,8 +294,8 @@ class MonthlySummaryCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.grey,
+                style: TextStyle(
+                  color: themeController.textSecondaryColor,
                   fontSize: 11,
                 ),
               ),
@@ -283,7 +334,9 @@ class MonthlySummaryCard extends StatelessWidget {
                     margin: const EdgeInsets.only(left: 6),
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
-                      color: isPositiveTrend ? Colors.green.shade50 : Colors.red.shade50,
+                      color: isPositiveTrend 
+                          ? (themeController.isDarkMode ? AppColors.darkSuccess.withOpacity(0.2) : Colors.green.shade50)
+                          : (themeController.isDarkMode ? AppColors.darkError.withOpacity(0.2) : Colors.red.shade50),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -291,7 +344,9 @@ class MonthlySummaryCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
-                        color: isPositiveTrend ? Colors.green.shade700 : Colors.red.shade700,
+                        color: isPositiveTrend 
+                            ? (themeController.isDarkMode ? AppColors.darkSuccess : Colors.green.shade700)
+                            : (themeController.isDarkMode ? AppColors.darkError : Colors.red.shade700),
                       ),
                     ),
                   ),
@@ -346,6 +401,8 @@ class _CardDetailDialog extends StatelessWidget {
     required this.cardType,
     required this.controller,
   });
+  
+  ThemeController get themeController => Get.find<ThemeController>();
 
   @override
   Widget build(BuildContext context) {
@@ -370,7 +427,7 @@ class _CardDetailDialog extends StatelessWidget {
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
-            color: Colors.white,
+            color: themeController.cardColor,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -507,11 +564,12 @@ class _CardDetailDialog extends StatelessWidget {
           
           const SizedBox(height: 24),
           
-          const Text(
+          Text(
             '💡 소득 인사이트',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              color: themeController.textPrimaryColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -567,11 +625,12 @@ class _CardDetailDialog extends StatelessWidget {
           
           const SizedBox(height: 24),
           
-          const Text(
+          Text(
             '💡 지출 인사이트',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              color: themeController.textPrimaryColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -626,11 +685,12 @@ class _CardDetailDialog extends StatelessWidget {
           
           const SizedBox(height: 24),
           
-          const Text(
+          Text(
             '💡 재테크 인사이트',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              color: themeController.textPrimaryColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -687,11 +747,12 @@ class _CardDetailDialog extends StatelessWidget {
           
           const SizedBox(height: 24),
           
-          const Text(
+          Text(
             '💡 현금 흐름 분석',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              color: themeController.textPrimaryColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -747,6 +808,8 @@ class _CardDetailDialog extends StatelessWidget {
     MaterialColor color, {
     bool showChange = true,
   }) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -762,7 +825,7 @@ class _CardDetailDialog extends StatelessWidget {
             title,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: themeController.textSecondaryColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -807,6 +870,8 @@ class _CardDetailDialog extends StatelessWidget {
     Color backgroundColor,
     Color textColor,
   ) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -837,7 +902,7 @@ class _CardDetailDialog extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: themeController.textSecondaryColor,
                   ),
                 ),
                 const SizedBox(height: 4),

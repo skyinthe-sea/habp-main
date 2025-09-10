@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/services/version_check_service.dart';
 import '../../../asset/presentation/pages/asset_page.dart';
 import '../controllers/settings_controller.dart';
@@ -84,6 +85,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final ThemeController themeController = Get.find<ThemeController>();
     
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -91,6 +93,39 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 16),
           children: [
+            // 앱 설정 섹션
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.settings,
+                    size: 16,
+                    color: Colors.grey[700],
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '앱 설정',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // 다크모드 토글
+            Obx(() => _buildThemeToggleItem(
+              icon: themeController.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              title: '다크모드',
+              subtitle: '어두운 테마로 전환하여 눈의 피로를 줄입니다',
+              value: themeController.isDarkMode,
+              onChanged: (value) => themeController.toggleTheme(),
+              color: themeController.isDarkMode ? AppColors.darkAccent3 : AppColors.primary,
+            )),
+
             // 자산 관리 섹션
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
@@ -326,6 +361,77 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
           size: 20,
         ),
         onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeToggleItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    Color? color,
+  }) {
+    final itemColor = color ?? AppColors.primary;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: itemColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: itemColor,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+        trailing: Transform.scale(
+          scale: 0.8,
+          child: Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: itemColor,
+            activeTrackColor: itemColor.withOpacity(0.3),
+            inactiveThumbColor: Colors.grey[400],
+            inactiveTrackColor: Colors.grey[300],
+          ),
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 8,

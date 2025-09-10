@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../data/entities/category_expense.dart';
 import '../presentation/dashboard_controller.dart';
@@ -85,6 +86,8 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Obx(() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,18 +97,19 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   '카테고리별 내역',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: themeController.textPrimaryColor,
                   ),
                 ),
                 Text(
                   '해당 월',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: themeController.textSecondaryColor,
                   ),
                 ),
               ],
@@ -115,9 +119,13 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
           // Tab bar for selecting category type
           TabBar(
             controller: _tabController,
-            labelColor: _tabColors[_tabController.index],
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: _tabColors[_tabController.index],
+            labelColor: themeController.isDarkMode 
+                ? _getTabColorForDarkMode(_tabController.index)
+                : _tabColors[_tabController.index],
+            unselectedLabelColor: themeController.textSecondaryColor,
+            indicatorColor: themeController.isDarkMode
+                ? _getTabColorForDarkMode(_tabController.index)
+                : _tabColors[_tabController.index],
             indicatorSize: TabBarIndicatorSize.label,
             labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
@@ -178,15 +186,21 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(3, (index) {
+                final isActive = _tabController.index == index;
+                final activeColor = themeController.isDarkMode 
+                    ? _getTabColorForDarkMode(index)
+                    : _tabColors[index];
+                final inactiveColor = themeController.isDarkMode
+                    ? Colors.grey.shade600
+                    : Colors.grey.shade300;
+                
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   height: 8,
-                  width: _tabController.index == index ? 24 : 8,
+                  width: isActive ? 24 : 8,
                   decoration: BoxDecoration(
-                    color: _tabController.index == index
-                        ? _tabColors[index]
-                        : Colors.grey.shade300,
+                    color: isActive ? activeColor : inactiveColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
                 );
@@ -206,11 +220,16 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     required Color baseColor,
     required String type,
   }) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     if (isLoading) {
-      return const Center(child: SizedBox(
+      return Center(child: SizedBox(
           width: 24,
           height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2)
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: themeController.primaryColor,
+          )
       ));
     }
 
@@ -256,7 +275,12 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
       padding: const EdgeInsets.all(8.0),
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade100, width: 1),
+          border: Border.all(
+            color: themeController.isDarkMode
+                ? Colors.grey.shade700
+                : Colors.grey.shade100, 
+            width: 1,
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -306,7 +330,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.normal,
-                                color: Colors.grey.shade600,
+                                color: themeController.textSecondaryColor,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -315,7 +339,9 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: baseColor,
+                                color: themeController.isDarkMode
+                                    ? _getBaseColorForDarkMode(type, baseColor)
+                                    : baseColor,
                               ),
                             ),
                           ],
@@ -434,6 +460,8 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
 
   // 스크롤 가능한 범례 위젯 구현 - 모든 카테고리 표시
   Widget _buildScrollableLegend(List<CategoryExpense> data, String type) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     if (data.isEmpty) return const SizedBox();
 
     return Padding(
@@ -481,7 +509,11 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                               Expanded(
                                 child: Text(
                                   item.categoryName,
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                  style: TextStyle(
+                                    fontSize: 12, 
+                                    fontWeight: FontWeight.w500,
+                                    color: themeController.textPrimaryColor,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -515,7 +547,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                         _formatAmount(item.amount),
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey.shade700,
+                          color: themeController.textSecondaryColor,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -532,6 +564,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
 
   // 카테고리 상세 정보를 보여주는 다이얼로그
   void _showCategoryDetailDialog(BuildContext context, CategoryExpense category, Color color, String type) async {
+    final ThemeController themeController = Get.find<ThemeController>();
     final titleText = type == 'INCOME' ? '소득 상세' :
     type == 'EXPENSE' ? '지출 상세' : '재테크 상세';
 
@@ -541,6 +574,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: themeController.cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             category.categoryName,
@@ -582,6 +616,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
+          backgroundColor: themeController.cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             category.categoryName,
@@ -594,8 +629,14 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('$titleText (${_formatTypeTitle(type)})',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              Text(
+                '$titleText (${_formatTypeTitle(type)})',
+                style: TextStyle(
+                  fontSize: 14, 
+                  fontWeight: FontWeight.w500,
+                  color: themeController.textPrimaryColor,
+                ),
+              ),
               const SizedBox(height: 12),
 
               // 금액 정보
@@ -606,13 +647,19 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text('평균 금액', style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(
+                    '평균 금액', 
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: themeController.textPrimaryColor,
+                    ),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '($period, $dataPoints개 데이터)',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.grey.shade600,
+                      color: themeController.textSecondaryColor,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -626,7 +673,10 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('닫기'),
+              child: Text(
+                '닫기',
+                style: TextStyle(color: themeController.primaryColor),
+              ),
             ),
           ],
         ),
@@ -635,13 +685,28 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   }
 
   Widget _buildDetailRow(String label, String value) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+          Text(
+            label, 
+            style: TextStyle(
+              color: themeController.textSecondaryColor, 
+              fontSize: 13,
+            ),
+          ),
+          Text(
+            value, 
+            style: TextStyle(
+              fontWeight: FontWeight.w500, 
+              fontSize: 13,
+              color: themeController.textPrimaryColor,
+            ),
+          ),
         ],
       ),
     );
@@ -729,22 +794,56 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
 
   // 빈 상태 위젯
   Widget _buildEmptyState(String message) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bar_chart, size: 24, color: Colors.grey.shade300),
+          Icon(
+            Icons.bar_chart, 
+            size: 24, 
+            color: themeController.textSecondaryColor.withOpacity(0.5),
+          ),
           const SizedBox(height: 8),
           Text(
             message,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade500,
+              color: themeController.textSecondaryColor,
             ),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
+  }
+  
+  // 다크모드용 탭 색상 가져오기
+  Color _getTabColorForDarkMode(int index) {
+    switch (index) {
+      case 0: // 소득
+        return AppColors.darkSuccess;
+      case 1: // 지출
+        return AppColors.darkPrimary;
+      case 2: // 재테크
+        return AppColors.darkInfo;
+      default:
+        return AppColors.darkPrimary;
+    }
+  }
+  
+  // 다크모드용 베이스 색상 가져오기
+  Color _getBaseColorForDarkMode(String type, Color lightColor) {
+    switch (type) {
+      case 'INCOME':
+        return AppColors.darkSuccess;
+      case 'EXPENSE':
+        return AppColors.darkPrimary;
+      case 'FINANCE':
+        return AppColors.darkInfo;
+      default:
+        return lightColor;
+    }
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../data/entities/transaction_with_category.dart';
 import '../presentation/dashboard_controller.dart';
 import 'date_range_transaction_dialog.dart';
@@ -17,13 +18,15 @@ class RecentTransactionsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Obx(() {
       if (controller.isRecentTransactionsLoading.value) {
         return Container(
           height: 200,
           alignment: Alignment.center,
-          child: const CircularProgressIndicator(
-            color: AppColors.primary,
+          child: CircularProgressIndicator(
+            color: themeController.primaryColor,
             strokeWidth: 3,
           ),
         );
@@ -31,11 +34,13 @@ class RecentTransactionsList extends StatelessWidget {
 
       return Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.12),
+              color: themeController.isDarkMode
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.12),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -56,12 +61,12 @@ class RecentTransactionsList extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: themeController.primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.receipt_long_rounded,
-                          color: AppColors.primary,
+                          color: themeController.primaryColor,
                           size: 18,
                         ),
                       ),
@@ -69,19 +74,19 @@ class RecentTransactionsList extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             '최근 거래 내역',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: Colors.black87,
+                              color: themeController.textPrimaryColor,
                             ),
                           ),
                           Text(
                             controller.getMonthYearString(),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade600,
+                              color: themeController.textSecondaryColor,
                             ),
                           ),
                         ],
@@ -91,7 +96,7 @@ class RecentTransactionsList extends StatelessWidget {
 
                   // 전체보기 버튼
                   Material(
-                    color: AppColors.primary.withOpacity(0.08),
+                    color: themeController.primaryColor.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
                       onTap: () => _showAllTransactionsDialog(context),
@@ -99,20 +104,20 @@ class RecentTransactionsList extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         child: Row(
-                          children: const [
+                          children: [
                             Text(
                               '전체보기',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.primary,
+                                color: themeController.primaryColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Icon(
                               Icons.arrow_forward_rounded,
                               size: 14,
-                              color: AppColors.primary,
+                              color: themeController.primaryColor,
                             ),
                           ],
                         ),
@@ -136,6 +141,8 @@ class RecentTransactionsList extends StatelessWidget {
 
   // 빈 상태 표시 위젯
   Widget _buildEmptyState() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       height: 200,
       alignment: Alignment.center,
@@ -145,13 +152,13 @@ class RecentTransactionsList extends StatelessWidget {
           Icon(
             Icons.receipt_long_outlined,
             size: 48,
-            color: Colors.grey.shade200,
+            color: themeController.textSecondaryColor.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
             '${controller.getMonthYearString()}의 거래 내역이 없습니다',
             style: TextStyle(
-              color: Colors.grey.shade500,
+              color: themeController.textSecondaryColor,
               fontSize: 14,
             ),
           ),
@@ -159,7 +166,7 @@ class RecentTransactionsList extends StatelessWidget {
           Text(
             '우측 하단의 + 버튼을 눌러 거래를 추가해보세요',
             style: TextStyle(
-              color: Colors.grey.shade400,
+              color: themeController.textSecondaryColor.withOpacity(0.7),
               fontSize: 12,
             ),
           ),
@@ -251,6 +258,8 @@ class RecentTransactionsList extends StatelessWidget {
 
   // 날짜 헤더 위젯 - 더 간결하게 수정
   Widget _buildDayHeader(String date, double income, double expense, double finance, double balance) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     // 수입/지출/재테크 포맷팅
     final formatter = NumberFormat('#,###');
     final formattedIncome = formatter.format(income);
@@ -260,9 +269,16 @@ class RecentTransactionsList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 6), // 상하 패딩 줄임
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: themeController.isDarkMode 
+            ? themeController.surfaceColor
+            : Colors.grey.shade50,
         border: Border(
-          bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+          bottom: BorderSide(
+            color: themeController.isDarkMode
+                ? Colors.grey.shade700
+                : Colors.grey.shade200, 
+            width: 1,
+          ),
         ),
       ),
       child: Row(
@@ -275,21 +291,22 @@ class RecentTransactionsList extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(4), // 더 작게 조정
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: themeController.primaryColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.calendar_today_rounded,
                   size: 12, // 아이콘 크기 줄임
-                  color: AppColors.primary,
+                  color: themeController.primaryColor,
                 ),
               ),
               const SizedBox(width: 6),
               Text(
                 date,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13, // 글꼴 크기 줄임
                   fontWeight: FontWeight.w600,
+                  color: themeController.textPrimaryColor,
                 ),
               ),
             ],
@@ -304,7 +321,9 @@ class RecentTransactionsList extends StatelessWidget {
                   margin: const EdgeInsets.only(left: 4), // 좌측 마진 줄임
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // 패딩 줄임
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: themeController.isDarkMode
+                        ? AppColors.darkSuccess.withOpacity(0.2)
+                        : Colors.green.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -312,7 +331,9 @@ class RecentTransactionsList extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10, // 폰트 크기 줄임
                       fontWeight: FontWeight.w600,
-                      color: Colors.green.shade700,
+                      color: themeController.isDarkMode
+                          ? AppColors.darkSuccess
+                          : Colors.green.shade700,
                     ),
                   ),
                 ),
@@ -323,7 +344,9 @@ class RecentTransactionsList extends StatelessWidget {
                   margin: const EdgeInsets.only(left: 4), // 좌측 마진 줄임
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // 패딩 줄임
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: themeController.isDarkMode
+                        ? AppColors.darkError.withOpacity(0.2)
+                        : Colors.red.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -331,7 +354,9 @@ class RecentTransactionsList extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10, // 폰트 크기 줄임
                       fontWeight: FontWeight.w600,
-                      color: Colors.red.shade700,
+                      color: themeController.isDarkMode
+                          ? AppColors.darkError
+                          : Colors.red.shade700,
                     ),
                   ),
                 ),
@@ -342,7 +367,9 @@ class RecentTransactionsList extends StatelessWidget {
                   margin: const EdgeInsets.only(left: 4), // 좌측 마진 줄임
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // 패딩 줄임
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: themeController.isDarkMode
+                        ? AppColors.darkInfo.withOpacity(0.2)
+                        : Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -350,7 +377,9 @@ class RecentTransactionsList extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10, // 폰트 크기 줄임
                       fontWeight: FontWeight.w600,
-                      color: Colors.blue.shade700,
+                      color: themeController.isDarkMode
+                          ? AppColors.darkInfo
+                          : Colors.blue.shade700,
                     ),
                   ),
                 ),
@@ -363,11 +392,13 @@ class RecentTransactionsList extends StatelessWidget {
 
   // 거래 항목 위젯 개선 - 더 심플하고 가로 배치로 변경
   Widget _buildTransactionItem(TransactionWithCategory transaction) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     // 금액 포맷팅
     final formattedAmount = NumberFormat('#,###').format(transaction.amount.abs());
 
     // 카테고리 색상
-    final categoryColor = _getCategoryColor(transaction.categoryType);
+    final categoryColor = _getCategoryColor(transaction.categoryType, themeController);
 
     // 수입인지 확인
     final isIncome = transaction.categoryType == 'INCOME';
@@ -378,7 +409,11 @@ class RecentTransactionsList extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), // 더 좁은 패딩으로 조정
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.grey.shade100),
+          bottom: BorderSide(
+            color: themeController.isDarkMode
+                ? Colors.grey.shade800
+                : Colors.grey.shade100,
+          ),
         ),
       ),
       child: Row(
@@ -406,9 +441,10 @@ class RecentTransactionsList extends StatelessWidget {
           Expanded(
             child: Text(
               transaction.description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
+                color: themeController.textPrimaryColor,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -438,9 +474,11 @@ class RecentTransactionsList extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: isIncome ? Colors.green.shade600 :
-              isFinance ? Colors.blue.shade600 :
-              Colors.red.shade600,
+              color: isIncome 
+                  ? (themeController.isDarkMode ? AppColors.darkSuccess : Colors.green.shade600)
+                  : isFinance 
+                      ? (themeController.isDarkMode ? AppColors.darkInfo : Colors.blue.shade600)
+                      : (themeController.isDarkMode ? AppColors.darkError : Colors.red.shade600),
             ),
           ),
         ],
@@ -450,6 +488,8 @@ class RecentTransactionsList extends StatelessWidget {
 
   // 더 많은 거래가 있음을 표시하는 위젯 - 더 작게 수정
   Widget _buildMoreTransactionsIndicator(int count) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return GestureDetector(
       onTap: () {},
       child: Container(
@@ -457,7 +497,9 @@ class RecentTransactionsList extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6), // 더 적은 패딩
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: themeController.isDarkMode
+              ? themeController.surfaceColor
+              : Colors.grey.shade50,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -466,7 +508,7 @@ class RecentTransactionsList extends StatelessWidget {
               '외 $count건 더보기',
               style: TextStyle(
                 fontSize: 11, // 더 작은 폰트
-                color: Colors.grey.shade600,
+                color: themeController.textSecondaryColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -474,7 +516,7 @@ class RecentTransactionsList extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios,
               size: 10,
-              color: Colors.grey.shade600,
+              color: themeController.textSecondaryColor,
             ),
           ],
         ),
@@ -527,16 +569,29 @@ class RecentTransactionsList extends StatelessWidget {
   }
 
   // 카테고리 유형에 맞는 색상 반환
-  Color _getCategoryColor(String categoryType) {
-    switch (categoryType) {
-      case 'INCOME':
-        return Colors.green[600]!;
-      case 'EXPENSE':
-        return Colors.red[600]!;
-      case 'FINANCE':
-        return Colors.blue[600]!;
-      default:
-        return Colors.grey;
+  Color _getCategoryColor(String categoryType, ThemeController themeController) {
+    if (themeController.isDarkMode) {
+      switch (categoryType) {
+        case 'INCOME':
+          return AppColors.darkSuccess;
+        case 'EXPENSE':
+          return AppColors.darkError;
+        case 'FINANCE':
+          return AppColors.darkInfo;
+        default:
+          return Colors.grey;
+      }
+    } else {
+      switch (categoryType) {
+        case 'INCOME':
+          return Colors.green[600]!;
+        case 'EXPENSE':
+          return Colors.red[600]!;
+        case 'FINANCE':
+          return Colors.blue[600]!;
+        default:
+          return Colors.grey;
+      }
     }
   }
 

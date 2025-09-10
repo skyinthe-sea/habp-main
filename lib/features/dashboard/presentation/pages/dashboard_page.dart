@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../data/datasources/transaction_local_data_source.dart';
 import '../../data/repositories/transaction_repository_impl.dart';
@@ -75,8 +76,10 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+    final ThemeController themeController = Get.find<ThemeController>();
+    
+    return Obx(() => Scaffold(
+      backgroundColor: themeController.backgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -112,11 +115,13 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                       // 월별 지출 추이 차트
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: themeController.cardColor,
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: themeController.isDarkMode
+                                  ? Colors.black.withOpacity(0.3)
+                                  : Colors.grey.withOpacity(0.1),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -129,11 +134,13 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                       // 카테고리별 차트 (탭으로 전환 가능)
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: themeController.cardColor,
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: themeController.isDarkMode
+                                  ? Colors.black.withOpacity(0.3)
+                                  : Colors.grey.withOpacity(0.1),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -146,11 +153,13 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                       // 최근 거래 내역
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: themeController.cardColor,
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: themeController.isDarkMode
+                                  ? Colors.black.withOpacity(0.3)
+                                  : Colors.grey.withOpacity(0.1),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -166,17 +175,21 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildMonthSelectorBar() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: themeController.isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -188,6 +201,8 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
 
 
   Widget _buildMonthSelector() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Obx(() {
       final isCurrentMonth = _controller.selectedMonth.value.year == DateTime.now().year &&
           _controller.selectedMonth.value.month == DateTime.now().month;
@@ -198,7 +213,10 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
+            colors: themeController.isDarkMode ? [
+              themeController.primaryColor.withOpacity(0.2),
+              themeController.surfaceColor,
+            ] : [
               Colors.pink.shade50,
               const Color(0xFFF5F5F5),
             ],
@@ -206,7 +224,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.2),
+              color: themeController.primaryColor.withOpacity(0.2),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -232,11 +250,11 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: themeController.cardColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: themeController.primaryColor.withOpacity(0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),
@@ -245,25 +263,25 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.calendar_today_rounded,
                           size: 14,
-                          color: AppColors.primary,
+                          color: themeController.primaryColor,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           _controller.getMonthYearString(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                            color: themeController.textPrimaryColor,
                           ),
                         ),
                         const SizedBox(width: 2),
-                        const Icon(
+                        Icon(
                           Icons.arrow_drop_down,
                           size: 18,
-                          color: Colors.black54,
+                          color: themeController.textSecondaryColor,
                         ),
                       ],
                     ),
@@ -278,7 +296,9 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isCurrentMonth ? Colors.grey.shade100 : AppColors.primary.withOpacity(0.1),
+                      color: isCurrentMonth 
+                          ? (themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100)
+                          : themeController.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -287,7 +307,9 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                         Icon(
                           Icons.today,
                           size: 12,
-                          color: isCurrentMonth ? Colors.grey : AppColors.primary,
+                          color: isCurrentMonth 
+                              ? (themeController.isDarkMode ? Colors.grey.shade500 : Colors.grey)
+                              : themeController.primaryColor,
                         ),
                       ],
                     ),
@@ -309,6 +331,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
   }
 
   Future<void> _showMonthPickerDialog(BuildContext context) async {
+    final ThemeController themeController = Get.find<ThemeController>();
     final initialDate = _controller.selectedMonth.value;
     int selectedYear = initialDate.year;
 
@@ -318,6 +341,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
+              backgroundColor: themeController.cardColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -332,7 +356,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                       });
                     },
                   ),
-                  Text('$selectedYear년', style: const TextStyle(fontSize: 16)),
+                  Text('$selectedYear년', style: TextStyle(fontSize: 16, color: themeController.textPrimaryColor)),
                   IconButton(
                     icon: const Icon(Icons.arrow_forward_ios, size: 18),
                     padding: EdgeInsets.zero,
@@ -369,10 +393,11 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : Colors.transparent,
+                          color: isSelected ? themeController.primaryColor : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                            color: isSelected ? themeController.primaryColor : 
+                                   (themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
                           ),
                         ),
                         child: Center(
@@ -380,8 +405,8 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                             '$month월',
                             style: TextStyle(
                               color: isDisabled
-                                  ? Colors.grey.shade400
-                                  : isSelected ? Colors.white : Colors.black87,
+                                  ? (themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400)
+                                  : isSelected ? Colors.white : themeController.textPrimaryColor,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
@@ -396,7 +421,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: const Text('취소', style: TextStyle(color: Colors.grey)),
+                  child: Text('취소', style: TextStyle(color: themeController.textSecondaryColor)),
                 ),
                 TextButton(
                   onPressed: () {
@@ -406,7 +431,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                       1,
                     ));
                   },
-                  child: const Text('오늘', style: TextStyle(color: AppColors.primary)),
+                  child: Text('오늘', style: TextStyle(color: themeController.primaryColor)),
                 ),
               ],
             );
@@ -425,6 +450,8 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
     required VoidCallback? onTap,
     bool isDisabled = false,
   }) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(30),
@@ -434,13 +461,17 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
-            color: isDisabled ? Colors.grey.shade100 : Colors.white,
+            color: isDisabled 
+                ? (themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100)
+                : themeController.cardColor,
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Icon(
               icon,
-              color: isDisabled ? Colors.grey.shade400 : AppColors.primary,
+              color: isDisabled 
+                  ? (themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400)
+                  : themeController.primaryColor,
               size: 24,
             ),
           ),

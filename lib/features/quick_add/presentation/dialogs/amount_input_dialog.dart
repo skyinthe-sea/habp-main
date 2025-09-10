@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/quick_add_controller.dart';
 import '../widgets/autocomplete_text_field.dart';
 import 'date_selection_dialog.dart';
@@ -154,6 +155,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
     // 키보드 닫기
     FocusScope.of(context).unfocus();
 
+    final ThemeController themeController = Get.find<ThemeController>();
     DateTime selectedDate = controller.transaction.value.transactionDate;
 
     final result = await showDialog<DateTime>(
@@ -163,14 +165,16 @@ class _AmountInputDialogState extends State<AmountInputDialog>
           return Dialog(
             backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.all(16),
-            child: Container(
+            child: Obx(() => Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: themeController.surfaceColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: themeController.isDarkMode
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -183,18 +187,18 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         '날짜 변경',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          color: themeController.primaryColor,
                         ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close, size: 20),
                         onPressed: () => Navigator.of(context).pop(),
-                        color: Colors.grey,
+                        color: themeController.textSecondaryColor,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
@@ -221,27 +225,34 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     headerStyle: HeaderStyle(
                       titleCentered: true,
                       formatButtonVisible: false,
-                      titleTextStyle: const TextStyle(
+                      titleTextStyle: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: themeController.textPrimaryColor,
                       ),
-                      leftChevronIcon: const Icon(
+                      leftChevronIcon: Icon(
                         Icons.chevron_left,
-                        color: AppColors.primary,
+                        color: themeController.primaryColor,
                       ),
-                      rightChevronIcon: const Icon(
+                      rightChevronIcon: Icon(
                         Icons.chevron_right,
-                        color: AppColors.primary,
+                        color: themeController.primaryColor,
                       ),
                     ),
                     calendarStyle: CalendarStyle(
                       markersMaxCount: 0,
+                      defaultTextStyle: TextStyle(
+                        color: themeController.textPrimaryColor,
+                      ),
+                      weekendTextStyle: TextStyle(
+                        color: themeController.textPrimaryColor,
+                      ),
                       todayDecoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.3),
+                        color: themeController.primaryColor.withOpacity(0.3),
                         shape: BoxShape.circle,
                       ),
-                      selectedDecoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      selectedDecoration: BoxDecoration(
+                        color: themeController.primaryColor,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -261,7 +272,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                             });
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: AppColors.primary,
+                            foregroundColor: themeController.primaryColor,
                           ),
                           child: const Text('오늘'),
                         ),
@@ -274,7 +285,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                             Navigator.of(context).pop(selectedDate);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: themeController.primaryColor,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -287,7 +298,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                   ),
                 ],
               ),
-            ),
+            )),
           );
         },
       ),
@@ -339,12 +350,16 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
   /// Builds the amount input field with visual feedback
   Widget _buildAmountField() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: themeController.isDarkMode 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 10,
             spreadRadius: 1,
             offset: const Offset(0, 2),
@@ -357,13 +372,15 @@ class _AmountInputDialogState extends State<AmountInputDialog>
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _isHighlighted
-                ? AppColors.primary
+                ? themeController.primaryColor
                 : _amountFocusNode.hasFocus
-                ? AppColors.primary
+                ? themeController.primaryColor
+                : themeController.isDarkMode
+                ? themeController.textSecondaryColor.withOpacity(0.3)
                 : Colors.grey.shade200,
             width: _isHighlighted ? 2.0 : 1.0,
           ),
-          color: Colors.white,
+          color: themeController.surfaceColor,
         ),
         child: Row(
           children: [
@@ -382,18 +399,20 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: themeController.isDarkMode
+                        ? themeController.cardColor
+                        : Colors.grey.shade50,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(15),
                       bottomLeft: Radius.circular(15),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'C',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                      color: themeController.textSecondaryColor,
                     ),
                   ),
                 ),
@@ -410,14 +429,16 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: _isHighlighted ? AppColors.primary : Colors.black,
+                  color: _isHighlighted 
+                      ? themeController.primaryColor 
+                      : themeController.textPrimaryColor,
                 ),
                 decoration: InputDecoration(
                   hintText: '0',
                   suffixText: '원',
                   suffixStyle: TextStyle(
                     fontSize: 18,
-                    color: Colors.grey.shade600,
+                    color: themeController.textSecondaryColor,
                   ),
                   border: InputBorder.none,
                   contentPadding:
@@ -455,7 +476,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: themeController.primaryColor.withOpacity(0.1),
                     borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(15),
                       bottomRight: Radius.circular(15),
@@ -463,7 +484,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                   ),
                   child: Icon(
                     Icons.calculate_rounded,
-                    color: AppColors.primary,
+                    color: themeController.primaryColor,
                     size: 24,
                   ),
                 ),
@@ -477,36 +498,80 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
   /// Builds the quick amount selection buttons with add/subtract functionality
   Widget _buildQuickAmountButtons() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: themeController.isDarkMode
+            ? themeController.cardColor
+            : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: themeController.isDarkMode
+              ? themeController.textSecondaryColor.withOpacity(0.2)
+              : Colors.grey.shade200,
+        ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          // Subtraction side (left) - 1,000, 10,000, 100,000
-          _buildOperationButton(amount: 1000, isAddition: false),
-          const SizedBox(width: 8),
-          _buildOperationButton(amount: 10000, isAddition: false),
-          const SizedBox(width: 8),
-          _buildOperationButton(amount: 100000, isAddition: false),
+          // First row: 100, 500, 1000
+          Row(
+            children: [
+              // Subtraction side (left)
+              _buildOperationButton(amount: 100, isAddition: false),
+              const SizedBox(width: 4),
+              _buildOperationButton(amount: 500, isAddition: false),
+              const SizedBox(width: 4),
+              _buildOperationButton(amount: 1000, isAddition: false),
 
-          // Center divider
-          Container(
-            height: 40,
-            width: 1,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            color: Colors.grey.shade300,
+              // Center divider
+              Container(
+                height: 40,
+                width: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                color: themeController.isDarkMode
+                    ? themeController.textSecondaryColor.withOpacity(0.3)
+                    : Colors.grey.shade300,
+              ),
+
+              // Addition side (right)
+              _buildOperationButton(amount: 100, isAddition: true),
+              const SizedBox(width: 4),
+              _buildOperationButton(amount: 500, isAddition: true),
+              const SizedBox(width: 4),
+              _buildOperationButton(amount: 1000, isAddition: true),
+            ],
           ),
+          const SizedBox(height: 8),
+          // Second row: 5000, 10000, 100000
+          Row(
+            children: [
+              // Subtraction side (left)
+              _buildOperationButton(amount: 5000, isAddition: false),
+              const SizedBox(width: 4),
+              _buildOperationButton(amount: 10000, isAddition: false),
+              const SizedBox(width: 4),
+              _buildOperationButton(amount: 100000, isAddition: false),
 
-          // Addition side (right) - 1,000, 10,000, 100,000
-          _buildOperationButton(amount: 1000, isAddition: true),
-          const SizedBox(width: 8),
-          _buildOperationButton(amount: 10000, isAddition: true),
-          const SizedBox(width: 8),
-          _buildOperationButton(amount: 100000, isAddition: true),
+              // Center divider
+              Container(
+                height: 40,
+                width: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                color: themeController.isDarkMode
+                    ? themeController.textSecondaryColor.withOpacity(0.3)
+                    : Colors.grey.shade300,
+              ),
+
+              // Addition side (right)
+              _buildOperationButton(amount: 5000, isAddition: true),
+              const SizedBox(width: 4),
+              _buildOperationButton(amount: 10000, isAddition: true),
+              const SizedBox(width: 4),
+              _buildOperationButton(amount: 100000, isAddition: true),
+            ],
+          ),
         ],
       ),
     );
@@ -514,20 +579,27 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
   /// Helper method to build operation buttons
   Widget _buildOperationButton({required int amount, required bool isAddition}) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     final Color backgroundColor = isAddition
-        ? AppColors.primary.withOpacity(0.1)
-        : Colors.grey.shade200;
+        ? themeController.primaryColor.withOpacity(0.1)
+        : themeController.isDarkMode
+            ? themeController.cardColor
+            : Colors.grey.shade200;
 
     final Color textColor = isAddition
-        ? AppColors.primary
-        : Colors.grey.shade700;
+        ? themeController.primaryColor
+        : themeController.textSecondaryColor;
 
     final IconData icon = isAddition ? Icons.add : Icons.remove;
 
-    // Adjust font size based on digit count to prevent text wrapping
-    double fontSize = 11.0;
+    // Adjust font size based on amount for better readability in 2 rows
+    double fontSize = 11.0;  // Larger base font size for 2-row layout
+    if (amount >= 10000) {
+      fontSize = 10.0; // Slightly smaller for 5-digit numbers
+    }
     if (amount >= 100000) {
-      fontSize = 9.0; // Smaller font for 100,000 to prevent line breaks
+      fontSize = 9.0; // Smallest for 6-digit numbers
     }
 
     return Expanded(
@@ -543,15 +615,17 @@ class _AmountInputDialogState extends State<AmountInputDialog>
             _updateAmount(0);
           }
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: themeController.isDarkMode
+                    ? Colors.black.withOpacity(0.2)
+                    : Colors.black.withOpacity(0.05),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),
@@ -560,11 +634,13 @@ class _AmountInputDialogState extends State<AmountInputDialog>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 12, color: textColor),
-              const SizedBox(height: 2),
+              Icon(icon, size: 14, color: textColor),
+              const SizedBox(height: 1),
               Text(
                 NumberFormat('#,###').format(amount),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: fontSize,
                   fontWeight: FontWeight.bold,
@@ -581,6 +657,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<QuickAddController>();
+    final ThemeController themeController = Get.find<ThemeController>();
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -599,11 +676,13 @@ class _AmountInputDialogState extends State<AmountInputDialog>
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: themeController.surfaceColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: themeController.isDarkMode
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.black.withOpacity(0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -619,14 +698,14 @@ class _AmountInputDialogState extends State<AmountInputDialog>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Obx(() => Text(
                     '금액 입력',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: themeController.primaryColor,
                     ),
-                  ),
+                  )),
                   IconButton(
                     icon: const Icon(Icons.arrow_back, size: 20),
                     onPressed: () {
@@ -654,10 +733,12 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                         transitionDuration: const Duration(milliseconds: 150),
                         barrierDismissible: true,
                         barrierLabel: '',
-                        barrierColor: Colors.black.withOpacity(0.5),
+                        barrierColor: themeController.isDarkMode
+                            ? Colors.black.withOpacity(0.7)
+                            : Colors.black.withOpacity(0.5),
                       );
                     },
-                    color: Colors.grey,
+                    color: themeController.textSecondaryColor,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -667,31 +748,38 @@ class _AmountInputDialogState extends State<AmountInputDialog>
               const SizedBox(height: 20),
 
               // Transaction info
-              Container(
+              Obx(() => Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: themeController.isDarkMode
+                      ? themeController.cardColor
+                      : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(
+                    color: themeController.isDarkMode
+                        ? themeController.textSecondaryColor.withOpacity(0.2)
+                        : Colors.grey.shade200,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           '카테고리:',
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey,
+                            color: themeController.textSecondaryColor,
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Obx(() => Text(
                             controller.transaction.value.categoryName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w500,
+                              color: themeController.textPrimaryColor,
                             ),
                           )),
                         ),
@@ -700,11 +788,11 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           '날짜:',
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey,
+                            color: themeController.textSecondaryColor,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -720,10 +808,10 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                                   horizontal: 12
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.05),
+                                  color: themeController.primaryColor.withOpacity(0.05),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: AppColors.primary.withOpacity(0.2),
+                                    color: themeController.primaryColor.withOpacity(0.2),
                                     width: 1,
                                   ),
                                 ),
@@ -732,15 +820,15 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                                     Icon(
                                       Icons.calendar_today,
                                       size: 16,
-                                      color: AppColors.primary,
+                                      color: themeController.primaryColor,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       DateFormat('yyyy년 MM월 dd일').format(
                                           controller.transaction.value.transactionDate),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.primary,
+                                        color: themeController.primaryColor,
                                       ),
                                     ),
                                   ],
@@ -753,7 +841,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     ),
                   ],
                 ),
-              ),
+              )),
 
               const SizedBox(height: 20),
 
@@ -761,13 +849,14 @@ class _AmountInputDialogState extends State<AmountInputDialog>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Obx(() => Text(
                     '금액',
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
+                      color: themeController.textPrimaryColor,
                     ),
-                  ),
+                  )),
                   const SizedBox(height: 12),
 
                   // 수정된 금액 입력 필드 (계산기 버튼 추가)
@@ -786,13 +875,14 @@ class _AmountInputDialogState extends State<AmountInputDialog>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Obx(() => Text(
                     '설명 (선택사항)',
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
+                      color: themeController.textPrimaryColor,
                     ),
-                  ),
+                  )),
                   const SizedBox(height: 6),
                   AutocompleteTextField(
                     controller: _descriptionController,
@@ -853,14 +943,14 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: themeController.primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     disabledBackgroundColor:
-                    AppColors.primary.withOpacity(0.3),
+                    themeController.primaryColor.withOpacity(0.3),
                     elevation: 2,
                   ),
                   child: controller.isLoading.value

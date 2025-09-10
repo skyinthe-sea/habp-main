@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../../core/controllers/theme_controller.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -12,12 +14,16 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final ThemeController themeController = Get.find<ThemeController>();
+    
+    return Obx(() => Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: themeController.isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, -1),
@@ -30,19 +36,19 @@ class CustomBottomNavigationBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.dashboard, '대시보드'),
-              _buildNavItem(1, Icons.calendar_today, '캘린더'),
-              _buildAddButton(),
-              _buildNavItem(3, Icons.account_balance_wallet, '지출'),
-              _buildNavItem(4, Icons.settings, '설정'),
+              _buildNavItem(0, Icons.dashboard, '대시보드', themeController),
+              _buildNavItem(1, Icons.calendar_today, '캘린더', themeController),
+              _buildAddButton(themeController),
+              _buildNavItem(3, Icons.account_balance_wallet, '지출', themeController),
+              _buildNavItem(4, Icons.settings, '설정', themeController),
             ],
           ),
         ),
       ),
-    );
+    ));
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildNavItem(int index, IconData icon, String label, ThemeController themeController) {
     final isSelected = index == currentIndex;
     return InkWell(
       onTap: () => onTap(index),
@@ -52,14 +58,18 @@ class CustomBottomNavigationBar extends StatelessWidget {
           Icon(
             icon,
             size: 24,
-            color: isSelected ? const Color(0xFFE495C0) : Colors.grey,
+            color: isSelected 
+                ? themeController.primaryColor 
+                : themeController.textSecondaryColor,
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
               fontSize: 10,
-              color: isSelected ? const Color(0xFFE495C0) : Colors.grey,
+              color: isSelected 
+                  ? themeController.primaryColor 
+                  : themeController.textSecondaryColor,
             ),
           ),
         ],
@@ -67,16 +77,16 @@ class CustomBottomNavigationBar extends StatelessWidget {
     );
   }
 
-  Widget _buildAddButton() {
+  Widget _buildAddButton(ThemeController themeController) {
     return Container(
       height: 42,
       width: 42,
       decoration: BoxDecoration(
-        color: const Color(0xFFE495C0),
+        color: themeController.primaryColor,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE495C0).withOpacity(0.3),
+            color: themeController.primaryColor.withOpacity(0.3),
             spreadRadius: 1,
             blurRadius: 6,
             offset: const Offset(0, 2),
