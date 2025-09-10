@@ -8,6 +8,7 @@ import '../controllers/main_controller.dart';
 import '../../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../../features/quick_add/presentation/widgets/quick_add_button.dart';
 import '../../../features/settings/presentation/pages/settings_page.dart';
+import '../../controllers/theme_controller.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -101,12 +102,16 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildBottomNavigationBar() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: themeController.isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, -1),
@@ -133,7 +138,9 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildNavItem(int index, IconData icon, String label) {
+    final ThemeController themeController = Get.find<ThemeController>();
     final isSelected = controller.selectedIndex.value == index;
+    
     return InkWell(
       onTap: () => controller.changeTab(index),
       child: Column(
@@ -142,14 +149,14 @@ class _MainPageState extends State<MainPage> {
           Icon(
             icon,
             size: 24,
-            color: isSelected ? const Color(0xFFE495C0) : Colors.grey,
+            color: isSelected ? const Color(0xFFE495C0) : themeController.textSecondaryColor,
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
               fontSize: 10,
-              color: isSelected ? const Color(0xFFE495C0) : Colors.grey,
+              color: isSelected ? const Color(0xFFE495C0) : themeController.textSecondaryColor,
             ),
           ),
         ],
