@@ -929,9 +929,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     // Calendar for create form with fixed height to prevent overflow
                     SizedBox(
                       height: 300,
-                      child: TableCalendar(
-                        firstDay: DateTime.utc(2020, 1, 1),
-                        lastDay: DateTime.utc(2030, 12, 31),
+                      child: Material(
+                        color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TableCalendar(
+                          firstDay: DateTime.utc(2020, 1, 1),
+                          lastDay: DateTime.utc(2030, 12, 31),
                         focusedDay: _effectiveFromDate,
                         selectedDayPredicate: (day) {
                           return isSameDay(_selectedDate, day);
@@ -969,6 +974,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                         availableGestures: AvailableGestures.none,
                         rowHeight: 40,
                         daysOfWeekHeight: 20,
+                        ),
                       ),
                     ),
                     Padding(
@@ -2049,9 +2055,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     // Fixed height calendar to prevent overflow
                     SizedBox(
                       height: 280,
-                      child: TableCalendar(
-                        firstDay: DateTime.utc(2020, 1, 1),
-                        lastDay: DateTime.utc(2030, 12, 31),
+                      child: Material(
+                        color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TableCalendar(
+                          firstDay: DateTime.utc(2020, 1, 1),
+                          lastDay: DateTime.utc(2030, 12, 31),
                         focusedDay: _deleteFromDate,
                         selectedDayPredicate: (day) {
                           return isSameDay(_deleteFromDate, day);
@@ -2083,6 +2094,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                         availableGestures: AvailableGestures.none,
                         rowHeight: 40,
                         daysOfWeekHeight: 20,
+                        ),
                       ),
                     ),
                     Padding(
@@ -3099,11 +3111,16 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                       // 캘린더 크기를 기기 화면에 맞춰 조절
                                       SizedBox(
                                         // 최대 265, 최소 180으로 조정 (작은 화면에서도 동작)
-                                        height: MediaQuery.of(context).size.height < 600 ? 180 :
-                                        MediaQuery.of(context).size.height < 700 ? 220 : 265,
-                                        child: TableCalendar(
-                                          firstDay: DateTime.utc(2020, 1, 1),
-                                          lastDay: DateTime.utc(2030, 12, 31),
+                                        height: MediaQuery.of(context).size.height < 600 ? 180.0 :
+                                            (MediaQuery.of(context).size.height < 700 ? 220.0 : 265.0),
+                                        child: Material(
+                                          color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          child: TableCalendar(
+                                            firstDay: DateTime.utc(2020, 1, 1),
+                                            lastDay: DateTime.utc(2030, 12, 31),
                                           focusedDay: effectiveFromDate,
                                           selectedDayPredicate: (day) {
                                             return isSameDay(selectedDate, day);
@@ -3157,20 +3174,22 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                           daysOfWeekHeight: 20,
                                           daysOfWeekStyle: DaysOfWeekStyle(
                                             decoration: BoxDecoration(
-                                              color: Colors.grey.shade100,
+                                              color: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade100,
                                             ),
-                                            weekdayStyle: const TextStyle(
+                                            weekdayStyle: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
+                                              color: themeController.textPrimaryColor,
                                             ),
                                             weekendStyle: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
-                                              color: Colors.red.shade300,
+                                              color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade300,
                                             ),
                                           ),
                                         ),
                                       ),
+                                    ),
 
                                       // Info text at bottom
                                       Padding(

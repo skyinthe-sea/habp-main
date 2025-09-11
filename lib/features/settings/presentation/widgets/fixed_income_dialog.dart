@@ -932,7 +932,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     // Calendar for create form with fixed height to prevent overflow
                     SizedBox(
                       height: 300,
-                      child: TableCalendar(
+                      child: Material(
+                        color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TableCalendar(
                         firstDay: DateTime.utc(2020, 1, 1),
                         lastDay: DateTime.utc(2030, 12, 31),
                         focusedDay: _effectiveFromDate,
@@ -972,6 +977,22 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         availableGestures: AvailableGestures.none,
                         rowHeight: 40,
                         daysOfWeekHeight: 20,
+                        daysOfWeekStyle: DaysOfWeekStyle(
+                          decoration: BoxDecoration(
+                            color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                          ),
+                          weekdayStyle: TextStyle(
+                            color: themeController.textPrimaryColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          weekendStyle: TextStyle(
+                            color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade300,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        ),
                       ),
                     ),
                     Padding(
@@ -1918,6 +1939,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Delete confirmation UI
   Widget _buildDeleteConfirmation() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     if (_selectedCategory == null) {
       return const Center(child: Text('선택된 카테고리가 없습니다.'));
     }
@@ -2053,7 +2076,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                     // Fixed height calendar to prevent overflow
                     SizedBox(
                       height: 280,
-                      child: TableCalendar(
+                      child: Material(
+                        color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TableCalendar(
                         firstDay: DateTime.utc(2020, 1, 1),
                         lastDay: DateTime.utc(2030, 12, 31),
                         focusedDay: _deleteFromDate,
@@ -2067,13 +2095,16 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         },
                         calendarStyle: CalendarStyle(
                           todayDecoration: BoxDecoration(
-                            color: Colors.red.shade200,
+                            color: themeController.isDarkMode ? Colors.red.shade400.withOpacity(0.3) : Colors.red.shade200,
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color: Colors.red.shade600,
+                            color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade600,
                             shape: BoxShape.circle,
                           ),
+                          defaultTextStyle: TextStyle(color: themeController.textPrimaryColor),
+                          weekendTextStyle: TextStyle(color: themeController.textPrimaryColor),
+                          outsideTextStyle: TextStyle(color: themeController.textSecondaryColor),
                         ),
                         headerVisible: false,
                         calendarFormat: CalendarFormat.month,
@@ -2084,6 +2115,22 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         availableGestures: AvailableGestures.none,
                         rowHeight: 40,
                         daysOfWeekHeight: 20,
+                        daysOfWeekStyle: DaysOfWeekStyle(
+                          decoration: BoxDecoration(
+                            color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                          ),
+                          weekdayStyle: TextStyle(
+                            color: themeController.textPrimaryColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          weekendStyle: TextStyle(
+                            color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade300,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        ),
                       ),
                     ),
                     Padding(
@@ -3098,7 +3145,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                         // 최대 265, 최소 180으로 조정 (작은 화면에서도 동작)
                                         height: MediaQuery.of(context).size.height < 600 ? 180 :
                                         MediaQuery.of(context).size.height < 700 ? 220 : 265,
-                                        child: TableCalendar(
+                                        child: Material(
+                                          color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          child: TableCalendar(
                                           firstDay: DateTime.utc(2020, 1, 1),
                                           lastDay: DateTime.utc(2030, 12, 31),
                                           focusedDay: effectiveFromDate,
@@ -3120,17 +3172,20 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                             cellMargin: const EdgeInsets.all(2),
                                             cellPadding: const EdgeInsets.all(3),
                                             todayDecoration: BoxDecoration(
-                                              color: Colors.green.shade200,
+                                              color: themeController.isDarkMode ? Colors.green.shade400.withOpacity(0.3) : Colors.green.shade200,
                                               shape: BoxShape.circle,
                                             ),
                                             selectedDecoration: BoxDecoration(
-                                              color: Colors.green.shade700,
+                                              color: themeController.isDarkMode ? Colors.green.shade400 : Colors.green.shade700,
                                               shape: BoxShape.circle,
                                             ),
-                                            defaultTextStyle: const TextStyle(fontSize: 13),
+                                            defaultTextStyle: TextStyle(
+                                              fontSize: 13,
+                                              color: themeController.textPrimaryColor,
+                                            ),
                                             weekendTextStyle: TextStyle(
                                               fontSize: 13,
-                                              color: Colors.red.shade300,
+                                              color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade300,
                                             ),
                                             selectedTextStyle: const TextStyle(
                                               fontSize: 13,
@@ -3143,7 +3198,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                             ),
                                             outsideTextStyle: TextStyle(
                                               fontSize: 12,
-                                              color: Colors.grey.withOpacity(0.5),
+                                              color: themeController.textSecondaryColor.withOpacity(0.5),
                                             ),
                                           ),
                                           headerVisible: false,
@@ -3157,17 +3212,19 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                           daysOfWeekHeight: 20,
                                           daysOfWeekStyle: DaysOfWeekStyle(
                                             decoration: BoxDecoration(
-                                              color: Colors.grey.shade100,
+                                              color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                                             ),
-                                            weekdayStyle: const TextStyle(
+                                            weekdayStyle: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
+                                              color: themeController.textPrimaryColor,
                                             ),
                                             weekendStyle: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
-                                              color: Colors.red.shade300,
+                                              color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade300,
                                             ),
+                                          ),
                                           ),
                                         ),
                                       ),

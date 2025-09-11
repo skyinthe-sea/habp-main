@@ -85,9 +85,10 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final ThemeController themeController = Get.find<ThemeController>();
     
-    return Scaffold(
+    return GetBuilder<ThemeController>(
+      builder: (themeController) {
+        return Scaffold(
       backgroundColor: themeController.backgroundColor,
       body: SafeArea(
         child: ListView(
@@ -300,6 +301,8 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
           ],
         ),
       ),
+        );
+      },
     );
   }
 
