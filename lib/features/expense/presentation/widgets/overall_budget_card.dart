@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/expense_controller.dart';
 
 class OverallBudgetCard extends StatelessWidget {
@@ -11,6 +12,8 @@ class OverallBudgetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Obx(() {
       // 통화 포맷팅
       final currencyFormat = NumberFormat('#,###', 'ko_KR');
@@ -21,17 +24,21 @@ class OverallBudgetCard extends StatelessWidget {
       // 진행 상태에 따른 색상 결정
       final double progressPercentage = controller.overallProgressPercentage.value.abs();
       final Color progressColor = progressPercentage >= 90
-          ? Colors.red
-          : (progressPercentage >= 70 ? Colors.orange : AppColors.primary);
+          ? (themeController.isDarkMode ? Colors.red.shade400 : Colors.red)
+          : (progressPercentage >= 70 
+              ? (themeController.isDarkMode ? Colors.orange.shade400 : Colors.orange) 
+              : themeController.primaryColor);
 
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: themeController.isDarkMode 
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -44,11 +51,12 @@ class OverallBudgetCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   '이번 달 예산 현황',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: themeController.textPrimaryColor,
                   ),
                 ),
                 Container(
@@ -93,7 +101,7 @@ class OverallBudgetCard extends StatelessWidget {
                     '총 예산',
                     totalBudget,
                     Icons.account_balance_wallet,
-                    AppColors.black,
+                    themeController.textPrimaryColor,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -113,7 +121,7 @@ class OverallBudgetCard extends StatelessWidget {
                     '남은 예산',
                     totalRemaining,
                     Icons.savings,
-                    Colors.green.shade700,
+                    themeController.isDarkMode ? Colors.green.shade400 : Colors.green.shade700,
                   ),
                 ),
               ],
@@ -125,7 +133,9 @@ class OverallBudgetCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value: (progressPercentage / 100).toDouble(),
-                backgroundColor: Colors.grey.withOpacity(0.2),
+                backgroundColor: themeController.isDarkMode 
+                    ? Colors.grey.shade700.withOpacity(0.3)
+                    : Colors.grey.withOpacity(0.2),
                 valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                 minHeight: 6,
               ),
@@ -138,10 +148,14 @@ class OverallBudgetCard extends StatelessWidget {
 
   // 정보 카드 위젯
   Widget _buildInfoCard(String title, String value, IconData icon, Color valueColor) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: themeController.isDarkMode 
+            ? Colors.grey.shade800.withOpacity(0.3)
+            : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -152,14 +166,14 @@ class OverallBudgetCard extends StatelessWidget {
               Icon(
                 icon,
                 size: 14,
-                color: Colors.grey.shade600,
+                color: themeController.textSecondaryColor,
               ),
               const SizedBox(width: 6),
               Text(
                 title,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: themeController.textSecondaryColor,
                 ),
               ),
             ],

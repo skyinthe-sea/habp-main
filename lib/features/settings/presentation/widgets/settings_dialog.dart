@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../../../core/routes/app_router.dart';
 import '../../../../core/services/event_bus_service.dart';
@@ -131,6 +132,8 @@ class _SettingsDialogState extends State<SettingsDialog>
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return WillPopScope(
       onWillPop: () async {
         _closeDialog();
@@ -148,7 +151,9 @@ class _SettingsDialogState extends State<SettingsDialog>
                 child: Container(
                   width: double.infinity,
                   height: double.infinity,
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withOpacity(
+                    themeController.isDarkMode ? 0.6 : 0.4
+                  ),
                 ),
               ),
             ),
@@ -162,13 +167,15 @@ class _SettingsDialogState extends State<SettingsDialog>
               child: SlideTransition(
                 position: _slideAnimation,
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: themeController.cardColor,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black26,
+                        color: themeController.isDarkMode
+                            ? Colors.black.withOpacity(0.5)
+                            : Colors.black26,
                         blurRadius: 15,
-                        offset: Offset(-5, 0),
+                        offset: const Offset(-5, 0),
                       ),
                     ],
                   ),
@@ -191,8 +198,8 @@ class _SettingsDialogState extends State<SettingsDialog>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    AppColors.primary.withOpacity(0.8),
-                                    AppColors.primary.withOpacity(0.6),
+                                    themeController.primaryColor.withOpacity(0.8),
+                                    themeController.primaryColor.withOpacity(0.6),
                                   ],
                                 ),
                                 borderRadius: const BorderRadius.only(
@@ -249,7 +256,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                     Icon(
                                       Icons.repeat,
                                       size: 16,
-                                      color: Colors.grey[700],
+                                      color: themeController.textSecondaryColor,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
@@ -257,13 +264,14 @@ class _SettingsDialogState extends State<SettingsDialog>
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.grey[700],
+                                        color: themeController.textSecondaryColor,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                               _buildSettingItem(
+                                themeController: themeController,
                                 icon: Icons.attach_money,
                                 title: '고정 소득',
                                 subtitle: '매월 반복되는 소득 항목을 관리합니다',
@@ -271,6 +279,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 onTap: () => Get.showFixedIncomeDialog(),
                               ),
                               _buildSettingItem(
+                                themeController: themeController,
                                 icon: Icons.money_off,
                                 title: '고정 지출',
                                 subtitle: '매월 반복되는 지출 항목을 관리합니다',
@@ -278,6 +287,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 onTap: () => Get.showFixedExpenseDialog(),
                               ),
                               _buildSettingItem(
+                                themeController: themeController,
                                 icon: Icons.account_balance,
                                 title: '고정 재테크',
                                 subtitle: '매월 반복되는 재테크 항목을 관리합니다',
@@ -294,7 +304,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                     Icon(
                                       Icons.more_horiz,
                                       size: 16,
-                                      color: Colors.grey[700],
+                                      color: themeController.textSecondaryColor,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
@@ -302,13 +312,14 @@ class _SettingsDialogState extends State<SettingsDialog>
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.grey[700],
+                                        color: themeController.textSecondaryColor,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                               _buildSettingItem(
+                                themeController: themeController,
                                 icon: Icons.help_outline,
                                 title: '도움말',
                                 subtitle: '앱 사용 가이드와 자주 묻는 질문',
@@ -317,6 +328,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 },
                               ),
                               _buildSettingItem(
+                                themeController: themeController,
                                 icon: Icons.info_outline,
                                 title: '앱 정보',
                                 subtitle: '버전, 개발팀, 라이센스 정보',
@@ -325,6 +337,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                                 },
                               ),
                               _buildSettingItem(
+                                themeController: themeController,
                                 icon: Icons.star_outline,
                                 title: '앱 평가하기',
                                 subtitle: '스토어에서 앱을 평가해주세요',
@@ -360,30 +373,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                           ),
                         ),
 
-                        // 하단 앱 버전
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 14,
-                                color: Colors.grey[500],
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _isLoadingVersion
-                                    ? '버전 정보 로딩 중...'
-                                    : '버전 $_appVersion',
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        // 버전 표시 제거됨
                       ],
                     ),
                   ),
@@ -397,6 +387,7 @@ class _SettingsDialogState extends State<SettingsDialog>
   }
 
   Widget _buildSettingItem({
+    required ThemeController themeController,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -404,7 +395,7 @@ class _SettingsDialogState extends State<SettingsDialog>
     Color? textColor,
     Color? color,
   }) {
-    final itemColor = color ?? (textColor ?? AppColors.primary);
+    final itemColor = color ?? (textColor ?? themeController.primaryColor);
 
     return ListTile(
       leading: Container(
@@ -423,7 +414,7 @@ class _SettingsDialogState extends State<SettingsDialog>
       title: Text(
         title,
         style: TextStyle(
-          color: textColor ?? Colors.black87,
+          color: textColor ?? themeController.textPrimaryColor,
           fontWeight: FontWeight.w500,
           fontSize: 16,
         ),
@@ -432,12 +423,12 @@ class _SettingsDialogState extends State<SettingsDialog>
         subtitle,
         style: TextStyle(
           fontSize: 12,
-          color: Colors.grey[600],
+          color: themeController.textSecondaryColor,
         ),
       ),
       trailing: Icon(
         Icons.chevron_right,
-        color: Colors.grey[400],
+        color: themeController.textSecondaryColor,
         size: 20,
       ),
       onTap: onTap,

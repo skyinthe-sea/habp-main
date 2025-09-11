@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 
 class AppInfoDialog extends StatefulWidget {
   const AppInfoDialog({Key? key}) : super(key: key);
@@ -30,6 +31,8 @@ class _AppInfoDialogState extends State<AppInfoDialog>
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
@@ -39,11 +42,13 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: themeController.isDarkMode 
+                  ? Colors.black.withOpacity(0.4)
+                  : Colors.black.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -52,15 +57,17 @@ class _AppInfoDialogState extends State<AppInfoDialog>
         child: Column(
           children: [
             // 앱 로고 및 정보 헤더
-            _buildHeader(),
+            _buildHeader(themeController),
 
             // 탭 바
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: themeController.cardColor,
                 border: Border(
                   bottom: BorderSide(
-                    color: Colors.grey.shade200,
+                    color: themeController.isDarkMode 
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade200,
                     width: 1,
                   ),
                 ),
@@ -71,9 +78,9 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                   Tab(text: '정보'),
                   Tab(text: '라이선스'),
                 ],
-                labelColor: AppColors.primary,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: AppColors.primary,
+                labelColor: themeController.primaryColor,
+                unselectedLabelColor: themeController.textSecondaryColor,
+                indicatorColor: themeController.primaryColor,
                 indicatorWeight: 3,
               ),
             ),
@@ -83,8 +90,8 @@ class _AppInfoDialogState extends State<AppInfoDialog>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildAboutTab(),
-                  _buildLicenseTab(),
+                  _buildAboutTab(themeController),
+                  _buildLicenseTab(themeController),
                 ],
               ),
             ),
@@ -93,10 +100,12 @@ class _AppInfoDialogState extends State<AppInfoDialog>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: themeController.cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: themeController.isDarkMode 
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.1),
                     blurRadius: 5,
                     offset: const Offset(0, -3),
                   ),
@@ -107,7 +116,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: themeController.primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -130,7 +139,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
   // 앱 로고 및 정보 헤더
   // Replace the _buildHeader method in app_info_dialog.dart with this:
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeController themeController) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -138,8 +147,8 @@ class _AppInfoDialogState extends State<AppInfoDialog>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withOpacity(0.8),
-            AppColors.primary,
+            themeController.primaryColor.withOpacity(0.8),
+            themeController.primaryColor,
           ],
         ),
         borderRadius: const BorderRadius.only(
@@ -170,7 +179,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                   child: Icon(
                     Icons.account_balance_wallet,
                     size: 40,
-                    color: AppColors.primary,
+                    color: themeController.primaryColor,
                   ),
                 ),
               ),
@@ -187,22 +196,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
               ),
               const SizedBox(height: 8),
 
-              // 앱 버전
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  '버전 1.0.0',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              // 버전 표시 제거
             ],
           ),
 
@@ -221,19 +215,19 @@ class _AppInfoDialogState extends State<AppInfoDialog>
   }
 
   // 정보 탭
-  Widget _buildAboutTab() {
+  Widget _buildAboutTab(ThemeController themeController) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 앱 소개
-          const Text(
+          Text(
             '앱 소개',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: themeController.primaryColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -242,60 +236,67 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                 '다양한 자산 유형을 관리하고, 지출을 추적하며, 예산을 설정하여 재정 목표를 달성하세요.',
             style: TextStyle(
               fontSize: 15,
-              color: Colors.grey[700],
+              color: themeController.textSecondaryColor,
               height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
 
           // 주요 기능
-          const Text(
+          Text(
             '주요 기능',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: themeController.primaryColor,
             ),
           ),
           const SizedBox(height: 12),
           _buildFeatureItem(
+            themeController,
             '자산 관리',
             '부동산, 예금, 주식 등 다양한 자산을 등록하고 현황을 확인하세요.',
           ),
           _buildFeatureItem(
+            themeController,
             '지출 추적',
             '일별, 월별 지출을 추적하고 카테고리별로 분석하세요.',
           ),
           _buildFeatureItem(
+            themeController,
             '예산 설정',
             '카테고리별 예산을 설정하고 지출 상황을 모니터링하세요.',
           ),
           _buildFeatureItem(
+            themeController,
             '달력 보기',
             '캘린더에서 일별 거래 내역을 확인하고 관리하세요.',
           ),
           _buildFeatureItem(
+            themeController,
             '통계 및 분석',
             '소득, 지출, 자산에 대한 다양한 분석과 인사이트를 얻으세요.',
           ),
           const SizedBox(height: 24),
 
           // 개인정보 처리방침 및 이용약관
-          const Text(
+          Text(
             '약관 및 정책',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: themeController.primaryColor,
             ),
           ),
           const SizedBox(height: 12),
           _buildPolicyButton(
+            themeController,
             '개인정보 처리방침',
             'https://doc-hosting.flycricket.io/sugigagyebu-privacy-policy/20e1f1f2-7680-4e8f-8251-53c7ac83e8f7/privacy',
           ),
           const SizedBox(height: 8),
           _buildPolicyButton(
+            themeController,
             '이용약관',
             'https://doc-hosting.flycricket.io/sugigagyebu-terms-of-use/73d9c4a4-0948-41fc-a8b0-20a01a367248/terms',
           ),
@@ -306,18 +307,18 @@ class _AppInfoDialogState extends State<AppInfoDialog>
 
 
   // 라이선스 탭
-  Widget _buildLicenseTab() {
+  Widget _buildLicenseTab(ThemeController themeController) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '오픈소스 라이선스',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: themeController.primaryColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -325,47 +326,54 @@ class _AppInfoDialogState extends State<AppInfoDialog>
             '이 앱은 다음과 같은 오픈소스 라이브러리를 사용하고 있습니다.',
             style: TextStyle(
               fontSize: 15,
-              color: Colors.grey[700],
+              color: themeController.textSecondaryColor,
             ),
           ),
           const SizedBox(height: 16),
           _buildLicenseItem(
+            themeController,
             title: 'Flutter',
             description: 'Google의 UI 툴킷으로, 하나의 코드베이스로 모바일, 웹, 데스크톱 앱을 제작할 수 있습니다.',
             url: 'https://flutter.dev',
             license: 'BSD 3-Clause License',
           ),
           _buildLicenseItem(
+            themeController,
             title: 'GetX',
             description: '상태 관리, 의존성 주입, 라우트 관리를 위한 라이브러리입니다.',
             url: 'https://pub.dev/packages/get',
             license: 'MIT License',
           ),
           _buildLicenseItem(
+            themeController,
             title: 'FL Chart',
             description: '차트 시각화를 위한 라이브러리로, 다양한 유형의 차트를 제공합니다.',
             url: 'https://pub.dev/packages/fl_chart',
             license: 'BSD 3-Clause License',
           ),
           _buildLicenseItem(
+            themeController,
             title: 'Table Calendar',
             description: '캘린더 UI를 제공하는 라이브러리입니다.',
             url: 'https://pub.dev/packages/table_calendar',
             license: 'Apache License 2.0',
           ),
           _buildLicenseItem(
+            themeController,
             title: 'Intl',
             description: '국제화 및 지역화 기능을 제공하는 라이브러리입니다.',
             url: 'https://pub.dev/packages/intl',
             license: 'BSD License',
           ),
           _buildLicenseItem(
+            themeController,
             title: 'URL Launcher',
             description: '앱에서 외부 링크를 열기 위한 라이브러리입니다.',
             url: 'https://pub.dev/packages/url_launcher',
             license: 'BSD License',
           ),
           _buildLicenseItem(
+            themeController,
             title: 'Shared Preferences',
             description: '간단한 데이터 저장을 위한 키-값 스토리지 라이브러리입니다.',
             url: 'https://pub.dev/packages/shared_preferences',
@@ -377,7 +385,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
             style: TextStyle(
               fontSize: 14,
               fontStyle: FontStyle.italic,
-              color: Colors.grey[600],
+              color: themeController.textSecondaryColor,
             ),
           ),
         ],
@@ -386,7 +394,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
   }
 
   // 기능 아이템 위젯
-  Widget _buildFeatureItem(String title, String description) {
+  Widget _buildFeatureItem(ThemeController themeController, String title, String description) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -394,7 +402,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
         children: [
           Icon(
             Icons.check_circle,
-            color: AppColors.primary,
+            color: themeController.primaryColor,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -404,9 +412,10 @@ class _AppInfoDialogState extends State<AppInfoDialog>
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
+                    color: themeController.textPrimaryColor,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -414,7 +423,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                   description,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[700],
+                    color: themeController.textSecondaryColor,
                   ),
                 ),
               ],
@@ -426,30 +435,37 @@ class _AppInfoDialogState extends State<AppInfoDialog>
   }
 
   // 정책 버튼 위젯
-  Widget _buildPolicyButton(String title, String url) {
+  Widget _buildPolicyButton(ThemeController themeController, String title, String url) {
     return GestureDetector(
       onTap: () => _launchUrl(url),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: themeController.isDarkMode 
+              ? Colors.grey.shade800.withOpacity(0.3)
+              : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color: themeController.isDarkMode 
+                ? Colors.grey.shade600
+                : Colors.grey.shade300
+          ),
         ),
         child: Row(
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 15,
+                color: themeController.textPrimaryColor,
               ),
             ),
             const Spacer(),
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Colors.grey[700],
+              color: themeController.textSecondaryColor,
             ),
           ],
         ),
@@ -460,7 +476,8 @@ class _AppInfoDialogState extends State<AppInfoDialog>
 
 
   // 라이선스 아이템 위젯
-  Widget _buildLicenseItem({
+  Widget _buildLicenseItem(
+    ThemeController themeController, {
     required String title,
     required String description,
     required String url,
@@ -470,9 +487,13 @@ class _AppInfoDialogState extends State<AppInfoDialog>
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: themeController.isDarkMode 
+              ? Colors.grey.shade700
+              : Colors.grey.shade200
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,9 +507,10 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: themeController.textPrimaryColor,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -496,7 +518,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                       license,
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.primary,
+                        color: themeController.primaryColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -508,7 +530,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: themeController.primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -517,14 +539,14 @@ class _AppInfoDialogState extends State<AppInfoDialog>
                       Icon(
                         Icons.link,
                         size: 14,
-                        color: AppColors.primary,
+                        color: themeController.primaryColor,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '링크',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.primary,
+                          color: themeController.primaryColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -539,7 +561,7 @@ class _AppInfoDialogState extends State<AppInfoDialog>
             description,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[700],
+              color: themeController.textSecondaryColor,
             ),
           ),
         ],

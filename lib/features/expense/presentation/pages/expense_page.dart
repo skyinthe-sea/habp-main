@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../data/datasources/expense_local_data_source.dart';
 import '../../data/repositories/expense_repository_impl.dart';
@@ -127,28 +128,32 @@ class _ExpensePageState extends State<ExpensePage>
         // Show loading indicator while initial data is being loaded
         if (snapshot.connectionState == ConnectionState.waiting &&
             !_isInitialized) {
+          final ThemeController themeController = Get.find<ThemeController>();
           return Scaffold(
-            backgroundColor: AppColors.background,
+            backgroundColor: themeController.backgroundColor,
             appBar: AppBar(
-              backgroundColor: Colors.white,
+              backgroundColor: themeController.cardColor,
               elevation: 1,
-              title: const Text(
+              title: Text(
                 '수기가계부',
                 style: TextStyle(
-                  color: AppColors.primary,
+                  color: themeController.primaryColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
               ),
             ),
-            body: const Center(
-              child: CircularProgressIndicator(),
+            body: Center(
+              child: CircularProgressIndicator(
+                color: themeController.primaryColor,
+              ),
             ),
           );
         }
 
+        final ThemeController themeController = Get.find<ThemeController>();
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: themeController.backgroundColor,
           body: SafeArea(
             child: GetBuilder<ExpenseController>(
                 init: _controller,
@@ -199,11 +204,12 @@ class _ExpensePageState extends State<ExpensePage>
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text(
+                                        Text(
                                           '카테고리별 예산',
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
+                                            color: themeController.textPrimaryColor,
                                           ),
                                         ),
                                         ElevatedButton.icon(
@@ -211,7 +217,7 @@ class _ExpensePageState extends State<ExpensePage>
                                           icon: const Icon(Icons.edit, size: 16),
                                           label: const Text('예산 설정'),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppColors.primary,
+                                            backgroundColor: themeController.primaryColor,
                                             foregroundColor: Colors.white,
                                             elevation: 0,
                                             padding: const EdgeInsets.symmetric(
@@ -239,15 +245,6 @@ class _ExpensePageState extends State<ExpensePage>
                     ],
                   );
                 }),
-          ),
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'budget_fab',
-            backgroundColor: AppColors.primary,
-            onPressed: _showBudgetDialog,
-            child: const Icon(
-              Icons.add,
-              color: Colors.white,
-            ),
           ),
         );
       },

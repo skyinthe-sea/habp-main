@@ -925,7 +925,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                         '성공',
                         '거래가 추가되었습니다',
                         snackPosition: SnackPosition.TOP,
-                        backgroundColor: Colors.green,
+                        backgroundColor: themeController.isDarkMode ? Colors.green.shade400 : Colors.green,
                         colorText: Colors.white,
                         margin: const EdgeInsets.all(16),
                         duration: const Duration(seconds: 2),
@@ -936,7 +936,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                         '오류',
                         '거래 추가에 실패했습니다',
                         snackPosition: SnackPosition.TOP,
-                        backgroundColor: Colors.red,
+                        backgroundColor: themeController.isDarkMode ? Colors.red.shade400 : Colors.red,
                         colorText: Colors.white,
                         margin: const EdgeInsets.all(16),
                       );

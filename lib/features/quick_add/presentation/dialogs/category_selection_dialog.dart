@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/quick_add_controller.dart';
 import 'add_category_dialog.dart';
 import 'category_type_dialog.dart';
@@ -15,6 +16,7 @@ class CategorySelectionDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<QuickAddController>();
+    final ThemeController themeController = Get.find<ThemeController>();
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -23,7 +25,7 @@ class CategorySelectionDialog extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -43,10 +45,10 @@ class CategorySelectionDialog extends StatelessWidget {
               children: [
                 Text(
                   '${_getTypeLabel(controller.transaction.value.categoryType)} 카테고리 선택',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: themeController.primaryColor,
                   ),
                 ),
                 IconButton(
@@ -80,7 +82,7 @@ class CategorySelectionDialog extends StatelessWidget {
                       barrierColor: Colors.black.withOpacity(0.5),
                     );
                   },
-                  color: Colors.grey,
+                  color: themeController.textSecondaryColor,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -103,25 +105,25 @@ class CategorySelectionDialog extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: themeController.primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1),
+                    border: Border.all(color: themeController.primaryColor.withOpacity(0.5), width: 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.add,
                         size: 16,
-                        color: AppColors.primary,
+                        color: themeController.primaryColor,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         '${_getTypeLabel(controller.transaction.value.categoryType)} 카테고리 추가',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          color: themeController.primaryColor,
                         ),
                       ),
                     ],
@@ -138,7 +140,7 @@ class CategorySelectionDialog extends StatelessWidget {
                   Icon(
                     Icons.info_outline,
                     size: 12,
-                    color: Colors.grey.shade600,
+                    color: themeController.textSecondaryColor,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -146,7 +148,7 @@ class CategorySelectionDialog extends StatelessWidget {
                       '카테고리를 길게 누르면 수정 또는 삭제할 수 있습니다.',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade600,
+                        color: themeController.textSecondaryColor,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -175,13 +177,13 @@ class CategorySelectionDialog extends StatelessWidget {
                         Icon(
                             Icons.category_outlined,
                             size: 28,
-                            color: Colors.grey.shade400
+                            color: themeController.textSecondaryColor
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           '등록된 카테고리가 없습니다.',
                           style: TextStyle(
-                            color: Colors.grey,
+                            color: themeController.textSecondaryColor,
                           ),
                         ),
                       ],
@@ -213,6 +215,7 @@ class CategorySelectionDialog extends StatelessWidget {
                       categoryId: category['id'],
                       categoryName: category['name'],
                       controller: controller,
+                      themeController: themeController,
                       index: index,
                     );
                   },
@@ -231,25 +234,26 @@ class CategorySelectionDialog extends StatelessWidget {
     required int categoryId,
     required String categoryName,
     required QuickAddController controller,
+    required ThemeController themeController,
     required int index,
   }) {
     // 카테고리 유형에 따른 색상 설정
     final categoryType = controller.transaction.value.categoryType;
     Color mainColor;
 
-    // 유형별 색상 지정
+    // 유형별 색상 지정 - 테마 컨트롤러 색상 시스템 사용
     switch (categoryType) {
       case 'INCOME':
-        mainColor = Colors.green.shade600;
+        mainColor = themeController.isDarkMode ? Colors.green.shade400 : Colors.green.shade600;
         break;
       case 'EXPENSE':
-        mainColor = AppColors.primary;
+        mainColor = themeController.primaryColor;
         break;
       case 'FINANCE':
-        mainColor = Colors.blue.shade600;
+        mainColor = themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue.shade600;
         break;
       default:
-        mainColor = AppColors.primary;
+        mainColor = themeController.primaryColor;
     }
 
     return Material(
@@ -264,31 +268,36 @@ class CategorySelectionDialog extends StatelessWidget {
             ),
             builder: (bottomSheetContext) => Container(
               padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: themeController.cardColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     categoryName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: themeController.textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 20),
                   ListTile(
                     leading: Icon(Icons.edit, color: mainColor),
-                    title: const Text('카테고리 수정'),
+                    title: Text('카테고리 수정', style: TextStyle(color: themeController.textPrimaryColor)),
                     onTap: () {
                       Navigator.pop(bottomSheetContext);
-                      _showEditCategoryDialog(context, categoryId, categoryName, controller);
+                      _showEditCategoryDialog(context, categoryId, categoryName, controller, themeController);
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text('카테고리 삭제'),
+                    title: Text('카테고리 삭제', style: TextStyle(color: themeController.textPrimaryColor)),
                     onTap: () {
                       Navigator.pop(bottomSheetContext);
-                      _showDeleteConfirmDialog(context, categoryId, categoryName, controller);
+                      _showDeleteConfirmDialog(context, categoryId, categoryName, controller, themeController);
                     },
                   ),
                 ],
@@ -334,7 +343,7 @@ class CategorySelectionDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Ink(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: themeController.cardColor,
             borderRadius: BorderRadius.circular(8),
             // 스티커 느낌을 위한 미묘한 그림자 효과
             boxShadow: [
@@ -381,7 +390,9 @@ class CategorySelectionDialog extends StatelessWidget {
                       // 스티커 효과를 위한 텍스트 그림자
                       shadows: [
                         Shadow(
-                          color: Colors.white.withOpacity(0.5),
+                          color: themeController.isDarkMode 
+                              ? Colors.black.withOpacity(0.3)
+                              : Colors.white.withOpacity(0.5),
                           offset: const Offset(0, 0.5),
                           blurRadius: 0.5,
                         ),
@@ -407,8 +418,10 @@ class CategorySelectionDialog extends StatelessWidget {
                     ),
                     gradient: LinearGradient(
                       colors: [
-                        Colors.white.withOpacity(0.4),
-                        Colors.white.withOpacity(0.0),
+                        themeController.isDarkMode 
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.white.withOpacity(0.4),
+                        Colors.transparent,
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -437,21 +450,28 @@ class CategorySelectionDialog extends StatelessWidget {
   }
 
   // 카테고리 수정 다이얼로그
-  void _showEditCategoryDialog(BuildContext context, int categoryId, String categoryName, QuickAddController controller) {
+  void _showEditCategoryDialog(BuildContext context, int categoryId, String categoryName, QuickAddController controller, ThemeController themeController) {
     final nameController = TextEditingController(text: categoryName);
     
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        backgroundColor: themeController.cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: const Text('카테고리 수정'),
+        title: Text('카테고리 수정', style: TextStyle(color: themeController.textPrimaryColor)),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
+          style: TextStyle(color: themeController.textPrimaryColor),
+          decoration: InputDecoration(
             labelText: '카테고리 이름',
+            labelStyle: TextStyle(color: themeController.textSecondaryColor),
             hintText: '카테고리 이름을 입력하세요',
+            hintStyle: TextStyle(color: themeController.textSecondaryColor),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: themeController.primaryColor),
+            ),
           ),
           autofocus: true,
         ),
@@ -460,7 +480,7 @@ class CategorySelectionDialog extends StatelessWidget {
             onPressed: () {
               Navigator.pop(dialogContext);
             },
-            child: const Text('취소'),
+            child: Text('취소', style: TextStyle(color: themeController.textSecondaryColor)),
           ),
           TextButton(
             onPressed: () async {
@@ -496,7 +516,7 @@ class CategorySelectionDialog extends StatelessWidget {
                 );
               }
             },
-            child: const Text('저장'),
+            child: Text('저장', style: TextStyle(color: themeController.primaryColor)),
           ),
         ],
       ),
@@ -504,21 +524,22 @@ class CategorySelectionDialog extends StatelessWidget {
   }
 
   // 카테고리 삭제 확인 다이얼로그
-  void _showDeleteConfirmDialog(BuildContext context, int categoryId, String categoryName, QuickAddController controller) {
+  void _showDeleteConfirmDialog(BuildContext context, int categoryId, String categoryName, QuickAddController controller, ThemeController themeController) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        backgroundColor: themeController.cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: const Text('카테고리 삭제'),
-        content: Text('\'$categoryName\' 카테고리를 삭제하시겠습니까?'),
+        title: Text('카테고리 삭제', style: TextStyle(color: themeController.textPrimaryColor)),
+        content: Text('\'$categoryName\' 카테고리를 삭제하시겠습니까?', style: TextStyle(color: themeController.textPrimaryColor)),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
             },
-            child: const Text('취소'),
+            child: Text('취소', style: TextStyle(color: themeController.textSecondaryColor)),
           ),
           TextButton(
             onPressed: () async {

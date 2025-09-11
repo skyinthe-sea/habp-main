@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/quick_add_controller.dart';
 import '../dialogs/category_type_dialog.dart';
 import '../dialogs/category_selection_dialog.dart';
@@ -103,6 +104,7 @@ class _QuickAddButtonState extends State<QuickAddButton>
   Widget build(BuildContext context) {
     // Initialize the controller if not already done
     final controller = Get.put(QuickAddController());
+    final ThemeController themeController = Get.find<ThemeController>();
 
     return AnimatedBuilder(
       animation: Listenable.merge([_scaleAnimation, _hintSlideAnimation]),
@@ -230,9 +232,12 @@ class _QuickAddButtonState extends State<QuickAddButton>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
-      default: // 기본 - 핑크색
-        return const LinearGradient(
-          colors: [Color(0xFFE495C0), Color(0xFFD279A6)],
+      default: // 기본 - 테마 색상
+        final themeController = Get.find<ThemeController>();
+        final primaryColor = themeController.primaryColor;
+        final darkerPrimary = Color.lerp(primaryColor, Colors.black, 0.1) ?? primaryColor;
+        return LinearGradient(
+          colors: [primaryColor, darkerPrimary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
@@ -250,8 +255,9 @@ class _QuickAddButtonState extends State<QuickAddButton>
         return const Color(0xFF2196F3);
       case SwipeDirection.down: // 감사 인사 - 따뜻한 핑크색
         return const Color(0xFFE91E63);
-      default: // 기본 - 핑크색
-        return const Color(0xFFE495C0);
+      default: // 기본 - 테마 색상
+        final themeController = Get.find<ThemeController>();
+        return themeController.primaryColor;
     }
   }
 
@@ -342,7 +348,7 @@ class _QuickAddButtonState extends State<QuickAddButton>
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Get.find<ThemeController>().cardColor,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
@@ -386,7 +392,7 @@ class _QuickAddButtonState extends State<QuickAddButton>
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: accentColor,
+                          color: Get.find<ThemeController>().textPrimaryColor,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -397,14 +403,14 @@ class _QuickAddButtonState extends State<QuickAddButton>
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '처음이라 많이 부족하지만\n지속적으로 업데이트하면서\n더욱 사용하기 편한 앱이 되겠습니다.\n\n여러분의 소중한 의견과 관심에\n진심으로 감사드립니다! 💖',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey.shade700,
+                            color: Get.find<ThemeController>().textSecondaryColor,
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,
@@ -492,7 +498,7 @@ class _QuickAddButtonState extends State<QuickAddButton>
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Get.find<ThemeController>().cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -509,18 +515,18 @@ class _QuickAddButtonState extends State<QuickAddButton>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   '💳 빠른 거래 추가',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3748),
+                    color: Get.find<ThemeController>().textPrimaryColor,
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, size: 24),
                   onPressed: () => Navigator.of(context).pop(),
-                  color: Colors.grey.shade600,
+                  color: Get.find<ThemeController>().textSecondaryColor,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -534,7 +540,7 @@ class _QuickAddButtonState extends State<QuickAddButton>
               '버튼을 스와이프해서 빠르게 거래를 추가하세요!',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey.shade600,
+                color: Get.find<ThemeController>().textSecondaryColor,
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
@@ -584,15 +590,18 @@ class _QuickAddButtonState extends State<QuickAddButton>
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFE495C0), Color(0xFFD279A6)],
+                      gradient: LinearGradient(
+                        colors: [
+                          Get.find<ThemeController>().primaryColor, 
+                          Color.lerp(Get.find<ThemeController>().primaryColor, Colors.black, 0.1) ?? Get.find<ThemeController>().primaryColor
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFE495C0).withOpacity(0.4),
+                          color: Get.find<ThemeController>().primaryColor.withOpacity(0.4),
                           spreadRadius: 2,
                           blurRadius: 12,
                           offset: const Offset(0, 4),
@@ -615,7 +624,7 @@ class _QuickAddButtonState extends State<QuickAddButton>
               '지금 시도해보세요!',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade600,
+                color: Get.find<ThemeController>().textSecondaryColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -628,7 +637,7 @@ class _QuickAddButtonState extends State<QuickAddButton>
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE495C0),
+                  backgroundColor: Get.find<ThemeController>().primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -710,7 +719,7 @@ class _QuickAddButtonState extends State<QuickAddButton>
                           action,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey.shade700,
+                            color: Get.find<ThemeController>().textSecondaryColor,
                           ),
                         ),
                       ],

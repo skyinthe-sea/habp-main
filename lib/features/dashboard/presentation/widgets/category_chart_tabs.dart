@@ -24,18 +24,20 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   late PageController _pageController;
 
   final List<String> _tabs = ['소득', '지출', '재테크'];
-  final List<Color> _tabColors = [Colors.green.shade400, AppColors.primary, Colors.blue.shade400];
+  // _tabColors를 제거하고 build 메서드에서 동적으로 생성
 
-  // 지출 카테고리 색상 - 핑크/빨강 계열로 통일
-  final List<Color> _expenseColors = [
-    Color(0xFFE07777), // 빨간색 계열
-    Color(0xFFE495C0), // 핑크색 계열 (primary)
-    Color(0xFFFF6B6B), // 밝은 빨간색
-    Color(0xFFE5A5A5), // 연한 빨간색
-    Color(0xFFD87AAE), // 진한 핑크색
-    Color(0xFFF3B8D3), // 연한 핑크색
-    Color(0xFFE84A5F), // 선명한 빨간색
-  ];
+  // 지출 카테고리 색상을 동적으로 생성하는 메서드로 변경
+  List<Color> _getExpenseColors(Color primaryColor) {
+    return [
+      primaryColor, // 메인 색상
+      Color(0xFFE07777), // 빨간색 계열
+      Color(0xFFFF6B6B), // 밝은 빨간색
+      Color(0xFFE5A5A5), // 연한 빨간색
+      Color.lerp(primaryColor, Colors.red, 0.3) ?? primaryColor, // Primary와 빨강 혼합
+      Color.lerp(primaryColor, Colors.pink, 0.5) ?? primaryColor, // Primary와 핑크 혼합
+      Color(0xFFE84A5F), // 선명한 빨간색
+    ];
+  }
 
   // 소득 카테고리 색상 - 초록색 계열로 통일
   final List<Color> _incomeColors = [
@@ -121,11 +123,11 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
             controller: _tabController,
             labelColor: themeController.isDarkMode 
                 ? _getTabColorForDarkMode(_tabController.index)
-                : _tabColors[_tabController.index],
+                : _getTabColorForLightMode(_tabController.index),
             unselectedLabelColor: themeController.textSecondaryColor,
             indicatorColor: themeController.isDarkMode
                 ? _getTabColorForDarkMode(_tabController.index)
-                : _tabColors[_tabController.index],
+                : _getTabColorForLightMode(_tabController.index),
             indicatorSize: TabBarIndicatorSize.label,
             labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
@@ -163,7 +165,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                   title: '지출',
                   isLoading: widget.controller.isCategoryExpenseLoading.value,
                   emptyMessage: '지출 데이터가 없습니다',
-                  baseColor: AppColors.primary,
+                  baseColor: themeController.primaryColor,
                   type: 'EXPENSE',
                 ),
 
@@ -189,7 +191,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                 final isActive = _tabController.index == index;
                 final activeColor = themeController.isDarkMode 
                     ? _getTabColorForDarkMode(index)
-                    : _tabColors[index];
+                    : _getTabColorForLightMode(index);
                 final inactiveColor = themeController.isDarkMode
                     ? Colors.grey.shade600
                     : Colors.grey.shade300;
@@ -300,7 +302,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                           PieChartData(
                             sectionsSpace: 2,
                             centerSpaceRadius: 40, // 도넛 차트 중앙 구멍 크기
-                            sections: _createSections(mainCategories, type),
+                            sections: _createSections(mainCategories, type, themeController.primaryColor),
                             startDegreeOffset: 180,
                             pieTouchData: PieTouchData(
                               enabled: true,
@@ -312,7 +314,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                                   if (sectionIndex >= 0 && sectionIndex < mainCategories.length) {
                                     final touchedCategory = mainCategories[sectionIndex];
                                     final color = _getCategoryColor(
-                                        touchedCategory.categoryName, sectionIndex, type);
+                                        touchedCategory.categoryName, sectionIndex, type, themeController.primaryColor);
                                     _showCategoryDetailDialog(context, touchedCategory, color, type);
                                   }
                                 }
@@ -473,7 +475,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           final item = data[index];
-          Color color = _getCategoryColor(item.categoryName, index, type);
+          Color color = _getCategoryColor(item.categoryName, index, type, themeController.primaryColor);
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 3),
@@ -736,10 +738,11 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   }
 
   // 카테고리별 색상 가져오기 (각 유형별로 일관된 색상 팔레트 사용)
-  Color _getCategoryColor(String categoryName, int index, String type) {
+  Color _getCategoryColor(String categoryName, int index, String type, Color primaryColor) {
     // 카테고리 유형에 따라 적절한 색상 팔레트 사용
     if (type == 'EXPENSE') {
-      return _expenseColors[index % _expenseColors.length];
+      final expenseColors = _getExpenseColors(primaryColor);
+      return expenseColors[index % expenseColors.length];
     } else if (type == 'INCOME') {
       return _incomeColors[index % _incomeColors.length];
     } else {
@@ -750,10 +753,11 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   // 도넛 차트 섹션 생성 (수정됨 - 모든 카테고리명 표시)
   List<PieChartSectionData> _createSections(
       List<CategoryExpense> categories,
-      String type) {
+      String type,
+      Color primaryColor) {
     return categories.map((item) {
       final index = categories.indexOf(item);
-      final color = _getCategoryColor(item.categoryName, index, type);
+      final color = _getCategoryColor(item.categoryName, index, type, primaryColor);
 
       // 모든 섹션에 라벨 표시 (5% 이상인 경우)
       final showLabel = item.percentage >= 5;
@@ -817,6 +821,21 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
         ],
       ),
     );
+  }
+  
+  // 라이트모드용 탭 색상 가져오기
+  Color _getTabColorForLightMode(int index) {
+    final themeController = Get.find<ThemeController>();
+    switch (index) {
+      case 0: // 소득
+        return Colors.green.shade400;
+      case 1: // 지출
+        return themeController.primaryColor;
+      case 2: // 재테크
+        return Colors.blue.shade400;
+      default:
+        return themeController.primaryColor;
+    }
   }
   
   // 다크모드용 탭 색상 가져오기

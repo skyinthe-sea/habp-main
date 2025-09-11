@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../data/models/category_model.dart';
 import '../controllers/expense_controller.dart';
 import 'add_category_dialog.dart';
@@ -169,18 +170,20 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
 
   // Show category delete confirmation dialog
   void _showDeleteCategoryDialog(BuildContext context, CategoryModel category) {
+    final ThemeController themeController = Get.find<ThemeController>();
     bool isDeleting = false;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: themeController.cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         title: Text(
           '카테고리 삭제',
           style: TextStyle(
-            color: AppColors.primary,
+            color: themeController.primaryColor,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -189,8 +192,9 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
           children: [
             Text(
               '\'${category.name}\' 카테고리를 삭제하시겠습니까?',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
+                color: themeController.textPrimaryColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -204,7 +208,7 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
             child: Text(
               '취소',
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: themeController.textSecondaryColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -257,13 +261,13 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(themeController.primaryColor),
                   ),
                 )
                     : Text(
                   '삭제',
                   style: TextStyle(
-                    color: Colors.red.shade700,
+                    color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade700,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -344,6 +348,8 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
@@ -355,11 +361,13 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: themeController.cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: themeController.isDarkMode 
+                    ? Colors.black.withOpacity(0.4)
+                    : Colors.black.withOpacity(0.2),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -374,8 +382,8 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withOpacity(0.8),
-                      AppColors.primary.withOpacity(0.6),
+                      themeController.primaryColor.withOpacity(0.8),
+                      themeController.primaryColor.withOpacity(0.6),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -443,9 +451,15 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
+                            color: themeController.isDarkMode 
+                                ? Colors.grey.shade800.withOpacity(0.3)
+                                : Colors.grey.shade50,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade200),
+                            border: Border.all(
+                              color: themeController.isDarkMode 
+                                  ? Colors.grey.shade700
+                                  : Colors.grey.shade200
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,12 +472,12 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade800,
+                                      color: themeController.textPrimaryColor,
                                     ),
                                   ),
                                   Switch(
                                     value: _useDefaultAmount,
-                                    activeColor: AppColors.primary,
+                                    activeColor: themeController.primaryColor,
                                     onChanged: (value) {
                                       setState(() {
                                         _useDefaultAmount = value;
@@ -488,7 +502,7 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                     : '카테고리별로 다른 예산 금액 설정',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey.shade600,
+                                  color: themeController.textSecondaryColor,
                                 ),
                               ),
                             ],
@@ -511,18 +525,20 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade800,
+                                    color: themeController.textPrimaryColor,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: themeController.cardColor,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+                                    border: Border.all(color: themeController.primaryColor.withOpacity(0.5)),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.grey.withOpacity(0.1),
+                                        color: themeController.isDarkMode 
+                                            ? Colors.black.withOpacity(0.3)
+                                            : Colors.grey.withOpacity(0.1),
                                         blurRadius: 10,
                                         offset: const Offset(0, 2),
                                       ),
@@ -562,19 +578,20 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                       }
                                       _updateSaveButtonState();
                                     },
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
+                                      color: themeController.textPrimaryColor,
                                     ),
                                     decoration: InputDecoration(
                                       hintText: '금액을 입력하세요',
                                       hintStyle: TextStyle(
-                                        color: Colors.grey.shade400,
+                                        color: themeController.textSecondaryColor,
                                         fontSize: 16,
                                       ),
                                       suffixText: '원',
                                       suffixStyle: TextStyle(
-                                        color: Colors.grey.shade700,
+                                        color: themeController.textSecondaryColor,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -603,7 +620,7 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade800,
+                                color: themeController.textPrimaryColor,
                               ),
                             ),
                             Row(
@@ -625,8 +642,8 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                     icon: const Icon(Icons.clear, size: 16),
                                     label: Text('전체 해제 (${selectedCategories.length})'),
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.grey.shade700,
-                                      side: BorderSide(color: Colors.grey.shade300),
+                                      foregroundColor: themeController.textSecondaryColor,
+                                      side: BorderSide(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
@@ -664,7 +681,7 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                   icon: const Icon(Icons.add, size: 16),
                                   label: const Text('추가'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
+                                    backgroundColor: themeController.primaryColor,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -683,12 +700,18 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                         Container(
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: themeController.cardColor,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(
+                              color: themeController.isDarkMode 
+                                  ? Colors.grey.shade600
+                                  : Colors.grey.shade300
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.05),
+                                color: themeController.isDarkMode 
+                                    ? Colors.black.withOpacity(0.2)
+                                    : Colors.grey.withOpacity(0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -696,9 +719,11 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                           ),
                           child: TextField(
                             controller: _searchController,
+                            style: TextStyle(color: themeController.textPrimaryColor),
                             decoration: InputDecoration(
                               hintText: '카테고리 검색',
-                              prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                              hintStyle: TextStyle(color: themeController.textSecondaryColor),
+                              prefixIcon: Icon(Icons.search, color: themeController.textSecondaryColor),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
@@ -722,16 +747,22 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                               height: 200,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
+                                color: themeController.isDarkMode 
+                                    ? Colors.grey.shade800.withOpacity(0.3)
+                                    : Colors.grey.shade50,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade200),
+                                border: Border.all(
+                                  color: themeController.isDarkMode 
+                                      ? Colors.grey.shade700
+                                      : Colors.grey.shade200
+                                ),
                               ),
                               child: Text(
                                 _searchQuery.isNotEmpty
                                     ? '검색 결과가 없습니다'
                                     : '등록된 카테고리가 없습니다',
                                 style: TextStyle(
-                                  color: Colors.grey.shade600,
+                                  color: themeController.textSecondaryColor,
                                   fontSize: 14,
                                 ),
                               ),
@@ -788,7 +819,7 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.info_outline, size: 14, color: Colors.grey.shade600),
+                            Icon(Icons.info_outline, size: 14, color: themeController.textSecondaryColor),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -796,7 +827,7 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontStyle: FontStyle.italic,
-                                  color: Colors.grey.shade600,
+                                  color: themeController.textSecondaryColor,
                                 ),
                               ),
                             ),
@@ -812,7 +843,7 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: themeController.cardColor,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
@@ -829,8 +860,8 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                           Get.back();
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey.shade800,
-                          side: BorderSide(color: Colors.grey.shade300),
+                          foregroundColor: themeController.textSecondaryColor,
+                          side: BorderSide(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -858,8 +889,8 @@ class _MultiCategoryBudgetDialogState extends State<MultiCategoryBudgetDialog> w
                         }
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isCompleted ? Colors.green : AppColors.primary,
-                          disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+                          backgroundColor: _isCompleted ? Colors.green : themeController.primaryColor,
+                          disabledBackgroundColor: themeController.primaryColor.withOpacity(0.5),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -949,18 +980,20 @@ class CategoryBudgetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     // Category colors based on selection state
     final cardColor = isSelected
-        ? AppColors.primary.withOpacity(0.1)
-        : Colors.white;
+        ? themeController.primaryColor.withOpacity(0.1)
+        : themeController.cardColor;
 
     final borderColor = isSelected
-        ? AppColors.primary
-        : Colors.grey.shade200;
+        ? themeController.primaryColor
+        : (themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade200);
 
     final iconColor = isSelected
-        ? AppColors.primary
-        : Colors.grey.shade600;
+        ? themeController.primaryColor
+        : themeController.textSecondaryColor;
 
     return GestureDetector(
       onTap: onSelected,
@@ -973,7 +1006,7 @@ class CategoryBudgetCard extends StatelessWidget {
           border: Border.all(color: borderColor),
           boxShadow: isSelected ? [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.1),
+              color: themeController.primaryColor.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             )
@@ -994,8 +1027,8 @@ class CategoryBudgetCard extends StatelessWidget {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.primary.withOpacity(0.2)
-                              : Colors.grey.shade100,
+                              ? themeController.primaryColor.withOpacity(0.2)
+                              : (themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade100),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -1011,7 +1044,7 @@ class CategoryBudgetCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? AppColors.primary : Colors.black,
+                            color: isSelected ? themeController.primaryColor : themeController.textPrimaryColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1027,9 +1060,9 @@ class CategoryBudgetCard extends StatelessWidget {
                           margin: const EdgeInsets.only(top: 8),
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: themeController.cardColor,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                            border: Border.all(color: themeController.primaryColor.withOpacity(0.3)),
                           ),
                           child: TextField(
                             controller: amountController,
@@ -1038,20 +1071,21 @@ class CategoryBudgetCard extends StatelessWidget {
                               FilteringTextInputFormatter.digitsOnly,
                             ],
                             onChanged: onAmountChanged,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
+                              color: themeController.textPrimaryColor,
                             ),
                             textAlign: TextAlign.center,
                             decoration: InputDecoration(
                               hintText: '금액 입력',
                               hintStyle: TextStyle(
-                                color: Colors.grey.shade400,
+                                color: themeController.textSecondaryColor,
                                 fontSize: 12,
                               ),
                               suffixText: '원',
                               suffixStyle: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: themeController.textSecondaryColor,
                                 fontSize: 12,
                               ),
                               contentPadding: const EdgeInsets.symmetric(
@@ -1078,10 +1112,14 @@ class CategoryBudgetCard extends StatelessWidget {
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.grey.shade200,
+                  color: isSelected 
+                      ? themeController.primaryColor 
+                      : (themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                    color: isSelected 
+                        ? themeController.primaryColor 
+                        : (themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
                     width: 1,
                   ),
                 ),

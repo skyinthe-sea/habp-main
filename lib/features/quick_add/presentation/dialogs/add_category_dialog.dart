@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/quick_add_controller.dart';
 
 class AddCategoryDialog extends StatefulWidget {
@@ -46,14 +47,17 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
 
   // 고정 카테고리 오류 다이얼로그를 표시하는 메서드
   void _showFixedCategoryAlert(BuildContext context, String categoryName) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('고정 카테고리 알림'),
+          backgroundColor: themeController.cardColor,
+          title: Text('고정 카테고리 알림', style: TextStyle(color: themeController.textPrimaryColor)),
           content: Text(
             '\'$categoryName\'은(는) 기본 고정 카테고리로 이미 존재합니다. 고정 카테고리는 사용자가 변경할 수 없습니다.',
-            style: const TextStyle(fontSize: 14),
+            style: TextStyle(fontSize: 14, color: themeController.textPrimaryColor),
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -63,9 +67,9 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
               onPressed: () {
                 Navigator.of(context).pop(); // 다이얼로그 닫기
               },
-              child: const Text(
+              child: Text(
                 '확인',
-                style: TextStyle(color: AppColors.primary),
+                style: TextStyle(color: themeController.primaryColor),
               ),
             ),
           ],
@@ -76,6 +80,7 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
     final categoryType = widget.controller.transaction.value.categoryType;
     final isIncome = categoryType == 'INCOME';
     final isFinance = categoryType == 'FINANCE';
@@ -104,7 +109,7 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -124,14 +129,14 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: themeController.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Text(
                   titleText,
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: themeController.primaryColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -152,18 +157,18 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                 labelText: '카테고리 이름',
                 hintText: hintText,
                 filled: true,
-                fillColor: Colors.grey.shade50,
+                fillColor: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: BorderSide(color: themeController.primaryColor, width: 2),
                 ),
               ),
             ),
@@ -178,8 +183,8 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                       Navigator.of(context).pop();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.black87,
+                      backgroundColor: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
+                      foregroundColor: themeController.textPrimaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -260,8 +265,8 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+                      backgroundColor: themeController.primaryColor,
+                      disabledBackgroundColor: themeController.primaryColor.withOpacity(0.5),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

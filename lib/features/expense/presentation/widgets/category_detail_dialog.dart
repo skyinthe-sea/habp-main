@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../domain/entities/budget_status.dart';
 import '../controllers/expense_controller.dart';
@@ -360,6 +359,7 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
     final currencyFormat = NumberFormat('#,###', 'ko_KR');
     final categoryName = widget.budgetStatus.categoryName;
     final budgetAmount = widget.budgetStatus.budgetAmount;
@@ -369,8 +369,10 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
 
     // 진행 상태에 따른 색상 결정
     final Color progressColor = progressPercentage >= 90
-        ? Colors.red
-        : (progressPercentage >= 70 ? Colors.orange : AppColors.primary);
+        ? (themeController.isDarkMode ? Colors.red.shade400 : Colors.red)
+        : (progressPercentage >= 70 
+            ? (themeController.isDarkMode ? Colors.orange.shade400 : Colors.orange)
+            : themeController.primaryColor);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -379,11 +381,13 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 0.8,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: themeController.isDarkMode 
+                  ? Colors.black.withOpacity(0.4)
+                  : Colors.black.withOpacity(0.15),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -395,7 +399,7 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
             Container(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: themeController.surfaceColor,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
@@ -409,13 +413,14 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                     children: [
                       Text(
                         categoryName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
+                          color: themeController.textPrimaryColor,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close, color: themeController.textPrimaryColor),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
@@ -430,19 +435,20 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               '예산',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey,
+                                color: themeController.textSecondaryColor,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '${currencyFormat.format(budgetAmount)}원',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
+                                color: themeController.textPrimaryColor,
                               ),
                             ),
                           ],
@@ -453,11 +459,11 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text(
+                            Text(
                               '사용',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey,
+                                color: themeController.textSecondaryColor,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -481,7 +487,9 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
                       value: progressPercentage / 100,
-                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      backgroundColor: themeController.isDarkMode 
+                          ? Colors.grey.shade700.withOpacity(0.3)
+                          : Colors.grey.withOpacity(0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                       minHeight: 10,
                     ),
@@ -501,9 +509,10 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                       ),
                       Text(
                         '남은 예산: ${currencyFormat.format(remainingAmount)}원',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
+                          color: themeController.textPrimaryColor,
                         ),
                       ),
                     ],
@@ -515,10 +524,12 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
             // 탭 바
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: themeController.cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: themeController.isDarkMode 
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.1),
                     offset: const Offset(0, 2),
                     blurRadius: 4,
                   ),
@@ -526,9 +537,9 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
               ),
               child: TabBar(
                 controller: _tabController,
-                indicatorColor: AppColors.primary,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: Colors.grey,
+                indicatorColor: themeController.primaryColor,
+                labelColor: themeController.primaryColor,
+                unselectedLabelColor: themeController.textSecondaryColor,
                 tabs: const [
                   Tab(text: '분석'),
                   Tab(text: '지출 내역'),
@@ -541,8 +552,10 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
             Expanded(
               child: Obx(() {
                 if (_isLoading.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: themeController.primaryColor,
+                    ),
                   );
                 }
 
@@ -553,13 +566,13 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                   controller: _tabController,
                   children: [
                     // 분석 탭
-                    _buildAnalyticsTab(),
+                    _buildAnalyticsTab(themeController),
 
                     // 지출 내역 탭 - 변경: Obx로 감싸기
                     Obx(() => CategoryTransactionList(transactions: _transactions.toList())),
 
                     // 인사이트 탭
-                    _buildInsightsTab(),
+                    _buildInsightsTab(themeController),
                   ],
                 );
               }),
@@ -571,11 +584,16 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
   }
 
   // 분석 탭 구성
-  Widget _buildAnalyticsTab() {
+  Widget _buildAnalyticsTab(ThemeController themeController) {
     final currencyFormat = NumberFormat('#,###', 'ko_KR');
 
     if (_analytics.isEmpty) {
-      return const Center(child: Text('분석 데이터가 없습니다.'));
+      return Center(
+        child: Text(
+          '분석 데이터가 없습니다.',
+          style: TextStyle(color: themeController.textSecondaryColor),
+        ),
+      );
     }
 
     final totalExpense = _analytics['total_expense'] as double;
@@ -596,11 +614,13 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
             margin: const EdgeInsets.only(bottom: 24),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: themeController.cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: themeController.isDarkMode
+                      ? Colors.black.withOpacity(0.3)
+                      : Colors.grey.withOpacity(0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -612,23 +632,24 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       '지출 요약',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: themeController.textPrimaryColor,
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: themeController.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '전체 지출의 ${categoryPercentage.toStringAsFixed(1)}%',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: themeController.primaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -644,6 +665,7 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                         '이번 달 총액',
                         '${currencyFormat.format(totalExpense.toInt())}원',
                         Icons.account_balance_wallet,
+                        themeController,
                       ),
                     ),
                     Expanded(
@@ -651,6 +673,7 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                         '평균 지출',
                         '${currencyFormat.format(_analytics['avg_expense'].toInt())}원',
                         Icons.bar_chart,
+                        themeController,
                       ),
                     ),
                   ],
@@ -663,6 +686,7 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                         '지난 달 대비',
                         '${_analytics['change_percentage'] >= 0 ? '+' : ''}${_analytics['change_percentage'].toStringAsFixed(1)}%',
                         Icons.timeline,
+                        themeController,
                         isPositive: _analytics['change_percentage'] < 0,
                       ),
                     ),
@@ -671,6 +695,7 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                         '지출 빈도 높은 요일',
                         dayNames[_analytics['max_expense_day'] - 1],
                         Icons.calendar_today,
+                        themeController,
                       ),
                     ),
                   ],
@@ -688,13 +713,13 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                   Icon(
                     Icons.bar_chart,
                     size: 48,
-                    color: Colors.grey.shade300,
+                    color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     '아직 ${widget.budgetStatus.categoryName} 카테고리의 지출 데이터가 없습니다.',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
+                      color: themeController.textSecondaryColor,
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
@@ -731,10 +756,10 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
   }
 
   // 통계 카드 위젯
-  Widget _buildStatCard(String title, String value, IconData icon, {bool isPositive = true}) {
+  Widget _buildStatCard(String title, String value, IconData icon, ThemeController themeController, {bool isPositive = true}) {
     return Card(
       elevation: 0,
-      color: Colors.grey.shade50,
+      color: themeController.isDarkMode ? Colors.grey.shade800.withOpacity(0.3) : Colors.grey.shade50,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -748,14 +773,14 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                 Icon(
                   icon,
                   size: 16,
-                  color: Colors.grey.shade600,
+                  color: themeController.textSecondaryColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   title,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: themeController.textSecondaryColor,
                   ),
                 ),
               ],
@@ -767,8 +792,10 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: title == '지난 달 대비'
-                    ? (isPositive ? Colors.green.shade700 : Colors.red.shade700)
-                    : Colors.black,
+                    ? (isPositive 
+                        ? (themeController.isDarkMode ? Colors.green.shade400 : Colors.green.shade700)
+                        : (themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade700))
+                    : themeController.textPrimaryColor,
               ),
             ),
           ],
@@ -778,7 +805,7 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
   }
 
   // 인사이트 탭 구성
-  Widget _buildInsightsTab() {
+  Widget _buildInsightsTab(ThemeController themeController) {
     // 거래 내역 여부 체크
     debugPrint('인사이트 탭 빌드 - 거래 내역 수: ${_transactions.length}');
 
@@ -798,13 +825,13 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
             Icon(
               Icons.lightbulb_outline,
               size: 64,
-              color: Colors.grey.shade300,
+              color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
             ),
             const SizedBox(height: 16),
             Text(
               '${widget.budgetStatus.categoryName} 카테고리의 지출 내역이 없어\n인사이트를 생성할 수 없습니다.',
               style: TextStyle(
-                color: Colors.grey.shade600,
+                color: themeController.textSecondaryColor,
                 fontSize: 14,
               ),
               textAlign: TextAlign.center,
@@ -828,13 +855,13 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
             Icon(
               Icons.lightbulb_outline,
               size: 64,
-              color: Colors.grey.shade300,
+              color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
             ),
             const SizedBox(height: 16),
             Text(
               '아직 충분한 지출 데이터가 없어 인사이트를 제공할 수 없습니다.\n지출을 기록하면 다양한 인사이트를 얻을 수 있습니다.',
               style: TextStyle(
-                color: Colors.grey.shade600,
+                color: themeController.textSecondaryColor,
                 fontSize: 14,
               ),
               textAlign: TextAlign.center,
@@ -894,9 +921,14 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
         return Card(
           elevation: 0,
           margin: const EdgeInsets.only(bottom: 16),
+          color: themeController.cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.grey.shade200),
+            side: BorderSide(
+              color: themeController.isDarkMode 
+                  ? Colors.grey.shade700 
+                  : Colors.grey.shade200,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -907,15 +939,16 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                   children: [
                     Icon(
                       insight['icon'] as IconData,
-                      color: AppColors.primary,
+                      color: themeController.primaryColor,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       insight['title'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: themeController.textPrimaryColor,
                       ),
                     ),
                   ],
@@ -923,16 +956,17 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
                 const SizedBox(height: 12),
                 Text(
                   insight['content'] as String,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
+                    color: themeController.textPrimaryColor,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: insight['action'] as Function(),
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary,
+                    foregroundColor: themeController.primaryColor,
                     padding: EdgeInsets.zero,
                   ),
                   child: Row(

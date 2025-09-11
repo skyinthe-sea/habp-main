@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/calendar_controller.dart';
 
 class MonthCalendarFullscreen extends StatelessWidget {
@@ -18,6 +19,8 @@ class MonthCalendarFullscreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return GetBuilder<CalendarController>(
       init: controller,
       builder: (controller) {
@@ -29,7 +32,7 @@ class MonthCalendarFullscreen extends StatelessWidget {
             slivers: [
               // Sticky header that stays at the top during scrolling
               SliverAppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: themeController.backgroundColor,
                 pinned: true,
                 elevation: 0,
                 automaticallyImplyLeading: false,
@@ -57,8 +60,8 @@ class MonthCalendarFullscreen extends StatelessWidget {
                   calendarFormat: CalendarFormat.month,
                   startingDayOfWeek: StartingDayOfWeek.sunday,
                   // Compact design for better fit
-                  daysOfWeekHeight: 26,
-                  rowHeight: 70, // Reduced height to prevent bottom cutoff
+                  daysOfWeekHeight: 24, // Slightly reduced for better fit
+                  rowHeight: 65, // Further reduced for improved vertical spacing
                   calendarStyle: CalendarStyle(
                     // Selected date style - empty style (handled in custom builder)
                     selectedDecoration: const BoxDecoration(
@@ -78,19 +81,19 @@ class MonthCalendarFullscreen extends StatelessWidget {
 
                     // Weekend color
                     weekendTextStyle: TextStyle(
-                      color: Colors.red[400],
+                      color: themeController.isDarkMode ? Colors.red[300] : Colors.red[400],
                       fontWeight: FontWeight.w500,
                     ),
 
                     // Other month date style
                     outsideTextStyle: TextStyle(
-                      color: Colors.grey.shade400,
+                      color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
                       fontSize: 11,
                     ),
 
                     // Default date style
                     defaultTextStyle: TextStyle(
-                      color: Colors.grey[800],
+                      color: themeController.textPrimaryColor,
                       fontSize: 13,
                     ),
 
@@ -101,17 +104,17 @@ class MonthCalendarFullscreen extends StatelessWidget {
                   daysOfWeekStyle: DaysOfWeekStyle(
                     // Weekday header style
                     weekdayStyle: TextStyle(
-                      color: Colors.grey[700],
+                      color: themeController.textSecondaryColor,
                       fontWeight: FontWeight.w500,
                       fontSize: 11,
                     ),
                     weekendStyle: TextStyle(
-                      color: Colors.red[400],
+                      color: themeController.isDarkMode ? Colors.red[300] : Colors.red[400],
                       fontWeight: FontWeight.w500,
                       fontSize: 11,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -150,25 +153,25 @@ class MonthCalendarFullscreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Income indicator (green)
+                            // Income indicator (green - theme aware)
                             if (income > 0)
                               _buildVerticalIndicator(
                                 '+${NumberFormat.compact().format(income)}',
-                                Colors.green,
+                                themeController.isDarkMode ? Colors.green.shade400 : Colors.green,
                               ),
 
-                            // Expense indicator (red)
+                            // Expense indicator (red - theme aware)
                             if (expense > 0)
                               _buildVerticalIndicator(
                                 '-${NumberFormat.compact().format(expense)}',
-                                Colors.red,
+                                themeController.isDarkMode ? Colors.red.shade400 : Colors.red,
                               ),
 
-                            // Finance indicator (blue)
+                            // Finance indicator (blue - theme aware)
                             if (finance != 0)
                               _buildVerticalIndicator(
                                 (finance >= 0 ? '+' : '') + '${NumberFormat.compact().format(finance)}',
-                                Colors.blue,
+                                themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue,
                               ),
                           ],
                         ),
@@ -180,8 +183,8 @@ class MonthCalendarFullscreen extends StatelessWidget {
                       return Container(
                         margin: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          border: Border.all(color: AppColors.primary, width: 1.5),
+                          color: themeController.primaryColor.withOpacity(0.1),
+                          border: Border.all(color: themeController.primaryColor, width: 1.5),
                           borderRadius: BorderRadius.circular(6),
                           shape: BoxShape.rectangle,
                         ),
@@ -194,13 +197,13 @@ class MonthCalendarFullscreen extends StatelessWidget {
                               margin: const EdgeInsets.only(top: 4),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.2),
+                                color: themeController.primaryColor.withOpacity(0.2),
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
                                 '${date.day}',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
+                                style: TextStyle(
+                                  color: themeController.primaryColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
@@ -217,7 +220,10 @@ class MonthCalendarFullscreen extends StatelessWidget {
                       return Container(
                         margin: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade400, width: 1),
+                          border: Border.all(
+                            color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400, 
+                            width: 1
+                          ),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Column(
@@ -229,13 +235,13 @@ class MonthCalendarFullscreen extends StatelessWidget {
                               margin: const EdgeInsets.only(top: 4),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
+                                color: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
                                 '${date.day}',
-                                style: const TextStyle(
-                                  color: Colors.black,
+                                style: TextStyle(
+                                  color: themeController.textPrimaryColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
@@ -250,9 +256,9 @@ class MonthCalendarFullscreen extends StatelessWidget {
                     // Default date style customization - space for markers
                     defaultBuilder: (context, date, _) {
                       // Weekend color setting
-                      Color textColor = Colors.grey[800]!;
+                      Color textColor = themeController.textPrimaryColor;
                       if (date.weekday == DateTime.sunday || date.weekday == DateTime.saturday) {
-                        textColor = Colors.red[400]!;
+                        textColor = themeController.isDarkMode ? Colors.red[300]! : Colors.red[400]!;
                       }
 
                       return Container(
@@ -294,7 +300,7 @@ class MonthCalendarFullscreen extends StatelessWidget {
                               child: Text(
                                 '${date.day}',
                                 style: TextStyle(
-                                  color: Colors.grey.shade400,
+                                  color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
                                   fontSize: 13,
                                 ),
                               ),
@@ -310,7 +316,7 @@ class MonthCalendarFullscreen extends StatelessWidget {
 
               // Add extra space at the bottom for small devices
               const SliverToBoxAdapter(
-                child: SizedBox(height: 40),
+                child: SizedBox(height: 20), // Reduced bottom padding
               ),
             ],
           );
@@ -351,13 +357,17 @@ class MonthCalendarFullscreen extends StatelessWidget {
     final year = current.year;
     final monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.backgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: themeController.isDarkMode 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -367,7 +377,7 @@ class MonthCalendarFullscreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left, color: AppColors.primary),
+            icon: Icon(Icons.chevron_left, color: themeController.primaryColor),
             onPressed: () {
               // Move to previous month
               controller.onPageChanged(
@@ -378,14 +388,14 @@ class MonthCalendarFullscreen extends StatelessWidget {
           ),
           Text(
             '${year}년 ${monthNames[month - 1]}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: themeController.primaryColor,
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right, color: AppColors.primary),
+            icon: Icon(Icons.chevron_right, color: themeController.primaryColor),
             onPressed: () {
               // Move to next month
               controller.onPageChanged(

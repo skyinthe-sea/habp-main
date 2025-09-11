@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/quick_add_controller.dart';
 import 'category_selection_dialog.dart';
 
@@ -14,6 +15,7 @@ class CategoryTypeDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<QuickAddController>();
+    final ThemeController themeController = Get.find<ThemeController>();
 
     // Reset transaction when dialog opens
     controller.resetTransaction();
@@ -26,7 +28,7 @@ class CategoryTypeDialog extends StatelessWidget {
         // 패딩 값을 줄여서 오버플로우 문제 해결
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -40,14 +42,14 @@ class CategoryTypeDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Dialog title
-            const Padding(
-              padding: EdgeInsets.only(bottom: 10),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
               child: Text(
                 '어떤 거래 입니까?',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: themeController.primaryColor,
                 ),
               ),
             ),
@@ -58,7 +60,7 @@ class CategoryTypeDialog extends StatelessWidget {
               child: IconButton(
                 icon: const Icon(Icons.close, size: 20),
                 onPressed: () => Navigator.of(context).pop(),
-                color: Colors.grey,
+                color: themeController.textSecondaryColor,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
@@ -70,10 +72,13 @@ class CategoryTypeDialog extends StatelessWidget {
               context: context,
               icon: Icons.account_balance_rounded, // 재테크 관련 아이콘
               label: '재테크',
-              color: const Color(0xFF4990E2), // 푸른계통 색상
+              color: themeController.isDarkMode ? Colors.blue.shade400 : const Color(0xFF4990E2), // 푸른계통 색상
               type: 'FINANCE',
               controller: controller,
-              backgroundColor: const Color(0xFFECF4FC), // 연한 푸른색 배경
+              backgroundColor: themeController.isDarkMode 
+                  ? Colors.blue.withOpacity(0.15) 
+                  : const Color(0xFFECF4FC), // 연한 푸른색 배경
+              themeController: themeController,
               fullWidth: true, // 전체 너비 사용
             ),
 
@@ -88,10 +93,13 @@ class CategoryTypeDialog extends StatelessWidget {
                     context: context,
                     icon: Icons.monetization_on,
                     label: '소득',
-                    color: Colors.green[600]!,
+                    color: themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600]!,
                     type: 'INCOME',
                     controller: controller,
-                    backgroundColor: const Color(0xFFEDF7ED), // 연한 배경색
+                    backgroundColor: themeController.isDarkMode 
+                        ? Colors.green.withOpacity(0.15) 
+                        : const Color(0xFFEDF7ED), // 연한 배경색
+                    themeController: themeController,
                   ),
                 ),
 
@@ -103,10 +111,13 @@ class CategoryTypeDialog extends StatelessWidget {
                     context: context,
                     icon: Icons.payment,
                     label: '지출',
-                    color: AppColors.primary,
+                    color: themeController.primaryColor,
                     type: 'EXPENSE',
                     controller: controller,
-                    backgroundColor: const Color(0xFFFCEEF0), // 연한 배경색
+                    backgroundColor: themeController.isDarkMode 
+                        ? themeController.primaryColor.withOpacity(0.15) 
+                        : const Color(0xFFFCEEF0), // 연한 배경색
+                    themeController: themeController,
                   ),
                 ),
               ],
@@ -128,6 +139,7 @@ class CategoryTypeDialog extends StatelessWidget {
     required String type,
     required QuickAddController controller,
     required Color backgroundColor,
+    required ThemeController themeController,
     bool fullWidth = false, // 전체 너비 사용 여부
   }) {
     return InkWell(
@@ -172,7 +184,11 @@ class CategoryTypeDialog extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(
+            color: themeController.isDarkMode 
+                ? color.withOpacity(0.6)
+                : color.withOpacity(0.3)
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

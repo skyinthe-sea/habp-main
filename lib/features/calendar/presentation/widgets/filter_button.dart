@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/calendar_filter_controller.dart';
 import '../../domain/entities/calendar_filter.dart';
 
@@ -15,24 +16,29 @@ class FilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Obx(() {
       final currentFilter = controller.currentFilter.value;
       final hasActiveFilter = currentFilter.categoryType != null ||
           currentFilter.selectedCategoryIds.isNotEmpty;
 
       return Positioned(
+        top: 16,
         right: 16,
-        bottom: 16,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: _showFilterOptions,
-            borderRadius: BorderRadius.circular(28),
+            onTap: _showFilterDialog,
+            borderRadius: BorderRadius.circular(50),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: hasActiveFilter ? AppColors.primary : Colors.white,
-                borderRadius: BorderRadius.circular(28),
+                color: hasActiveFilter 
+                    ? themeController.primaryColor 
+                    : themeController.cardColor,
+                shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -41,43 +47,40 @@ class FilterButton extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Stack(
                 children: [
-                  Icon(
-                    Icons.filter_list_rounded,
-                    size: 20,
-                    color: hasActiveFilter ? Colors.white : AppColors.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _getFilterLabel(currentFilter),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: hasActiveFilter ? Colors.white : AppColors.primary,
+                  Center(
+                    child: Icon(
+                      Icons.filter_list_rounded,
+                      size: 24,
+                      color: hasActiveFilter 
+                          ? Colors.white 
+                          : themeController.textPrimaryColor,
                     ),
                   ),
-                  if (hasActiveFilter) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        currentFilter.selectedCategoryIds.isNotEmpty
-                            ? '${currentFilter.selectedCategoryIds.length}'
-                            : '',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                  if (hasActiveFilter && currentFilter.selectedCategoryIds.isNotEmpty)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${currentFilter.selectedCategoryIds.length}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ],
                 ],
               ),
             ),
@@ -101,124 +104,142 @@ class FilterButton extends StatelessWidget {
     }
   }
 
-  void _showFilterOptions() {
-    Get.bottomSheet(
-      FilterBottomSheet(controller: controller),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+  void _showFilterDialog() {
+    Get.dialog(
+      FilterDialog(controller: controller),
+      barrierDismissible: true,
     );
   }
 }
 
-class FilterBottomSheet extends StatelessWidget {
+class FilterDialog extends StatelessWidget {
   final CalendarFilterController controller;
 
-  const FilterBottomSheet({
+  const FilterDialog({
     Key? key,
     required this.controller,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle indicator
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
+    final ThemeController themeController = Get.find<ThemeController>();
+    
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: themeController.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "필터 선택",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Obx(() {
-                  final hasFilter = controller.currentFilter.value.categoryType != null ||
-                      controller.currentFilter.value.selectedCategoryIds.isNotEmpty;
-
-                  return hasFilter ? TextButton(
-                    onPressed: controller.resetFilter,
-                    child: const Text("초기화"),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.grey.shade700,
-                    ),
-                  ) : const SizedBox.shrink();
-                }),
-              ],
-            ),
-          ),
-
-          // Filter options
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: Obx(() {
-              final currentFilter = controller.currentFilter.value;
-
-              return Wrap(
-                spacing: 8,
-                runSpacing: 12,
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildFilterChip(
-                    label: "전체",
-                    isSelected: currentFilter.categoryType == null &&
-                        currentFilter.selectedCategoryIds.isEmpty,
-                    onTap: () => controller.setFilter(CalendarFilter.all),
+                  Text(
+                    "필터 선택",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: themeController.textPrimaryColor,
+                    ),
                   ),
-                  _buildFilterChip(
-                    label: "소득",
-                    isSelected: currentFilter.categoryType == 'INCOME' &&
-                        currentFilter.selectedCategoryIds.isEmpty,
-                    onTap: () => controller.setFilter(CalendarFilter.income),
-                    color: Colors.green,
-                  ),
-                  _buildFilterChip(
-                    label: "지출",
-                    isSelected: currentFilter.categoryType == 'EXPENSE' &&
-                        currentFilter.selectedCategoryIds.isEmpty,
-                    onTap: () => controller.setFilter(CalendarFilter.expense),
-                    color: Colors.red,
-                  ),
-                  _buildFilterChip(
-                    label: "재테크",
-                    isSelected: currentFilter.categoryType == 'FINANCE' &&
-                        currentFilter.selectedCategoryIds.isEmpty,
-                    onTap: () => controller.setFilter(CalendarFilter.finance),
-                    color: Colors.blue,
-                  ),
-                  _buildFilterChip(
-                    label: "상세 필터",
-                    isSelected: false,
-                    onTap: () {
-                      Get.back();
-                      controller.openFilterModal();
-                    },
-                    icon: Icons.tune,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Obx(() {
+                        final hasFilter = controller.currentFilter.value.categoryType != null ||
+                            controller.currentFilter.value.selectedCategoryIds.isNotEmpty;
+
+                        return hasFilter ? TextButton(
+                          onPressed: controller.resetFilter,
+                          child: Text("초기화", style: TextStyle(color: themeController.textSecondaryColor)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: themeController.textSecondaryColor,
+                          ),
+                        ) : const SizedBox.shrink();
+                      }),
+                      IconButton(
+                        onPressed: () => Get.back(),
+                        icon: Icon(Icons.close, color: themeController.textSecondaryColor),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
                 ],
-              );
-            }),
-          ),
-        ],
+              ),
+            ),
+
+            // Filter options
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: Obx(() {
+                final currentFilter = controller.currentFilter.value;
+
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 12,
+                  children: [
+                    _buildFilterChip(
+                      label: "전체",
+                      isSelected: currentFilter.categoryType == null &&
+                          currentFilter.selectedCategoryIds.isEmpty,
+                      onTap: () => controller.setFilter(CalendarFilter.all),
+                      themeController: themeController,
+                    ),
+                    _buildFilterChip(
+                      label: "소득",
+                      isSelected: currentFilter.categoryType == 'INCOME' &&
+                          currentFilter.selectedCategoryIds.isEmpty,
+                      onTap: () => controller.setFilter(CalendarFilter.income),
+                      color: themeController.isDarkMode ? Colors.green.shade400 : Colors.green,
+                      themeController: themeController,
+                    ),
+                    _buildFilterChip(
+                      label: "지출",
+                      isSelected: currentFilter.categoryType == 'EXPENSE' &&
+                          currentFilter.selectedCategoryIds.isEmpty,
+                      onTap: () => controller.setFilter(CalendarFilter.expense),
+                      color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red,
+                      themeController: themeController,
+                    ),
+                    _buildFilterChip(
+                      label: "재테크",
+                      isSelected: currentFilter.categoryType == 'FINANCE' &&
+                          currentFilter.selectedCategoryIds.isEmpty,
+                      onTap: () => controller.setFilter(CalendarFilter.finance),
+                      color: themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue,
+                      themeController: themeController,
+                    ),
+                    _buildFilterChip(
+                      label: "상세 필터",
+                      isSelected: false,
+                      onTap: () {
+                        Get.back();
+                        controller.openFilterModal();
+                      },
+                      icon: Icons.tune,
+                      themeController: themeController,
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -227,10 +248,11 @@ class FilterBottomSheet extends StatelessWidget {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
+    required ThemeController themeController,
     Color? color,
     IconData? icon,
   }) {
-    final effectiveColor = color ?? AppColors.primary;
+    final effectiveColor = color ?? themeController.primaryColor;
 
     return Material(
       color: Colors.transparent,
@@ -238,17 +260,25 @@ class FilterBottomSheet extends StatelessWidget {
         onTap: () {
           onTap();
           if (label != "상세 필터") {
-            Get.back(); // Close bottom sheet after selection
+            Get.back(); // Close dialog after selection
           }
         },
         borderRadius: BorderRadius.circular(100),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? effectiveColor.withOpacity(0.1) : Colors.grey.shade100,
+            color: isSelected 
+                ? effectiveColor.withOpacity(0.1) 
+                : themeController.isDarkMode 
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(100),
             border: Border.all(
-              color: isSelected ? effectiveColor : Colors.grey.shade300,
+              color: isSelected 
+                  ? effectiveColor 
+                  : themeController.isDarkMode 
+                      ? Colors.grey.shade600
+                      : Colors.grey.shade300,
               width: 1.5,
             ),
           ),
@@ -259,7 +289,9 @@ class FilterBottomSheet extends StatelessWidget {
                 Icon(
                   icon,
                   size: 18,
-                  color: isSelected ? effectiveColor : Colors.grey.shade700,
+                  color: isSelected 
+                      ? effectiveColor 
+                      : themeController.textSecondaryColor,
                 ),
                 const SizedBox(width: 8),
               ],
@@ -268,7 +300,9 @@ class FilterBottomSheet extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: isSelected ? effectiveColor : Colors.grey.shade700,
+                  color: isSelected 
+                      ? effectiveColor 
+                      : themeController.textSecondaryColor,
                 ),
               ),
             ],

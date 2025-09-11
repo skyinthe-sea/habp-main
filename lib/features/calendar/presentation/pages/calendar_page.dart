@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/database/db_helper.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../data/datasources/calendar_local_data_source.dart';
 import '../../data/repositories/calendar_repository_impl.dart';
 import '../../domain/usecases/get_month_transactions.dart';
@@ -107,33 +108,41 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
       builder: (context, snapshot) {
         // Show loading screen while data is loading
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: AppColors.primary,
-            ),
+          return GetBuilder<ThemeController>(
+            builder: (themeController) {
+              return Center(
+                child: CircularProgressIndicator(
+                  color: themeController.primaryColor,
+                ),
+              );
+            },
           );
         }
 
         // Show actual calendar screen after data is loaded
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: SafeArea(
-            child: Stack(
-              children: [
-                // Full-screen calendar with scroll support
-                MonthCalendarFullscreen(
-                  controller: _controller,
-                  onDateTap: _showTransactionDialog,
+        return GetBuilder<ThemeController>(
+          builder: (themeController) {
+            return Scaffold(
+              backgroundColor: themeController.backgroundColor,
+              body: SafeArea(
+                child: Stack(
+                  children: [
+                    // Full-screen calendar with scroll support
+                    MonthCalendarFullscreen(
+                      controller: _controller,
+                      onDateTap: _showTransactionDialog,
+                    ),
+
+                    // Modern filter button (our new implementation)
+                    FilterButton(controller: _filterController),
+
+                    // Filter modal (still used for detailed category filtering)
+                    FilterModal(controller: _filterController),
+                  ],
                 ),
-
-                // Modern filter button (our new implementation)
-                FilterButton(controller: _filterController),
-
-                // Filter modal (still used for detailed category filtering)
-                FilterModal(controller: _filterController),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

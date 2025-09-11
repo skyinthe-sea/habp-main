@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:get/get.dart';
+import '../../../../core/controllers/theme_controller.dart';
 
 class CategoryAnalyticsCharts extends StatelessWidget {
   final String title;
@@ -21,14 +22,18 @@ class CategoryAnalyticsCharts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: themeController.isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -39,17 +44,18 @@ class CategoryAnalyticsCharts extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              color: themeController.textPrimaryColor,
             ),
           ),
           const SizedBox(height: 24),
           SizedBox(
             height: 220,
             child: chartType == 'dayOfWeek'
-                ? _buildDayOfWeekChart()
-                : _buildDailyExpensesChart(),
+                ? _buildDayOfWeekChart(themeController)
+                : _buildDailyExpensesChart(themeController),
           ),
         ],
       ),
@@ -57,14 +63,14 @@ class CategoryAnalyticsCharts extends StatelessWidget {
   }
 
   // 요일별 지출 차트
-  Widget _buildDayOfWeekChart() {
+  Widget _buildDayOfWeekChart(ThemeController themeController) {
     final dayLabels = ['월', '화', '수', '목', '금', '토', '일'];
 
     // 데이터가 비어있는지 확인
     bool hasData = dayOfWeekExpenses.values.any((value) => value > 0);
 
     if (!hasData) {
-      return _buildNoDataMessage();
+      return _buildNoDataMessage(themeController);
     }
 
     final maxExpense = dayOfWeekExpenses.values.fold<double>(
@@ -72,7 +78,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
 
     // 최댓값이 0이면 데이터가 없는 것
     if (maxExpense <= 0) {
-      return _buildNoDataMessage();
+      return _buildNoDataMessage(themeController);
     }
 
     return BarChart(
@@ -108,8 +114,8 @@ class CategoryAnalyticsCharts extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       dayLabels[index],
-                      style: const TextStyle(
-                        color: Colors.black,
+                      style: TextStyle(
+                        color: themeController.textPrimaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -139,7 +145,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
                   child: Text(
                     '${currencyFormat.format(value.toInt())}',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
+                      color: themeController.textSecondaryColor,
                       fontSize: 10,
                     ),
                   ),
@@ -167,7 +173,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: expense,
-                color: _getDayColor(day),
+                color: _getDayColor(day, themeController),
                 width: 16,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(6),
@@ -182,7 +188,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
   }
 
   // 일별 지출 추이 차트 (라인 차트)
-  Widget _buildDailyExpensesChart() {
+  Widget _buildDailyExpensesChart(ThemeController themeController) {
     // 월의 총 일수 계산
     final year = int.parse(selectedPeriod.split('-')[0]);
     final month = int.parse(selectedPeriod.split('-')[1]);
@@ -192,7 +198,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
     bool hasData = dailyExpenses.values.any((value) => value > 0);
 
     if (!hasData) {
-      return _buildNoDataMessage();
+      return _buildNoDataMessage(themeController);
     }
 
     // 일별 데이터 포인트 생성
@@ -206,7 +212,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
 
     // 빈 데이터 처리
     if (spots.isEmpty) {
-      return _buildNoDataMessage();
+      return _buildNoDataMessage(themeController);
     }
 
     // 최대값 계산
@@ -220,7 +226,9 @@ class CategoryAnalyticsCharts extends StatelessWidget {
           horizontalInterval: maxY / 4,
           getDrawingHorizontalLine: (value) {
             return FlLine(
-              color: Colors.grey.withOpacity(0.2),
+              color: themeController.isDarkMode 
+                  ? Colors.grey.shade700.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.2),
               strokeWidth: 1,
             );
           },
@@ -246,7 +254,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
                   child: Text(
                     '${value.toInt()}일',
                     style: TextStyle(
-                      color: Colors.grey.shade700,
+                      color: themeController.textSecondaryColor,
                       fontSize: 11,
                     ),
                   ),
@@ -267,7 +275,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
                   child: Text(
                     '${currencyFormat.format(value.toInt())}',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
+                      color: themeController.textSecondaryColor,
                       fontSize: 10,
                     ),
                   ),
@@ -281,10 +289,14 @@ class CategoryAnalyticsCharts extends StatelessWidget {
           show: true,
           border: Border(
             bottom: BorderSide(
-              color: Colors.grey.withOpacity(0.2),
+              color: themeController.isDarkMode 
+                  ? Colors.grey.shade700.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.2),
             ),
             left: BorderSide(
-              color: Colors.grey.withOpacity(0.2),
+              color: themeController.isDarkMode 
+                  ? Colors.grey.shade700.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.2),
             ),
             right: BorderSide(
               color: Colors.transparent,
@@ -302,21 +314,21 @@ class CategoryAnalyticsCharts extends StatelessWidget {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: AppColors.primary,
+            color: themeController.primaryColor,
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: FlDotData(
               show: true,
               getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
                 radius: 4,
-                color: AppColors.primary,
+                color: themeController.primaryColor,
                 strokeWidth: 2,
-                strokeColor: Colors.white,
+                strokeColor: themeController.cardColor,
               ),
             ),
             belowBarData: BarAreaData(
               show: true,
-              color: AppColors.primary.withOpacity(0.1),
+              color: themeController.primaryColor.withOpacity(0.1),
             ),
           ),
         ],
@@ -345,7 +357,7 @@ class CategoryAnalyticsCharts extends StatelessWidget {
   }
 
   // 데이터가 없을 때 표시할 위젯
-  Widget _buildNoDataMessage() {
+  Widget _buildNoDataMessage(ThemeController themeController) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -353,13 +365,15 @@ class CategoryAnalyticsCharts extends StatelessWidget {
           Icon(
             Icons.bar_chart,
             size: 48,
-            color: Colors.grey.withOpacity(0.4),
+            color: themeController.isDarkMode 
+                ? Colors.grey.shade600.withOpacity(0.4)
+                : Colors.grey.withOpacity(0.4),
           ),
           const SizedBox(height: 16),
           Text(
             '데이터가 충분하지 않습니다',
             style: TextStyle(
-              color: Colors.grey.shade600,
+              color: themeController.textSecondaryColor,
               fontSize: 14,
             ),
           ),
@@ -369,24 +383,24 @@ class CategoryAnalyticsCharts extends StatelessWidget {
   }
 
   // 요일별 색상 지정
-  Color _getDayColor(int day) {
+  Color _getDayColor(int day, ThemeController themeController) {
     switch (day) {
       case 1: // 월요일
-        return AppColors.primary.withOpacity(0.7);
+        return themeController.primaryColor.withOpacity(0.7);
       case 2: // 화요일
-        return AppColors.primary.withOpacity(0.8);
+        return themeController.primaryColor.withOpacity(0.8);
       case 3: // 수요일
-        return AppColors.primary.withOpacity(0.9);
+        return themeController.primaryColor.withOpacity(0.9);
       case 4: // 목요일
-        return AppColors.primary;
+        return themeController.primaryColor;
       case 5: // 금요일
-        return AppColors.primary;
+        return themeController.primaryColor;
       case 6: // 토요일
         return const Color(0xFF9177E0); // 보라색 (토요일)
       case 7: // 일요일
         return const Color(0xFFE2A949); // 노란색 (일요일)
       default:
-        return AppColors.primary;
+        return themeController.primaryColor;
     }
   }
 }

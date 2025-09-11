@@ -149,14 +149,14 @@ class _MainPageState extends State<MainPage> {
           Icon(
             icon,
             size: 24,
-            color: isSelected ? const Color(0xFFE495C0) : themeController.textSecondaryColor,
+            color: isSelected ? themeController.primaryColor : themeController.textSecondaryColor,
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
               fontSize: 10,
-              color: isSelected ? const Color(0xFFE495C0) : themeController.textSecondaryColor,
+              color: isSelected ? themeController.primaryColor : themeController.textSecondaryColor,
             ),
           ),
         ],

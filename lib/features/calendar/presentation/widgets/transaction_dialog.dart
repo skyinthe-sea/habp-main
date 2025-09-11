@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/calendar_controller.dart';
 import '../controllers/calendar_filter_controller.dart';
 import '../../domain/entities/calendar_transaction.dart';
@@ -24,11 +25,12 @@ class TransactionDialog extends StatelessWidget {
   void _onTransactionTap(CalendarTransaction transaction) {
     // 고정 거래는 수정 불가
     if (transaction.isFixed) {
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '수정 불가',
         '고정 거래는 수정할 수 없습니다.',
-        backgroundColor: AppColors.warning.withOpacity(0.1),
-        colorText: AppColors.warning,
+        backgroundColor: (themeController.isDarkMode ? Colors.orange.shade400 : AppColors.warning).withOpacity(0.1),
+        colorText: themeController.isDarkMode ? Colors.orange.shade400 : AppColors.warning,
         margin: const EdgeInsets.all(16),
         borderRadius: 8,
         duration: const Duration(seconds: 2),
@@ -53,11 +55,12 @@ class TransactionDialog extends StatelessWidget {
   void _onTransactionLongPress(CalendarTransaction transaction) {
     // 고정 거래는 삭제 불가
     if (transaction.isFixed) {
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '삭제 불가',
         '고정 거래는 삭제할 수 없습니다.',
-        backgroundColor: AppColors.warning.withOpacity(0.1),
-        colorText: AppColors.warning,
+        backgroundColor: (themeController.isDarkMode ? Colors.orange.shade400 : AppColors.warning).withOpacity(0.1),
+        colorText: themeController.isDarkMode ? Colors.orange.shade400 : AppColors.warning,
         margin: const EdgeInsets.all(16),
         borderRadius: 8,
         duration: const Duration(seconds: 2),
@@ -71,8 +74,10 @@ class TransactionDialog extends StatelessWidget {
 
   // 삭제 확인 다이얼로그
   void _showDeleteConfirmDialog(CalendarTransaction transaction) {
+    final ThemeController themeController = Get.find<ThemeController>();
     Get.dialog(
       AlertDialog(
+        backgroundColor: themeController.cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -80,15 +85,16 @@ class TransactionDialog extends StatelessWidget {
           children: [
             Icon(
               Icons.delete_forever,
-              color: Colors.red[600],
+              color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600],
               size: 24,
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               '거래 내역 삭제',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: themeController.textPrimaryColor,
               ),
             ),
           ],
@@ -101,16 +107,16 @@ class TransactionDialog extends StatelessWidget {
               '다음 거래 내역을 삭제하시겠습니까?',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[700],
+                color: themeController.textSecondaryColor,
               ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[200]!),
+                border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey[200]!),
               ),
               child: Row(
                 children: [
@@ -134,9 +140,10 @@ class TransactionDialog extends StatelessWidget {
                       children: [
                         Text(
                           transaction.description,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
+                            color: themeController.textPrimaryColor,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -144,7 +151,7 @@ class TransactionDialog extends StatelessWidget {
                           transaction.categoryName,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: themeController.textSecondaryColor,
                           ),
                         ),
                       ],
@@ -156,8 +163,8 @@ class TransactionDialog extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: transaction.categoryType == 'INCOME' 
-                          ? Colors.green[600] 
-                          : Colors.red[600],
+                          ? (themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600])
+                          : (themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600]),
                     ),
                   ),
                 ],
@@ -168,7 +175,7 @@ class TransactionDialog extends StatelessWidget {
               '이 작업은 되돌릴 수 없습니다.',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.red[600],
+                color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600],
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -180,7 +187,7 @@ class TransactionDialog extends StatelessWidget {
             child: Text(
               '취소',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: themeController.textSecondaryColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -193,28 +200,28 @@ class TransactionDialog extends StatelessWidget {
                 Get.snackbar(
                   '삭제 완료',
                   '거래 내역이 삭제되었습니다.',
-                  backgroundColor: Colors.green.withOpacity(0.1),
-                  colorText: Colors.green[700],
+                  backgroundColor: (themeController.isDarkMode ? Colors.green.shade400 : Colors.green).withOpacity(0.1),
+                  colorText: themeController.isDarkMode ? Colors.green.shade400 : Colors.green[700],
                   margin: const EdgeInsets.all(16),
                   borderRadius: 8,
                   duration: const Duration(seconds: 2),
-                  icon: Icon(Icons.check_circle, color: Colors.green[700]),
+                  icon: Icon(Icons.check_circle, color: themeController.isDarkMode ? Colors.green.shade400 : Colors.green[700]),
                 );
               } catch (e) {
                 Get.snackbar(
                   '삭제 실패',
                   e.toString(),
-                  backgroundColor: Colors.red.withOpacity(0.1),
-                  colorText: Colors.red[700],
+                  backgroundColor: (themeController.isDarkMode ? Colors.red.shade400 : Colors.red).withOpacity(0.1),
+                  colorText: themeController.isDarkMode ? Colors.red.shade400 : Colors.red[700],
                   margin: const EdgeInsets.all(16),
                   borderRadius: 8,
                   duration: const Duration(seconds: 3),
-                  icon: Icon(Icons.error, color: Colors.red[700]),
+                  icon: Icon(Icons.error, color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red[700]),
                 );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
+              backgroundColor: themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600],
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -235,6 +242,8 @@ class TransactionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     // 다이얼로그가 표시될 때 해당 날짜의 거래 정보를 가져옴
     controller.fetchDaySummary(date);
 
@@ -319,12 +328,12 @@ class TransactionDialog extends StatelessWidget {
                 height: 250,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: themeController.cardColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
-                    color: AppColors.primary,
+                    color: themeController.primaryColor,
                   ),
                 ),
               );
@@ -335,7 +344,7 @@ class TransactionDialog extends StatelessWidget {
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.7,
               ),
-              color: Colors.white,
+              color: themeController.cardColor,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -355,22 +364,24 @@ class TransactionDialog extends StatelessWidget {
 
   // 다이얼로그 헤더 위젯 - 새로운 디자인 (그라데이션 배경)
   Widget _buildDialogHeader(String formattedDate, String weekday, double income, double expense, double finance, double totalNet) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     // 헤더 배경색 결정 (소득이 많으면 녹색, 지출이 많으면 빨강, 그 외는 파랑)
     Color gradientStartColor;
     Color gradientEndColor;
 
     if (totalNet > 0) {
       // 소득이 큰 경우
-      gradientStartColor = Colors.green[300]!;
-      gradientEndColor = Colors.green[100]!;
+      gradientStartColor = themeController.isDarkMode ? Colors.green.shade600 : Colors.green[300]!;
+      gradientEndColor = themeController.isDarkMode ? Colors.green.shade800 : Colors.green[100]!;
     } else if (totalNet < 0) {
       // 지출이 큰 경우
-      gradientStartColor = Colors.red[300]!;
-      gradientEndColor = Colors.red[100]!;
+      gradientStartColor = themeController.isDarkMode ? Colors.red.shade600 : Colors.red[300]!;
+      gradientEndColor = themeController.isDarkMode ? Colors.red.shade800 : Colors.red[100]!;
     } else {
       // 그 외 경우 (재테크 또는 밸런스)
-      gradientStartColor = AppColors.primary;
-      gradientEndColor = AppColors.primary.withOpacity(0.5);
+      gradientStartColor = themeController.primaryColor;
+      gradientEndColor = themeController.primaryColor.withOpacity(0.5);
     }
 
     return Container(
@@ -436,11 +447,11 @@ class TransactionDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: themeController.cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: themeController.isDarkMode ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -452,11 +463,11 @@ class TransactionDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       '순액',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey,
+                        color: themeController.textSecondaryColor,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -465,14 +476,18 @@ class TransactionDialog extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: totalNet >= 0 ? Colors.green[600] : Colors.red[600],
+                        color: totalNet >= 0 
+                            ? (themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600])
+                            : (themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600]),
                       ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
                       totalNet >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
                       size: 16,
-                      color: totalNet >= 0 ? Colors.green[600] : Colors.red[600],
+                      color: totalNet >= 0 
+                          ? (themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600])
+                          : (themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600]),
                     ),
                   ],
                 ),
@@ -486,11 +501,11 @@ class TransactionDialog extends StatelessWidget {
                     Expanded(
                       child: Column(
                         children: [
-                          const Text(
+                          Text(
                             '소득',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: themeController.textSecondaryColor,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -499,7 +514,7 @@ class TransactionDialog extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green[600],
+                              color: themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600],
                             ),
                           ),
                         ],
@@ -510,18 +525,18 @@ class TransactionDialog extends StatelessWidget {
                     Container(
                       height: 30,
                       width: 1,
-                      color: Colors.grey.withOpacity(0.3),
+                      color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.withOpacity(0.3),
                     ),
 
                     // 지출
                     Expanded(
                       child: Column(
                         children: [
-                          const Text(
+                          Text(
                             '지출',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: themeController.textSecondaryColor,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -530,7 +545,7 @@ class TransactionDialog extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Colors.red[600],
+                              color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600],
                             ),
                           ),
                         ],
@@ -541,18 +556,18 @@ class TransactionDialog extends StatelessWidget {
                     Container(
                       height: 30,
                       width: 1,
-                      color: Colors.grey.withOpacity(0.3),
+                      color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.withOpacity(0.3),
                     ),
 
                     // 재테크
                     Expanded(
                       child: Column(
                         children: [
-                          const Text(
+                          Text(
                             '재테크',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: themeController.textSecondaryColor,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -561,7 +576,7 @@ class TransactionDialog extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue[600],
+                              color: themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue[600],
                             ),
                           ),
                         ],
@@ -579,6 +594,7 @@ class TransactionDialog extends StatelessWidget {
 
   // 트랜잭션 목록 위젯
   Widget _buildTransactionList(List<CalendarTransaction> transactions, bool isDateInFuture) {
+    final ThemeController themeController = Get.find<ThemeController>();
     if (transactions.isEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -588,13 +604,13 @@ class TransactionDialog extends StatelessWidget {
             Icon(
               isDateInFuture ? Icons.event_available : Icons.event_busy,
               size: 48,
-              color: Colors.grey[300],
+              color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey[300],
             ),
             const SizedBox(height: 16),
             Text(
               isDateInFuture ? '표시할 거래 예정이 없습니다.' : '표시할 거래 내역이 없습니다.',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: themeController.textSecondaryColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
@@ -615,7 +631,7 @@ class TransactionDialog extends StatelessWidget {
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.primary,
+                  foregroundColor: themeController.primaryColor,
                 ),
               ),
           ],
@@ -656,7 +672,7 @@ class TransactionDialog extends StatelessWidget {
             // 그룹 헤더
             Container(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-              color: Colors.grey[50],
+              color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
               child: Row(
                 children: [
                   Icon(
@@ -665,8 +681,10 @@ class TransactionDialog extends StatelessWidget {
                         : (key == '지출' ? Icons.arrow_downward : Icons.swap_horiz),
                     size: 16,
                     color: key == '소득'
-                        ? Colors.green[600]
-                        : (key == '지출' ? Colors.red[600] : Colors.blue[600]),
+                        ? (themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600])
+                        : (key == '지출' 
+                            ? (themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600])
+                            : (themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue[600])),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -675,8 +693,10 @@ class TransactionDialog extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: key == '소득'
-                          ? Colors.green[600]
-                          : (key == '지출' ? Colors.red[600] : Colors.blue[600]),
+                          ? (themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600])
+                          : (key == '지출' 
+                              ? (themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600])
+                              : (themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue[600])),
                     ),
                   ),
                 ],
@@ -696,6 +716,7 @@ class TransactionDialog extends StatelessWidget {
 
   // 개별 트랜잭션 아이템 위젯
   Widget _buildTransactionItem(CalendarTransaction transaction) {
+    final ThemeController themeController = Get.find<ThemeController>();
     // 거래 시간 포맷팅
     final time = DateFormat('HH:mm').format(transaction.transactionDate);
     final isFixed = transaction.isFixed;
@@ -713,12 +734,14 @@ class TransactionDialog extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: Colors.grey.withOpacity(0.1),
+              color: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.withOpacity(0.1),
               width: 1,
             ),
           ),
           // 고정 거래는 약간 투명하게 표시
-          color: isFixed ? Colors.grey.withOpacity(0.05) : Colors.transparent,
+          color: isFixed 
+              ? (themeController.isDarkMode ? Colors.grey.shade800.withOpacity(0.3) : Colors.grey.withOpacity(0.05))
+              : Colors.transparent,
         ),
         child: Row(
           children: [
@@ -747,9 +770,10 @@ class TransactionDialog extends StatelessWidget {
               children: [
                 Text(
                   transaction.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
+                    color: themeController.textPrimaryColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -775,7 +799,7 @@ class TransactionDialog extends StatelessWidget {
                       time,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: themeController.textSecondaryColor,
                       ),
                     ),
                     if (isFixed)
@@ -785,14 +809,14 @@ class TransactionDialog extends StatelessWidget {
                           Icon(
                             Icons.repeat,
                             size: 12,
-                            color: Colors.grey[600],
+                            color: themeController.textSecondaryColor,
                           ),
                           const SizedBox(width: 2),
                           Text(
                             '고정',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: themeController.textSecondaryColor,
                             ),
                           ),
                         ],
@@ -813,8 +837,10 @@ class TransactionDialog extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: (isIncome || (isFinance && transaction.amount > 0)
-                      ? Colors.green[600]
-                      : (isFinance ? Colors.blue[600] : Colors.red[600]))!
+                      ? (themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600]!)
+                      : (isFinance 
+                          ? (themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue[600]!)
+                          : (themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600]!)))
                       .withOpacity(isFixed ? 0.6 : 1.0), // 고정 거래는 투명도 적용
                 ),
               ),
@@ -823,7 +849,7 @@ class TransactionDialog extends StatelessWidget {
                 Icon(
                   Icons.edit,
                   size: 12,
-                  color: AppColors.primary.withOpacity(0.6),
+                  color: themeController.primaryColor.withOpacity(0.6),
                 ),
               ],
             ],
@@ -836,29 +862,31 @@ class TransactionDialog extends StatelessWidget {
 
   // 카테고리 타입에 따른 색상 반환
   Color _getCategoryColor(String categoryType) {
+    final ThemeController themeController = Get.find<ThemeController>();
     switch (categoryType) {
       case 'INCOME':
-        return Colors.green[600]!;
+        return themeController.isDarkMode ? Colors.green.shade400 : Colors.green[600]!;
       case 'EXPENSE':
-        return Colors.red[600]!;
+        return themeController.isDarkMode ? Colors.red.shade400 : Colors.red[600]!;
       case 'FINANCE':
-        return Colors.blue[600]!;
+        return themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue[600]!;
       default:
-        return Colors.grey;
+        return themeController.isDarkMode ? Colors.grey.shade400 : Colors.grey;
     }
   }
 
   // 카테고리 타입에 따른 밝은 배경색 반환
   Color _getCategoryColorLight(String categoryType) {
+    final ThemeController themeController = Get.find<ThemeController>();
     switch (categoryType) {
       case 'INCOME':
-        return Colors.green[50]!;
+        return themeController.isDarkMode ? Colors.green.withOpacity(0.15) : Colors.green[50]!;
       case 'EXPENSE':
-        return Colors.red[50]!;
+        return themeController.isDarkMode ? Colors.red.withOpacity(0.15) : Colors.red[50]!;
       case 'FINANCE':
-        return Colors.blue[50]!;
+        return themeController.isDarkMode ? Colors.blue.withOpacity(0.15) : Colors.blue[50]!;
       default:
-        return Colors.grey[50]!;
+        return themeController.isDarkMode ? Colors.grey.withOpacity(0.15) : Colors.grey[50]!;
     }
   }
 

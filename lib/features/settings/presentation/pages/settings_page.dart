@@ -88,7 +88,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
     final ThemeController themeController = Get.find<ThemeController>();
     
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: themeController.backgroundColor,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -101,7 +101,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                   Icon(
                     Icons.settings,
                     size: 16,
-                    color: Colors.grey[700],
+                    color: themeController.textSecondaryColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -109,7 +109,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
+                      color: themeController.textSecondaryColor,
                     ),
                   ),
                 ],
@@ -134,7 +134,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                   Icon(
                     Icons.account_balance,
                     size: 16,
-                    color: Colors.grey[700],
+                    color: themeController.textSecondaryColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -142,7 +142,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
+                      color: themeController.textSecondaryColor,
                     ),
                   ),
                 ],
@@ -166,7 +166,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                   Icon(
                     Icons.repeat,
                     size: 16,
-                    color: Colors.grey[700],
+                    color: themeController.textSecondaryColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -174,7 +174,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
+                      color: themeController.textSecondaryColor,
                     ),
                   ),
                 ],
@@ -210,7 +210,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                   Icon(
                     Icons.more_horiz,
                     size: 16,
-                    color: Colors.grey[700],
+                    color: themeController.textSecondaryColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -218,7 +218,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
+                      color: themeController.textSecondaryColor,
                     ),
                   ),
                 ],
@@ -282,7 +282,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                   Icon(
                     Icons.info_outline,
                     size: 14,
-                    color: Colors.grey[500],
+                    color: themeController.textSecondaryColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -290,7 +290,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                         ? '버전 정보 로딩 중...'
                         : '버전 $_appVersion',
                     style: TextStyle(
-                      color: Colors.grey[500],
+                      color: themeController.textSecondaryColor,
                       fontSize: 12,
                     ),
                   ),
@@ -311,16 +311,19 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
     Color? textColor,
     Color? color,
   }) {
-    final itemColor = color ?? (textColor ?? AppColors.primary);
+    final ThemeController themeController = Get.find<ThemeController>();
+    final itemColor = color ?? (textColor ?? themeController.primaryColor);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: themeController.isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -343,7 +346,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
         title: Text(
           title,
           style: TextStyle(
-            color: textColor ?? Colors.black87,
+            color: textColor ?? themeController.textPrimaryColor,
             fontWeight: FontWeight.w500,
             fontSize: 16,
           ),
@@ -352,12 +355,12 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
           subtitle,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: themeController.textSecondaryColor,
           ),
         ),
         trailing: Icon(
           Icons.chevron_right,
-          color: Colors.grey[400],
+          color: themeController.textSecondaryColor,
           size: 20,
         ),
         onTap: onTap,
@@ -377,16 +380,19 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
     required ValueChanged<bool> onChanged,
     Color? color,
   }) {
-    final itemColor = color ?? AppColors.primary;
+    final ThemeController themeController = Get.find<ThemeController>();
+    final itemColor = color ?? themeController.primaryColor;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: themeController.isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -408,8 +414,8 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            color: Colors.black87,
+          style: TextStyle(
+            color: themeController.textPrimaryColor,
             fontWeight: FontWeight.w500,
             fontSize: 16,
           ),
@@ -418,7 +424,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
           subtitle,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: themeController.textSecondaryColor,
           ),
         ),
         trailing: Transform.scale(
@@ -428,8 +434,10 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
             onChanged: onChanged,
             activeColor: itemColor,
             activeTrackColor: itemColor.withOpacity(0.3),
-            inactiveThumbColor: Colors.grey[400],
-            inactiveTrackColor: Colors.grey[300],
+            inactiveThumbColor: themeController.textSecondaryColor,
+            inactiveTrackColor: themeController.isDarkMode 
+                ? Colors.grey.shade700
+                : Colors.grey.shade300,
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(

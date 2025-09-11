@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../domain/entities/calendar_transaction.dart';
 
 class EditTransactionDialog extends StatefulWidget {
@@ -50,6 +51,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
 
   // 날짜 선택 다이얼로그
   Future<void> _selectDate() async {
+    final ThemeController themeController = Get.find<ThemeController>();
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -59,10 +61,10 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: AppColors.primary,
+              primary: themeController.primaryColor,
               onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textPrimary,
+              surface: themeController.cardColor,
+              onSurface: themeController.textPrimaryColor,
             ),
           ),
           child: child!,
@@ -78,6 +80,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
 
   // 시간 선택 다이얼로그
   Future<void> _selectTime() async {
+    final ThemeController themeController = Get.find<ThemeController>();
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
@@ -85,10 +88,10 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: AppColors.primary,
+              primary: themeController.primaryColor,
               onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textPrimary,
+              surface: themeController.cardColor,
+              onSurface: themeController.textPrimaryColor,
             ),
           ),
           child: child!,
@@ -193,6 +196,8 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -201,7 +206,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: themeController.isDarkMode ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.2),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -214,7 +219,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.8,
             ),
-            color: Colors.white,
+            color: themeController.cardColor,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -258,25 +263,27 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
   }
 
   Widget _buildHeader() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     // 거래 타입에 따른 색상 설정
     Color headerColor;
     String headerTitle;
     
     switch (widget.transaction.categoryType) {
       case 'INCOME':
-        headerColor = Colors.green[300]!;
+        headerColor = themeController.isDarkMode ? Colors.green.shade600 : Colors.green[300]!;
         headerTitle = '소득 수정';
         break;
       case 'EXPENSE':
-        headerColor = Colors.red[300]!;
+        headerColor = themeController.isDarkMode ? Colors.red.shade600 : Colors.red[300]!;
         headerTitle = '지출 수정';
         break;
       case 'FINANCE':
-        headerColor = Colors.blue[300]!;
+        headerColor = themeController.isDarkMode ? Colors.blue.shade600 : Colors.blue[300]!;
         headerTitle = '재테크 수정';
         break;
       default:
-        headerColor = AppColors.primary;
+        headerColor = themeController.primaryColor;
         headerTitle = '거래 수정';
     }
 
@@ -342,36 +349,38 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
   }
 
   Widget _buildDescriptionField() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '거래 내용',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: themeController.textPrimaryColor,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.lightGrey),
-            color: Colors.grey[50],
+            border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
+            color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
           ),
           child: TextField(
             controller: _descriptionController,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: AppColors.textPrimary,
+              color: themeController.textPrimaryColor,
             ),
-            decoration: const InputDecoration(
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: InputBorder.none,
               hintText: '거래 내용을 입력하세요',
               hintStyle: TextStyle(
-                color: AppColors.textHint,
+                color: themeController.textSecondaryColor,
                 fontSize: 16,
               ),
             ),
@@ -382,29 +391,31 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
   }
 
   Widget _buildAmountField() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '금액',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: themeController.textPrimaryColor,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.lightGrey),
-            color: Colors.grey[50],
+            border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
+            color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
           ),
           child: TextField(
             controller: _amountController,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: AppColors.textPrimary,
+              color: themeController.textPrimaryColor,
               fontWeight: FontWeight.w500,
             ),
             keyboardType: TextInputType.number,
@@ -426,15 +437,15 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: InputBorder.none,
               hintText: '0',
-              hintStyle: const TextStyle(
-                color: AppColors.textHint,
+              hintStyle: TextStyle(
+                color: themeController.textSecondaryColor,
                 fontSize: 16,
               ),
-              suffix: const Text(
+              suffix: Text(
                 '원',
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppColors.textSecondary,
+                  color: themeController.textSecondaryColor,
                 ),
               ),
             ),
@@ -445,15 +456,17 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
   }
 
   Widget _buildDateTimeFields() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '날짜 및 시간',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: themeController.textPrimaryColor,
           ),
         ),
         const SizedBox(height: 8),
@@ -468,8 +481,8 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.lightGrey),
-                    color: Colors.grey[50],
+                    border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
+                    color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -477,15 +490,15 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
                       Icon(
                         Icons.calendar_today,
                         size: 18,
-                        color: AppColors.primary,
+                        color: themeController.primaryColor,
                       ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           DateFormat('M월 d일').format(_selectedDate),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: AppColors.textPrimary,
+                            color: themeController.textPrimaryColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -505,8 +518,8 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.lightGrey),
-                    color: Colors.grey[50],
+                    border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
+                    color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -514,15 +527,15 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
                       Icon(
                         Icons.access_time,
                         size: 18,
-                        color: AppColors.primary,
+                        color: themeController.primaryColor,
                       ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           _selectedTime.format(context),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: AppColors.textPrimary,
+                            color: themeController.textPrimaryColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),

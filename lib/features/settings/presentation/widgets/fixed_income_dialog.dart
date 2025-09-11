@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../../../core/services/event_bus_service.dart';
 import '../../../../core/util/thousands_formatter.dart';
@@ -93,21 +94,31 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Helper method to show delete confirmation dialog
   Future<bool?> _showDeleteConfirmDialog(SettingHistoryItem item) async {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: themeController.cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('설정 삭제'),
+          title: Text(
+            '설정 삭제',
+            style: TextStyle(color: themeController.textPrimaryColor),
+          ),
           content: Text(
             '${DateFormat('yyyy년 M월 d일').format(item.effectiveFrom)}부터 적용된 설정을 삭제하시겠습니까?'
                 '\n\n삭제 후에는 이전 설정이 적용됩니다.',
+            style: TextStyle(color: themeController.textPrimaryColor),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('취소'),
+              child: Text(
+                '취소',
+                style: TextStyle(color: themeController.textSecondaryColor),
+              ),
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
@@ -115,7 +126,9 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
             TextButton(
               child: Text(
                 '삭제',
-                style: TextStyle(color: Colors.red.shade700),
+                style: TextStyle(
+                  color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade700,
+                ),
               ),
               onPressed: () {
                 Navigator.of(context).pop(true);
@@ -138,10 +151,11 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       await _deleteFixedTransactionSetting(id);
     } catch (e) {
       if (mounted) {
+        final ThemeController themeController = Get.find<ThemeController>();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("삭제 중 오류가 발생했습니다: $e"),
-            backgroundColor: Colors.red,
+            backgroundColor: themeController.isDarkMode ? Colors.red.shade700 : Colors.red,
           ),
         );
       }
@@ -306,6 +320,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return ScaleTransition(
       scale: _scaleAnimation,
       child: BackdropFilter(
@@ -321,7 +337,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 width: MediaQuery.of(context).size.width * 0.9,
                 height: 300,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: themeController.cardColor,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Center(
@@ -332,7 +348,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         width: 50,
                         height: 50,
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade700),
+                          valueColor: AlwaysStoppedAnimation<Color>(themeController.primaryColor),
                           strokeWidth: 3,
                         ),
                       ),
@@ -341,7 +357,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         '고정 소득 정보를 불러오는 중...',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.grey[600],
+                          color: themeController.textSecondaryColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -357,11 +373,13 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 maxHeight: MediaQuery.of(context).size.height * 0.85,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: themeController.cardColor,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: themeController.isDarkMode
+                        ? Colors.black.withOpacity(0.4)
+                        : Colors.black.withOpacity(0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -453,14 +471,16 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Header with title and statistics
   Widget _buildHeader() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.green.shade600,
-            Colors.green.shade800,
+            themeController.isDarkMode ? Colors.green.shade700 : Colors.green.shade600,
+            themeController.isDarkMode ? Colors.green.shade900 : Colors.green.shade800,
           ],
         ),
       ),
@@ -668,6 +688,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Create form with calendar - now with proper scrolling
   Widget _buildCreateForm() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Form(
@@ -705,12 +727,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               const SizedBox(height: 24),
 
               // Name field
-              const Text(
+              Text(
                 '소득 이름',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: themeController.textPrimaryColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -719,19 +741,21 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 decoration: InputDecoration(
                   hintText: '예: 월급, 용돈 등',
                   filled: true,
-                  fillColor: Colors.grey[50],
-                  prefixIcon: Icon(Icons.account_balance_wallet, color: Colors.grey[600]),
+                  fillColor: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                  prefixIcon: Icon(Icons.account_balance_wallet, color: themeController.textSecondaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey[200]!),
+                    borderSide: BorderSide(
+                      color: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.green.shade700, width: 2),
+                    borderSide: BorderSide(color: themeController.primaryColor, width: 2),
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
@@ -745,12 +769,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               const SizedBox(height: 20),
 
               // Amount field
-              const Text(
+              Text(
                 '금액',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: themeController.textPrimaryColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -783,22 +807,28 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 decoration: InputDecoration(
                   hintText: '숫자만 입력',
                   filled: true,
-                  fillColor: Colors.grey[50],
-                  prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
+                  fillColor: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                  prefixIcon: Icon(Icons.attach_money, color: themeController.primaryColor),
                   prefixText: '₩ ',
-                  prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
+                  prefixStyle: TextStyle(color: themeController.textPrimaryColor, fontSize: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: _isValidAmount ? Colors.grey[200]! : Colors.red.shade300),
+                    borderSide: BorderSide(
+                      color: _isValidAmount 
+                          ? (themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200)
+                          : (themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade300),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
-                        color: _isValidAmount ? Colors.green.shade700 : Colors.red.shade500,
+                        color: _isValidAmount 
+                            ? themeController.primaryColor 
+                            : (themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade500),
                         width: 2
                     ),
                   ),
@@ -922,13 +952,16 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         },
                         calendarStyle: CalendarStyle(
                           todayDecoration: BoxDecoration(
-                            color: Colors.green.shade200,
+                            color: themeController.primaryColor.withOpacity(0.3),
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color: Colors.green.shade700,
+                            color: themeController.primaryColor,
                             shape: BoxShape.circle,
                           ),
+                          defaultTextStyle: TextStyle(color: themeController.textPrimaryColor),
+                          weekendTextStyle: TextStyle(color: themeController.textPrimaryColor),
+                          outsideTextStyle: TextStyle(color: themeController.textSecondaryColor),
                         ),
                         headerVisible: false,
                         calendarFormat: CalendarFormat.month,
@@ -948,7 +981,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                           Icon(
                             Icons.info_outline,
                             size: 16,
-                            color: Colors.grey[600],
+                            color: themeController.textSecondaryColor,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -956,7 +989,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                               '선택한 날짜: ${DateFormat('yyyy년 M월 d일').format(_selectedDate)}부터 적용',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.grey[600],
+                                color: themeController.textSecondaryColor,
                               ),
                             ),
                           ),
@@ -976,6 +1009,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // List of fixed income categories
   Widget _buildCategoryList() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     if (_controller.incomeCategories.isEmpty) {
       return Center(
         child: Padding(
@@ -1010,7 +1045,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 '새로운 고정 소득을 추가해보세요',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[500],
+                  color: themeController.textSecondaryColor,
                 ),
               ),
               const SizedBox(height: 24),
@@ -1018,7 +1053,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 icon: const Icon(Icons.add, size: 16),
                 label: const Text('고정 소득 추가하기', style: TextStyle(fontSize: 14)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
+                  backgroundColor: themeController.primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   shape: RoundedRectangleBorder(
@@ -1711,6 +1746,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
 // Add the method to delete a fixed transaction setting
   Future<void> _deleteFixedTransactionSetting(int settingId) async {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     try {
       // 로딩 표시
       Get.dialog(
@@ -1771,7 +1808,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '삭제 완료',
         '설정이 성공적으로 삭제되었습니다.',
-        backgroundColor: Colors.green[100],
+        backgroundColor: themeController.primaryColor.withOpacity(0.1),
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2114,11 +2151,13 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Bottom action buttons based on current mode
   Widget _buildBottomActions() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     if (_isDetailViewMode) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(24),
             bottomRight: Radius.circular(24),
@@ -2139,7 +2178,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               child: ElevatedButton(
                 onPressed: () => _showUpdateDialog(_selectedCategory!),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
+                  backgroundColor: themeController.primaryColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2225,7 +2264,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(24),
             bottomRight: Radius.circular(24),
@@ -2294,7 +2333,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                       Get.snackbar(
                         '성공',
                         '고정 소득이 추가되었습니다',
-                        backgroundColor: Colors.green[100],
+                        backgroundColor: themeController.primaryColor.withOpacity(0.1),
                         borderRadius: 12,
                         margin: const EdgeInsets.all(12),
                         snackPosition: SnackPosition.BOTTOM,
@@ -2314,7 +2353,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
+                  backgroundColor: themeController.primaryColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2338,7 +2377,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(24),
             bottomRight: Radius.circular(24),
@@ -2359,7 +2398,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 icon: const Icon(Icons.add_circle_outline, size: 18),
                 label: const Text('새 고정 소득 추가'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
+                  backgroundColor: themeController.primaryColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2518,6 +2557,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
   }
 
   Future<void> _deleteAllCategoryData() async {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     if (_selectedCategory == null) return;
 
     try {
@@ -2612,7 +2653,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '삭제 완료',
         '${_selectedCategory?.name ?? "고정 소득"} 항목이 완전히 삭제되었습니다.',
-        backgroundColor: Colors.green[100],
+        backgroundColor: themeController.primaryColor.withOpacity(0.1),
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2639,6 +2680,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Show update dialog for adding a new setting
   void _showUpdateDialog(CategoryWithSettings category) {
+    final ThemeController themeController = Get.find<ThemeController>();
     final TextEditingController amountController = TextEditingController();
 
     // Success state variables
@@ -2666,6 +2708,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       barrierDismissible: false, // Prevent closing by tapping outside
       builder: (context) {
         return Dialog(
+          backgroundColor: themeController.cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -2869,7 +2912,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                               Positioned.fill(
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: themeController.cardColor.withOpacity(0.9),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Center(
@@ -2966,12 +3009,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                 const SizedBox(height: 24),
 
                                 // Date selection
-                                const Text(
+                                Text(
                                   '적용 시작일',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    color: themeController.textPrimaryColor,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -2979,7 +3022,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                   '설정한 날짜부터 새 금액이 적용됩니다.',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey[600],
+                                    color: themeController.textSecondaryColor,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -2988,9 +3031,11 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                 // 캘린더 높이를 화면 크기에 따라 조정
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[50],
+                                    color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                                     borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.grey[200]!),
+                                    border: Border.all(
+                                      color: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
+                                    ),
                                   ),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
@@ -3003,15 +3048,16 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                           children: [
                                             Text(
                                               DateFormat('yyyy년 M월').format(effectiveFromDate),
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16,
+                                                color: themeController.textPrimaryColor,
                                               ),
                                             ),
                                             Row(
                                               children: [
                                                 IconButton(
-                                                  icon: const Icon(Icons.chevron_left),
+                                                  icon: Icon(Icons.chevron_left, color: themeController.textPrimaryColor),
                                                   onPressed: () {
                                                     setState(() {
                                                       effectiveFromDate = DateTime(
@@ -3027,7 +3073,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                                 ),
                                                 const SizedBox(width: 16),
                                                 IconButton(
-                                                  icon: const Icon(Icons.chevron_right),
+                                                  icon: Icon(Icons.chevron_right, color: themeController.textPrimaryColor),
                                                   onPressed: () {
                                                     setState(() {
                                                       effectiveFromDate = DateTime(
@@ -3168,7 +3214,9 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                             child: OutlinedButton(
                               onPressed: () => Navigator.pop(context),
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: Colors.grey[300]!),
+                                side: BorderSide(
+                                  color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -3178,7 +3226,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                 '취소',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.grey[700],
+                                  color: themeController.textSecondaryColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -3188,7 +3236,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green.shade700,
+                                backgroundColor: themeController.primaryColor,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -3263,7 +3311,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                   Get.snackbar(
                                     '성공',
                                     '${category.name}의 설정이 ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 ${NumberFormat('#,###').format(amount)}원으로 변경되었습니다.',
-                                    backgroundColor: Colors.green[100],
+                                    backgroundColor: themeController.primaryColor.withOpacity(0.1),
                                     borderRadius: 12,
                                     margin: const EdgeInsets.all(12),
                                     snackPosition: SnackPosition.BOTTOM,
@@ -3316,6 +3364,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
 
   // Confirm deletion of fixed income
   void _confirmDelete() async {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     if (_selectedCategory == null) return;
 
     try {
@@ -3372,7 +3422,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '삭제 완료',
         '${_deleteFromDate.toString().substring(0, 10)} 이후의 ${_selectedCategory!.name} 고정 소득이 삭제되었습니다.',
-        backgroundColor: Colors.green[100],
+        backgroundColor: themeController.primaryColor.withOpacity(0.1),
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,

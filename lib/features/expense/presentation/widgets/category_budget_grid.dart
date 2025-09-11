@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../domain/entities/budget_status.dart';
 import '../controllers/expense_controller.dart';
 import '../widgets/category_detail_dialog.dart';
@@ -63,6 +64,7 @@ class CategoryBudgetGrid extends StatelessWidget {
 
   // 카테고리 카드 위젯
   Widget _buildCategoryCard(BuildContext context, BudgetStatus budgetStatus) {
+    final ThemeController themeController = Get.find<ThemeController>();
     // 통화 포맷팅
     final currencyFormat = NumberFormat('#,###', 'ko_KR');
     final budget = '${currencyFormat.format(budgetStatus.budgetAmount.toInt())}원';
@@ -71,8 +73,10 @@ class CategoryBudgetGrid extends StatelessWidget {
     // 진행 상태에 따른 색상 결정
     final double progressPercentage = budgetStatus.progressPercentage.abs();
     final Color progressColor = progressPercentage >= 90
-        ? Colors.red
-        : (progressPercentage >= 70 ? Colors.orange : AppColors.primary);
+        ? (themeController.isDarkMode ? Colors.red.shade400 : Colors.red)
+        : (progressPercentage >= 70 
+            ? (themeController.isDarkMode ? Colors.orange.shade400 : Colors.orange)
+            : themeController.primaryColor);
 
     // 카테고리별 색상 지정
     final categoryColors = [
@@ -106,11 +110,13 @@ class CategoryBudgetGrid extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: themeController.isDarkMode 
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.1),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -143,9 +149,10 @@ class CategoryBudgetGrid extends StatelessWidget {
                 Expanded(
                   child: Text(
                     budgetStatus.categoryName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      color: themeController.textPrimaryColor,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -163,7 +170,9 @@ class CategoryBudgetGrid extends StatelessWidget {
                     height: 70,
                     child: CircularProgressIndicator(
                       value: (progressPercentage / 100).toDouble(), // 명시적으로 double로 변환
-                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      backgroundColor: themeController.isDarkMode 
+                          ? Colors.grey.shade700.withOpacity(0.3)
+                          : Colors.grey.withOpacity(0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                       strokeWidth: 8,
                     ),
@@ -184,7 +193,7 @@ class CategoryBudgetGrid extends StatelessWidget {
                         '사용',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.grey.shade600,
+                          color: themeController.textSecondaryColor,
                         ),
                       ),
                     ],
@@ -203,14 +212,15 @@ class CategoryBudgetGrid extends StatelessWidget {
                       '예산',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade600,
+                        color: themeController.textSecondaryColor,
                       ),
                     ),
                     Text(
                       budget,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
+                        color: themeController.textPrimaryColor,
                       ),
                     ),
                   ],
@@ -223,7 +233,7 @@ class CategoryBudgetGrid extends StatelessWidget {
                       '사용',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade600,
+                        color: themeController.textSecondaryColor,
                       ),
                     ),
                     Text(
@@ -246,8 +256,11 @@ class CategoryBudgetGrid extends StatelessWidget {
 
   // 카테고리 옵션 다이얼로그 (수정/삭제)
   void _showCategoryOptionsDialog(BuildContext context, BudgetStatus budgetStatus) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     showModalBottomSheet(
       context: context,
+      backgroundColor: themeController.cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -258,23 +271,24 @@ class CategoryBudgetGrid extends StatelessWidget {
           children: [
             Text(
               budgetStatus.categoryName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: themeController.textPrimaryColor,
               ),
             ),
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.edit, color: AppColors.primary),
-              title: const Text('예산 수정'),
+              title: Text('예산 수정', style: TextStyle(color: themeController.textPrimaryColor)),
               onTap: () {
                 Navigator.pop(context);
                 _showEditCategoryDialog(context, budgetStatus);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('카테고리 삭제'),
+              leading: Icon(Icons.delete, color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red),
+              title: Text('카테고리 삭제', style: TextStyle(color: themeController.textPrimaryColor)),
               onTap: () {
                 Navigator.pop(context);
                 _showDeleteCategoryDialog(context, budgetStatus);
@@ -288,6 +302,7 @@ class CategoryBudgetGrid extends StatelessWidget {
 
   // 예산 수정 다이얼로그
   void _showEditCategoryDialog(BuildContext context, BudgetStatus budgetStatus) {
+    final ThemeController themeController = Get.find<ThemeController>();
     final budgetController = TextEditingController(
       text: budgetStatus.budgetAmount.toInt().toString(),
     );
@@ -296,23 +311,27 @@ class CategoryBudgetGrid extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: themeController.cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         title: Text(
           '예산 수정',
           style: TextStyle(
-            color: AppColors.primary,
+            color: themeController.primaryColor,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: TextField(
           controller: budgetController,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
+          style: TextStyle(color: themeController.textPrimaryColor),
+          decoration: InputDecoration(
             labelText: '예산 금액',
             hintText: '예산 금액을 입력하세요',
             suffixText: '원',
+            labelStyle: TextStyle(color: themeController.textSecondaryColor),
+            hintStyle: TextStyle(color: themeController.textSecondaryColor),
           ),
         ),
         actions: [
@@ -323,7 +342,7 @@ class CategoryBudgetGrid extends StatelessWidget {
             child: Text(
               '취소',
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: themeController.textSecondaryColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -366,13 +385,13 @@ class CategoryBudgetGrid extends StatelessWidget {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(themeController.primaryColor),
                   ),
                 )
                     : Text(
                   '저장',
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: themeController.primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -386,18 +405,20 @@ class CategoryBudgetGrid extends StatelessWidget {
 
   // 카테고리 삭제 다이얼로그
   void _showDeleteCategoryDialog(BuildContext context, BudgetStatus budgetStatus) {
+    final ThemeController themeController = Get.find<ThemeController>();
     bool isDeleting = false;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: themeController.cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         title: Text(
           '카테고리 삭제',
           style: TextStyle(
-            color: AppColors.primary,
+            color: themeController.primaryColor,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -406,8 +427,9 @@ class CategoryBudgetGrid extends StatelessWidget {
           children: [
             Text(
               '\'${budgetStatus.categoryName}\' 예산 정보를 삭제하시겠습니까?',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
+                color: themeController.textPrimaryColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -421,7 +443,7 @@ class CategoryBudgetGrid extends StatelessWidget {
             child: Text(
               '취소',
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: themeController.textSecondaryColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -462,13 +484,13 @@ class CategoryBudgetGrid extends StatelessWidget {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(themeController.primaryColor),
                   ),
                 )
                     : Text(
                   '삭제',
                   style: TextStyle(
-                    color: Colors.red.shade700,
+                    color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade700,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -482,14 +504,20 @@ class CategoryBudgetGrid extends StatelessWidget {
 
   // 빈 상태 위젯
   Widget _buildEmptyState() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Container(
       height: 200,
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color: themeController.isDarkMode 
+              ? Colors.grey.shade700
+              : Colors.grey.shade300
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -497,15 +525,15 @@ class CategoryBudgetGrid extends StatelessWidget {
           Icon(
             Icons.account_balance_wallet_outlined,
             size: 48,
-            color: Colors.grey.shade400,
+            color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             '등록된 예산 정보가 없습니다.',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Colors.grey,
+              color: themeController.textSecondaryColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -513,7 +541,7 @@ class CategoryBudgetGrid extends StatelessWidget {
             '예산을 설정하여 관리해보세요.',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey.shade500,
+              color: themeController.textSecondaryColor,
             ),
           ),
         ],

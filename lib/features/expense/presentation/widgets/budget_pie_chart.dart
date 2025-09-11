@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/expense_controller.dart';
 
 class BudgetPieChart extends StatelessWidget {
@@ -11,9 +12,11 @@ class BudgetPieChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Obx(() {
       if (controller.budgetStatusList.isEmpty) {
-        return _buildEmptyState();
+        return _buildEmptyState(themeController);
       }
 
       // 예산이 0인 항목 필터링
@@ -22,18 +25,20 @@ class BudgetPieChart extends StatelessWidget {
           .toList();
 
       if (budgetItems.isEmpty) {
-        return _buildEmptyState();
+        return _buildEmptyState(themeController);
       }
 
       return Container(
         height: 280,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: themeController.isDarkMode 
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -42,11 +47,12 @@ class BudgetPieChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '예산 배분',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                color: themeController.textPrimaryColor,
               ),
             ),
             const SizedBox(height: 16),
@@ -60,7 +66,7 @@ class BudgetPieChart extends StatelessWidget {
                       PieChartData(
                         sectionsSpace: 2,
                         centerSpaceRadius: 40,
-                        sections: _generatePieSections(budgetItems),
+                        sections: _generatePieSections(budgetItems, themeController),
                         pieTouchData: PieTouchData(
                           touchCallback: (FlTouchEvent event, pieTouchResponse) {
                             // 터치 이벤트 처리 (원하는 경우)
@@ -73,7 +79,7 @@ class BudgetPieChart extends StatelessWidget {
                   // 범례
                   Expanded(
                     flex: 5,
-                    child: _buildLegend(budgetItems),
+                    child: _buildLegend(budgetItems, themeController),
                   ),
                 ],
               ),
@@ -85,7 +91,7 @@ class BudgetPieChart extends StatelessWidget {
   }
 
   // 파이 차트 섹션 생성
-  List<PieChartSectionData> _generatePieSections(final budgetItems) {
+  List<PieChartSectionData> _generatePieSections(final budgetItems, ThemeController themeController) {
     // 카테고리 색상 매핑 함수
     Color getCategoryColor(int index) {
       final colors = [
@@ -126,6 +132,7 @@ class BudgetPieChart extends StatelessWidget {
           '${percentage.toStringAsFixed(0)}%',
           size: 30,
           borderColor: getCategoryColor(i),
+          themeController: themeController,
         ) : null,
         badgePositionPercentageOffset: .98,
       );
@@ -133,7 +140,7 @@ class BudgetPieChart extends StatelessWidget {
   }
 
   // 범례 위젯
-  Widget _buildLegend(final budgetItems) {
+  Widget _buildLegend(final budgetItems, ThemeController themeController) {
     // 카테고리 색상 매핑 함수
     Color getCategoryColor(int index) {
       final colors = [
@@ -176,18 +183,20 @@ class BudgetPieChart extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.categoryName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
+                    color: themeController.textPrimaryColor,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               Text(
                 budget,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
+                  color: themeController.textPrimaryColor,
                 ),
               ),
             ],
@@ -198,16 +207,18 @@ class BudgetPieChart extends StatelessWidget {
   }
 
   // 데이터가 없을 때 표시할 위젯
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(ThemeController themeController) {
     return Container(
       height: 280,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: themeController.isDarkMode 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -220,15 +231,15 @@ class BudgetPieChart extends StatelessWidget {
             Icon(
               Icons.pie_chart_outline,
               size: 48,
-              color: Colors.grey.shade400,
+              color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '예산 데이터가 없습니다',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                color: themeController.textSecondaryColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -236,7 +247,7 @@ class BudgetPieChart extends StatelessWidget {
               '카테고리별 예산을 설정하면 차트가 표시됩니다',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade500,
+                color: themeController.textSecondaryColor,
               ),
             ),
           ],
@@ -251,11 +262,13 @@ class _Badge extends StatelessWidget {
   final String text;
   final double size;
   final Color borderColor;
+  final ThemeController themeController;
 
   const _Badge(
       this.text, {
         required this.size,
         required this.borderColor,
+        required this.themeController,
       });
 
   @override
@@ -265,7 +278,7 @@ class _Badge extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeController.cardColor,
         shape: BoxShape.circle,
         border: Border.all(
           color: borderColor,
@@ -273,7 +286,9 @@ class _Badge extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.5),
+            color: themeController.isDarkMode 
+                ? Colors.black.withOpacity(0.7)
+                : Colors.black.withOpacity(0.5),
             offset: const Offset(3, 3),
             blurRadius: 3,
           ),

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../data/entities/monthly_expense.dart';
 import '../presentation/dashboard_controller.dart';
 
@@ -68,6 +69,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Obx(() {
       if (widget.controller.isExpenseTrendLoading.value) {
         return Container(
@@ -138,7 +141,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: themeController.primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -149,14 +152,14 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                                   ? Icons.show_chart
                                   : Icons.bar_chart,
                               size: 14,
-                              color: AppColors.primary,
+                              color: themeController.primaryColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               _showLineChart.value ? '라인' : '막대',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
-                                color: AppColors.primary,
+                                color: themeController.primaryColor,
                               ),
                             ),
                           ],
@@ -189,7 +192,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                     : _buildColumnChart(chartData, yearChanges.cast<int, DateTime>()),
 
                 // 년도 변경 표시 오버레이
-                _buildYearOverlay(chartData, yearChanges),
+                _buildYearOverlay(chartData, yearChanges, themeController),
               ],
             ),
           ),
@@ -207,8 +210,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                     max: 12,
                     divisions: 9,
                     label: '${currentRangeValue.toInt()}개월',
-                    activeColor: AppColors.primary,
-                    inactiveColor: AppColors.primary.withOpacity(0.2),
+                    activeColor: themeController.primaryColor,
+                    inactiveColor: themeController.primaryColor.withOpacity(0.2),
                     onChangeStart: (_) {
                       // 슬라이더 드래그 시작 시 컨트롤러에 알림
                       widget.controller.onSlideStart();
@@ -292,7 +295,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   }
 
   // 년도 변경 오버레이 위젯 - 완전히 새롭게 개선
-  Widget _buildYearOverlay(List<ExpenseData> chartData, Map<String, List<Object>> yearChanges) {
+  Widget _buildYearOverlay(List<ExpenseData> chartData, Map<String, List<Object>> yearChanges, ThemeController themeController) {
     if (yearChanges.isEmpty) return const SizedBox();
 
     return LayoutBuilder(
@@ -324,9 +327,9 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.pink.shade50,
+                          color: themeController.primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                          border: Border.all(color: themeController.primaryColor.withOpacity(0.4)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
@@ -340,7 +343,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: themeController.primaryColor,
                           ),
                         ),
                       ),
@@ -356,6 +359,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
 
   // 라인 차트 구현 - 수정됨
   Widget _buildLineChart(List<ExpenseData> chartData, Map<int, DateTime> yearChanges) {
+    final themeController = Get.find<ThemeController>();
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
@@ -401,7 +405,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
       tooltipBehavior: TooltipBehavior(
         enable: true,
         color: Colors.white,
-        borderColor: AppColors.primary.withOpacity(0.5),
+        borderColor: themeController.primaryColor.withOpacity(0.5),
         borderWidth: 1,
         elevation: 5,
         duration: 2000,
@@ -422,25 +426,25 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           xValueMapper: (ExpenseData data, _) => data.date,
           yValueMapper: (ExpenseData data, _) => data.amount,
           xAxisName: 'primaryXAxis', // 명시적으로 X축 이름 지정
-          color: AppColors.primary.withOpacity(0.2),
-          borderColor: AppColors.primary,
+          color: themeController.primaryColor.withOpacity(0.2),
+          borderColor: themeController.primaryColor,
           borderWidth: 3,
           name: '', // 빈 이름으로 설정하여 'Series 0' 제거
           // 애니메이션 지속 시간 조정 - 더 일관된 경험 제공
           animationDuration: widget.controller.isSliding.value ? 200 : 300,
-          markerSettings: const MarkerSettings(
+          markerSettings: MarkerSettings(
             isVisible: true,
             height: 8,
             width: 8,
             borderWidth: 2,
-            borderColor: AppColors.primary,
+            borderColor: themeController.primaryColor,
             color: Colors.white,
           ),
           splineType: SplineType.natural,
           gradient: LinearGradient(
             colors: [
-              AppColors.primary.withOpacity(0.3),
-              AppColors.primary.withOpacity(0.05),
+              themeController.primaryColor.withOpacity(0.3),
+              themeController.primaryColor.withOpacity(0.05),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -470,8 +474,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
             height: 14,
             width: 14,
             borderWidth: 3,
-            borderColor: AppColors.primary,
-            color: AppColors.primary.withOpacity(0.3),
+            borderColor: themeController.primaryColor,
+            color: themeController.primaryColor.withOpacity(0.3),
             shape: DataMarkerType.circle,
           ),
           // 애니메이션 지속 시간 조정 - 라인 차트와 일치시킴
@@ -485,7 +489,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
         if (args.pointIndex == chartData.length - 1) {
           args.markerHeight = 12;
           args.markerWidth = 12;
-          args.color = AppColors.primary;
+          args.color = themeController.primaryColor;
         }
       },
       // 툴팁 렌더링 이벤트 - 더 간단하고 안정적인 방식으로 구현
@@ -514,6 +518,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
   // monthly_expense_chart.dart 파일에서 _buildColumnChart 메서드를 아래와 같이 수정
 
   Widget _buildColumnChart(List<ExpenseData> chartData, Map<int, DateTime> yearChanges) {
+    final themeController = Get.find<ThemeController>();
     return SfCartesianChart(
       margin: const EdgeInsets.all(10),
       plotAreaBorderWidth: 0,
@@ -569,7 +574,7 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
       tooltipBehavior: TooltipBehavior(
         enable: true,
         color: Colors.white,
-        borderColor: AppColors.primary.withOpacity(0.5),
+        borderColor: themeController.primaryColor.withOpacity(0.5),
         borderWidth: 1,
         elevation: 5,
         duration: 2000,
@@ -596,8 +601,8 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
           // 막대 색상 설정 - 마지막 항목 강조
           pointColorMapper: (ExpenseData data, index) {
             return index == chartData.length - 1
-                ? AppColors.primary
-                : AppColors.primary.withOpacity(0.5);
+                ? themeController.primaryColor
+                : themeController.primaryColor.withOpacity(0.5);
           },
           dataLabelSettings: const DataLabelSettings(
             isVisible: false,

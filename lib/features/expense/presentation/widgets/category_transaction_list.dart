@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:get/get.dart';
+import '../../../../core/controllers/theme_controller.dart';
 
 class CategoryTransactionList extends StatelessWidget {
   final List<Map<String, dynamic>> transactions;
@@ -12,6 +13,7 @@ class CategoryTransactionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
     final currencyFormat = NumberFormat('#,###', 'ko_KR');
 
     // 디버깅: 받은 트랜잭션 데이터 출력
@@ -28,15 +30,17 @@ class CategoryTransactionList extends StatelessWidget {
             Icon(
               Icons.receipt_long_outlined,
               size: 64,
-              color: Colors.grey.withOpacity(0.5),
+              color: themeController.isDarkMode 
+                  ? Colors.grey.shade600.withOpacity(0.5)
+                  : Colors.grey.withOpacity(0.5),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '아직 지출 내역이 없습니다',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                color: themeController.textSecondaryColor,
               ),
             ),
           ],
@@ -59,15 +63,17 @@ class CategoryTransactionList extends StatelessWidget {
             Icon(
               Icons.receipt_long_outlined,
               size: 64,
-              color: Colors.grey.withOpacity(0.5),
+              color: themeController.isDarkMode 
+                  ? Colors.grey.shade600.withOpacity(0.5)
+                  : Colors.grey.withOpacity(0.5),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '이 카테고리의 지출 내역이 없습니다',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                color: themeController.textSecondaryColor,
               ),
             ),
           ],
@@ -127,9 +133,10 @@ class CategoryTransactionList extends StatelessWidget {
                 children: [
                   Text(
                     formattedDate,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      color: themeController.textPrimaryColor,
                     ),
                   ),
                   Text(
@@ -137,7 +144,7 @@ class CategoryTransactionList extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red,
+                      color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red,
                     ),
                   ),
                 ],
@@ -166,7 +173,9 @@ class CategoryTransactionList extends StatelessWidget {
                 return Card(
                   elevation: 0,
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  color: Colors.grey.shade50,
+                  color: themeController.isDarkMode 
+                      ? Colors.grey.shade800.withOpacity(0.3)
+                      : Colors.grey.shade50,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -176,24 +185,25 @@ class CategoryTransactionList extends StatelessWidget {
                       transaction['description'] != null && transaction['description'].toString().isNotEmpty
                           ? transaction['description']
                           : '설명 없음',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 15,
+                        color: themeController.textPrimaryColor,
                       ),
                     ),
                     subtitle: Text(
                       time,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: themeController.textSecondaryColor,
                       ),
                     ),
                     trailing: Text(
                       '-${currencyFormat.format(amount.toInt())}원',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                        color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red,
                       ),
                     ),
                   ),
@@ -204,7 +214,9 @@ class CategoryTransactionList extends StatelessWidget {
             // 구분선
             if (dateIndex < sortedDates.length - 1)
               Divider(
-                color: Colors.grey.withOpacity(0.2),
+                color: themeController.isDarkMode 
+                    ? Colors.grey.shade700.withOpacity(0.3)
+                    : Colors.grey.withOpacity(0.2),
                 thickness: 1,
                 height: 32,
               ),
