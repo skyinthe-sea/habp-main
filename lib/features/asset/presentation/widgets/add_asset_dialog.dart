@@ -92,14 +92,22 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
       builder: (context, child) {
+        final themeController = Get.find<ThemeController>();
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
+            colorScheme: themeController.isDarkMode 
+                ? ColorScheme.dark(
+                    primary: themeController.primaryColor,
+                    onPrimary: Colors.white,
+                    surface: themeController.cardColor,
+                    onSurface: themeController.textPrimaryColor,
+                  )
+                : ColorScheme.light(
+                    primary: themeController.primaryColor,
+                    onPrimary: Colors.white,
+                    surface: themeController.cardColor,
+                    onSurface: themeController.textPrimaryColor,
+                  ),
           ),
           child: child!,
         );
@@ -179,13 +187,15 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
   }
 
   void _showAddCategoryDialog() {
+    final themeController = Get.find<ThemeController>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: themeController.cardColor,
         title: Text(
           '새 자산 유형 추가',
           style: TextStyle(
-            color: AppColors.primary,
+            color: themeController.primaryColor,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -197,7 +207,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-            prefixIcon: Icon(Icons.category, color: AppColors.primary),
+            prefixIcon: Icon(Icons.category, color: themeController.primaryColor),
           ),
           autofocus: true,
         ),
@@ -209,7 +219,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
           ElevatedButton(
             onPressed: _addNewCategory,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: themeController.primaryColor,
               foregroundColor: Colors.white,
             ),
             child: isLoading
@@ -305,6 +315,8 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -319,11 +331,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: themeController.isDarkMode ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -332,7 +344,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildHeader(),
+            _buildHeader(themeController),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -340,25 +352,25 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    _buildCategorySelector(),
+                    _buildCategorySelector(themeController),
                     const SizedBox(height: 12),
-                    _buildBasicInfoFields(),
+                    _buildBasicInfoFields(themeController),
                     const SizedBox(height: 16),
-                    _buildAdvancedOptionsToggle(),
-                    if (_showAdvancedOptions) _buildAdvancedOptions(),
+                    _buildAdvancedOptionsToggle(themeController),
+                    if (_showAdvancedOptions) _buildAdvancedOptions(themeController),
                     const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
-            _buildActionButtons(),
+            _buildActionButtons(themeController),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeController themeController) {
     return Column(
       children: [
         Row(
@@ -367,45 +379,46 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
             Text(
               '새 자산 추가',
               style: TextStyle(
-                color: AppColors.primary,
+                color: themeController.primaryColor,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.close, size: 20),
+              icon: Icon(Icons.close, size: 20, color: themeController.textSecondaryColor),
               onPressed: () => Navigator.of(context).pop(),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
           ],
         ),
-        Divider(color: Colors.grey.shade200),
+        Divider(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade200),
       ],
     );
   }
 
-  Widget _buildCategorySelector() {
+  Widget _buildCategorySelector(ThemeController themeController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               '자산 유형',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
+                color: themeController.textPrimaryColor,
               ),
             ),
             TextButton.icon(
               onPressed: _showAddCategoryDialog,
-              icon: Icon(Icons.add, size: 16, color: AppColors.primary),
+              icon: Icon(Icons.add, size: 16, color: themeController.primaryColor),
               label: Text(
                 '새 유형 추가',
                 style: TextStyle(
-                  color: AppColors.primary,
+                  color: themeController.primaryColor,
                   fontSize: 12,
                 ),
               ),
@@ -421,9 +434,9 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
         Container(
           height: 100,
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: themeController.surfaceColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade200),
           ),
           child: Obx(() {
             final categories = widget.controller.assetCategories;
@@ -452,15 +465,15 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : Colors.white,
+                        color: isSelected ? themeController.primaryColor : themeController.cardColor,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                          color: isSelected ? themeController.primaryColor : (themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
                         ),
                         boxShadow: isSelected
                             ? [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
+                            color: themeController.primaryColor.withOpacity(0.3),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -470,7 +483,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
                       child: Text(
                         category.name,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
+                          color: isSelected ? Colors.white : themeController.textPrimaryColor,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           fontSize: 13,
                         ),
@@ -486,11 +499,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     );
   }
 
-  Widget _buildBasicInfoFields() {
+  Widget _buildBasicInfoFields(ThemeController themeController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInputField(
+        _buildInputField(themeController, 
           controller: nameController,
           labelText: '자산 이름',
           hintText: '예: 삼성전자 주식, 강남 아파트, 마이카',
@@ -498,7 +511,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
           isRequired: true,
         ),
         const SizedBox(height: 12),
-        _buildCurrencyField(
+        _buildCurrencyField(themeController, 
           controller: currentValueController,
           labelText: '현재 가치 (원)',
           hintText: '자산의 현재 가치',
@@ -509,7 +522,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     );
   }
 
-  Widget _buildAdvancedOptionsToggle() {
+  Widget _buildAdvancedOptionsToggle(ThemeController themeController) {
     return InkWell(
       onTap: () {
         setState(() {
@@ -525,7 +538,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
             Text(
               _showAdvancedOptions ? '기본 정보만 보기' : '상세 정보 입력하기',
               style: TextStyle(
-                color: AppColors.primary,
+                color: themeController.primaryColor,
                 fontWeight: FontWeight.w500,
                 fontSize: 13,
               ),
@@ -534,7 +547,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
             Icon(
               _showAdvancedOptions ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
               size: 16,
-              color: AppColors.primary,
+              color: themeController.primaryColor,
             ),
           ],
         ),
@@ -542,30 +555,30 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     );
   }
 
-  Widget _buildAdvancedOptions() {
+  Widget _buildAdvancedOptions(ThemeController themeController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        Divider(color: Colors.grey.shade200),
+        Divider(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade200),
         const SizedBox(height: 8),
-        _buildCurrencyField(
+        _buildCurrencyField(themeController, 
           controller: purchaseValueController,
           labelText: '구매 가치 (원)',
           hintText: '자산 구매 당시 가치',
           prefixIcon: Icons.shopping_cart,
         ),
         const SizedBox(height: 12),
-        _buildDatePicker(),
+        _buildDatePicker(themeController),
         const SizedBox(height: 12),
-        _buildInputField(
+        _buildInputField(themeController, 
           controller: locationController,
           labelText: '위치',
           hintText: '자산의 위치 (주소 등)',
           prefixIcon: Icons.location_on,
         ),
         const SizedBox(height: 12),
-        _buildInputField(
+        _buildInputField(themeController, 
           controller: interestRateController,
           labelText: '이자율 (%)',
           hintText: '연 이자율 (예: 3.5)',
@@ -576,14 +589,14 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
           ],
         ),
         const SizedBox(height: 12),
-        _buildCurrencyField(
+        _buildCurrencyField(themeController, 
           controller: loanAmountController,
           labelText: '대출 잔액 (원)',
           hintText: '현재 남은 대출 금액',
           prefixIcon: Icons.account_balance,
         ),
         const SizedBox(height: 12),
-        _buildInputField(
+        _buildInputField(themeController, 
           controller: descriptionController,
           labelText: '설명',
           hintText: '자산에 대한 추가 설명',
@@ -594,7 +607,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     );
   }
 
-  Widget _buildInputField({
+  Widget _buildInputField(ThemeController themeController, {
     required TextEditingController controller,
     required String labelText,
     required String hintText,
@@ -612,15 +625,15 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
       decoration: InputDecoration(
         labelText: isRequired ? '$labelText *' : labelText,
         hintText: hintText,
-        hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-        prefixIcon: Icon(prefixIcon, size: 18, color: AppColors.primary),
+        hintStyle: TextStyle(fontSize: 13, color: themeController.textSecondaryColor),
+        prefixIcon: Icon(prefixIcon, size: 18, color: themeController.primaryColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         isDense: true,
@@ -629,7 +642,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     );
   }
 
-  Widget _buildCurrencyField({
+  Widget _buildCurrencyField(ThemeController themeController, {
     required TextEditingController controller,
     required String labelText,
     required String hintText,
@@ -645,15 +658,15 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
       decoration: InputDecoration(
         labelText: isRequired ? '$labelText *' : labelText,
         hintText: hintText,
-        hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-        prefixIcon: Icon(prefixIcon, size: 18, color: AppColors.primary),
+        hintStyle: TextStyle(fontSize: 13, color: themeController.textSecondaryColor),
+        prefixIcon: Icon(prefixIcon, size: 18, color: themeController.primaryColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         isDense: true,
@@ -675,7 +688,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     );
   }
 
-  Widget _buildDatePicker() {
+  Widget _buildDatePicker(ThemeController themeController) {
     return InkWell(
       onTap: () => _selectDate(context),
       borderRadius: BorderRadius.circular(8),
@@ -683,7 +696,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
         height: 44,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -691,7 +704,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
             Icon(
               Icons.calendar_today,
               size: 18,
-              color: AppColors.primary,
+              color: themeController.primaryColor,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -715,7 +728,7 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(ThemeController themeController) {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(

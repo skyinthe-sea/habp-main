@@ -239,7 +239,7 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
           ),
           floatingActionButton: FloatingActionButton(
             heroTag: 'asset_fab',
-            backgroundColor: AppColors.primary,
+            backgroundColor: themeController.primaryColor,
             onPressed: () {
               showDialog(
                 context: context,
@@ -261,6 +261,7 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
   // lib/features/asset/presentation/pages/asset_page.dart의 _buildEmptyState 함수 수정
 
   Widget _buildEmptyState() {
+    final themeController = Get.find<ThemeController>();
     return Center(
       child: Container(
         height: 200,
@@ -269,9 +270,9 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
         padding: const EdgeInsets.symmetric(horizontal: 60),
         margin: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: themeController.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -279,15 +280,15 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
             Icon(
               Icons.account_balance_outlined,
               size: 48,
-              color: Colors.grey.shade400,
+              color: themeController.textSecondaryColor,
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '등록된 자산 정보가 없습니다.',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                color: themeController.textSecondaryColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -295,7 +296,7 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
               '자산을 설정하여 관리해보세요.',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade500,
+                color: themeController.textSecondaryColor.withOpacity(0.7),
               ),
             ),
           ],

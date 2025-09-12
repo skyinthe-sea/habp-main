@@ -1,7 +1,9 @@
 // lib/features/asset/presentation/widgets/asset_summary_card.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../domain/entities/asset_summary.dart';
 import 'pie_chart.dart';
 
@@ -17,8 +19,10 @@ class AssetSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    
     if (assetSummary == null) {
-      return _buildLoadingState();
+      return _buildLoadingState(themeController);
     }
 
     final currencyFormat = NumberFormat('#,###', 'ko_KR');
@@ -38,14 +42,14 @@ class AssetSummaryCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.primary,
-                AppColors.primary.withOpacity(0.85),
+                themeController.primaryColor,
+                themeController.primaryColor.withOpacity(0.85),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
+                color: themeController.primaryColor.withOpacity(0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -209,7 +213,7 @@ class AssetSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(ThemeController themeController) {
     return Container(
       width: double.infinity,
       height: 200,
@@ -219,8 +223,8 @@ class AssetSummaryCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withOpacity(0.6),
-            AppColors.primary.withOpacity(0.4),
+            themeController.primaryColor.withOpacity(0.6),
+            themeController.primaryColor.withOpacity(0.4),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
