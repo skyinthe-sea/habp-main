@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../../../core/services/event_bus_service.dart';
 import '../models/quick_add_transaction.dart';
@@ -307,11 +309,12 @@ class QuickAddController extends GetxController {
       );
 
       if (existingCategory.isNotEmpty) {
+        final ThemeController themeController = Get.find<ThemeController>();
         Get.snackbar(
           '오류',
           '이미 동일한 이름의 카테고리가 존재합니다.',
           snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
+          backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
           colorText: Colors.white,
         );
         return false;

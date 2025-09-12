@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../domain/entities/budget_status.dart';
@@ -891,11 +892,15 @@ class _CategoryDetailDialogState extends State<CategoryDetailDialog>
         'actionText': changePercentage >= 0 ? '지출 줄이는 팁 보기' : '잘 하고 있어요!',
         'action': () {
           // 지출 줄이는 팁 가이드 또는 축하 메시지
+          final ThemeController themeController = Get.find<ThemeController>();
           Get.snackbar(
             changePercentage >= 0 ? '지출 관리 팁' : '축하합니다!',
             changePercentage >= 0
                 ? '계획적인 소비와 필요한 지출만 하는 습관을 들여보세요.'
                 : '지난 달보다 지출을 줄였네요. 잘 하고 있습니다!',
+            backgroundColor: changePercentage >= 0 
+                ? (themeController.isDarkMode ? AppColors.darkInfo : AppColors.info)
+                : (themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success),
             snackPosition: SnackPosition.TOP,
           );
         },

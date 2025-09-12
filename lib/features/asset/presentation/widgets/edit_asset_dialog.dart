@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../data/models/asset_category_model.dart';
 import '../../domain/entities/asset.dart';
 
@@ -143,9 +144,11 @@ class _EditAssetDialogState extends State<EditAssetDialog> {
 
   void _saveAsset() async {
     if (nameController.text.isEmpty || currentValueController.text.isEmpty) {
-      Get.snackbar(
-        '알림',
-        '이름과 현재 가치는 필수 입력사항입니다.',
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '알림',
+            '이름과 현재 가치는 필수 입력사항입니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkInfo : AppColors.info,
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -183,22 +186,28 @@ class _EditAssetDialogState extends State<EditAssetDialog> {
 
       if (success) {
         Navigator.of(context).pop();
-        Get.snackbar(
-          '성공',
-          '자산 정보가 업데이트되었습니다.',
+        final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '성공',
+            '자산 정보가 업데이트되었습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
           snackPosition: SnackPosition.TOP,
         );
       } else {
-        Get.snackbar(
-          '오류',
-          '자산 업데이트에 실패했습니다.',
+        final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '자산 업데이트에 실패했습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
           snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
-      Get.snackbar(
-        '오류',
-        '입력한 값을 확인해주세요.',
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '입력한 값을 확인해주세요.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         snackPosition: SnackPosition.TOP,
       );
     } finally {

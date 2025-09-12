@@ -366,15 +366,19 @@ class CategoryBudgetGrid extends StatelessWidget {
                   Navigator.of(context).pop();
 
                   if (result) {
-                    Get.snackbar(
-                      '성공',
-                      '예산이 수정되었습니다.',
+                    final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '성공',
+            '예산이 수정되었습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                       snackPosition: SnackPosition.TOP,
                     );
                   } else {
-                    Get.snackbar(
-                      '오류',
-                      '예산 수정에 실패했습니다.',  
+                    final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '예산 수정에 실패했습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,  
                       snackPosition: SnackPosition.TOP,
                     );
                   }
@@ -465,15 +469,19 @@ class CategoryBudgetGrid extends StatelessWidget {
 
                   // 결과 알림
                   if (success) {
-                    Get.snackbar(
-                      '성공',
-                      '카테고리가 삭제되었습니다.',
+                    final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '성공',
+            '카테고리가 삭제되었습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                       snackPosition: SnackPosition.TOP,
                     );
                   } else {
-                    Get.snackbar(
-                      '오류',
-                      '카테고리 삭제에 실패했습니다.',
+                    final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '카테고리 삭제에 실패했습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                       snackPosition: SnackPosition.TOP,
                     );
                   }

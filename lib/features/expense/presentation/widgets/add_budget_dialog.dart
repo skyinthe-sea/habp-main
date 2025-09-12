@@ -140,15 +140,19 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
 
                   // 결과 알림
                   if (success) {
-                    Get.snackbar(
-                      '성공',
-                      '카테고리가 삭제되었습니다.',
+                    final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '성공',
+            '카테고리가 삭제되었습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                       snackPosition: SnackPosition.TOP,
                     );
                   } else {
-                    Get.snackbar(
-                      '오류',
-                      '카테고리 삭제에 실패했습니다.',
+                    final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '카테고리 삭제에 실패했습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                       snackPosition: SnackPosition.TOP,
                     );
                   }
@@ -297,9 +301,11 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                         ) ?? 0;
 
                         if (amount <= 0) {
-                          Get.snackbar(
-                            '오류',
-                            '유효한 금액을 입력하세요.',
+                          final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '유효한 금액을 입력하세요.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                             snackPosition: SnackPosition.TOP,
                           );
                           setState(() {
@@ -316,9 +322,11 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
 
                         if (success) {
                           Get.back();
-                          Get.snackbar(
-                            '성공',
-                            '예산이 추가되었습니다.',
+                          final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '성공',
+            '예산이 추가되었습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                             snackPosition: SnackPosition.TOP,
                           );
                         } else {
@@ -326,9 +334,11 @@ class _AddBudgetDialogState extends State<AddBudgetDialog> {
                             isLoading = false;
                             _updateSaveButtonState();
                           });
-                          Get.snackbar(
-                            '오류',
-                            '예산 추가에 실패했습니다.',
+                          final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '예산 추가에 실패했습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                             snackPosition: SnackPosition.TOP,
                           );
                         }

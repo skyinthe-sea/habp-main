@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../../../core/services/event_bus_service.dart';
 import '../../data/models/category_model.dart';
@@ -79,9 +81,11 @@ class ExpenseController extends GetxController {
         if (today.day <= 3) {
           final copied = await copyBudgetFromPreviousMonth();
           if (copied) {
+            final ThemeController themeController = Get.find<ThemeController>();
             Get.snackbar(
               '자동 예산 설정',
               '이전 달의 예산이 자동으로 복사되었습니다.',
+              backgroundColor: themeController.isDarkMode ? AppColors.darkInfo : AppColors.info,
               snackPosition: SnackPosition.TOP,
               duration: const Duration(seconds: 3),
             );

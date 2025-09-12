@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../data/models/asset_category_model.dart';
 import '../../domain/entities/asset.dart';
 import 'asset_icon_visualizer.dart';
@@ -353,9 +354,11 @@ class AssetDetailDialog extends StatelessWidget {
               Navigator.of(context).pop(); // 확인 다이얼로그 닫기
               Navigator.of(context).pop(); // 상세 다이얼로그 닫기
               onDelete();
-              Get.snackbar(
-                '삭제 완료',
-                '${asset.name} 자산이 삭제되었습니다.',
+              final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '삭제 완료',
+            '${asset.name} 자산이 삭제되었습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                 snackPosition: SnackPosition.TOP,
               );
             },

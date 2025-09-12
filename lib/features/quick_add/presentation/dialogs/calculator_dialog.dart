@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 
 class CalculatorDialog extends StatefulWidget {
   final int initialValue;
@@ -315,6 +317,8 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
 
   // 숫자 버튼 생성 헬퍼 메서드
   Widget _buildNumberButton(String number) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(4.0),
@@ -322,12 +326,16 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
           onPressed: () => _onNumberPressed(number),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black87,
+            backgroundColor: themeController.cardColor,
+            foregroundColor: themeController.textPrimaryColor,
             elevation: 1,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey.shade300),
+              side: BorderSide(
+                color: themeController.isDarkMode
+                    ? Colors.grey.shade600
+                    : Colors.grey.shade300,
+              ),
             ),
           ),
           child: Text(
@@ -344,6 +352,8 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
 
   // 연산자 버튼 생성 헬퍼 메서드
   Widget _buildOperationButton(String operation) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(4.0),
@@ -351,8 +361,8 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
           onPressed: () => _onOperationPressed(operation),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: AppColors.primary.withOpacity(0.2),
-            foregroundColor: AppColors.primary,
+            backgroundColor: themeController.primaryColor.withOpacity(0.2),
+            foregroundColor: themeController.primaryColor,
             elevation: 1,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -372,12 +382,14 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
       elevation: 0,
-      backgroundColor: Colors.white,
+      backgroundColor: themeController.cardColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -388,14 +400,14 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: themeController.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
                   '계산기',
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: themeController.primaryColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -409,9 +421,15 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: themeController.isDarkMode
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(
+                  color: themeController.isDarkMode
+                      ? Colors.grey.shade600
+                      : Colors.grey.shade200,
+                ),
               ),
               constraints: const BoxConstraints(minHeight: 40),
               child: SingleChildScrollView(
@@ -424,7 +442,7 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
                       _expression,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade700,
+                        color: themeController.textSecondaryColor,
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -441,15 +459,22 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: themeController.isDarkMode
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(
+                  color: themeController.isDarkMode
+                      ? Colors.grey.shade600
+                      : Colors.grey.shade300,
+                ),
               ),
               child: Text(
                 _display,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  color: themeController.textPrimaryColor,
                 ),
                 textAlign: TextAlign.right,
               ),
@@ -490,8 +515,10 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
                       onPressed: _onClearPressed,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.black87,
+                        backgroundColor: themeController.isDarkMode
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade200,
+                        foregroundColor: themeController.textPrimaryColor,
                         elevation: 1,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -514,8 +541,10 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
                       onPressed: _onEqualsPressed,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.black87,
+                        backgroundColor: themeController.isDarkMode
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade200,
+                        foregroundColor: themeController.textPrimaryColor,
                         elevation: 1,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -546,8 +575,10 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.black87,
+                      backgroundColor: themeController.isDarkMode
+                          ? Colors.grey.shade700
+                          : Colors.grey.shade200,
+                      foregroundColor: themeController.textPrimaryColor,
                       elevation: 1,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -578,7 +609,7 @@ class _CalculatorDialogState extends State<CalculatorDialog> {
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: themeController.primaryColor,
                       foregroundColor: Colors.white,
                       elevation: 1,
                       shape: RoundedRectangleBorder(

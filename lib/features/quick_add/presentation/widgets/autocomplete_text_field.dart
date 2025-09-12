@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../services/autocomplete_service.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 
 /// 자동완성 기능이 있는 텍스트 필드 위젯
 class AutocompleteTextField extends StatefulWidget {
@@ -152,6 +154,8 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
   
   // 추천 항목 오버레이 빌드
   Widget _buildSuggestionsOverlay() {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return Positioned(
       width: MediaQuery.of(context).size.width - 56,
       child: CompositedTransformFollower(
@@ -161,25 +165,41 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
         child: Material(
           elevation: 4.0,
           borderRadius: BorderRadius.circular(12),
-          child: Container(
+          child: Obx(() => Container(
             constraints: BoxConstraints(
               maxHeight: 200,
               maxWidth: MediaQuery.of(context).size.width - 56,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: themeController.surfaceColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(
+                color: themeController.isDarkMode
+                    ? themeController.textSecondaryColor.withOpacity(0.2)
+                    : Colors.grey.shade200,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: themeController.isDarkMode
+                      ? Colors.black.withOpacity(0.3)
+                      : Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: _isLoading
-              ? const Center(
+              ? Center(
                   child: Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: SizedBox(
                       height: 24,
                       width: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          themeController.primaryColor,
+                        ),
                       ),
                     ),
                   ),
@@ -190,7 +210,7 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
                     child: Text(
                       '추천 항목이 없습니다',
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: themeController.textSecondaryColor,
                         fontSize: 14,
                       ),
                       textAlign: TextAlign.center,
@@ -216,14 +236,15 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
                                 Icon(
                                   Icons.history,
                                   size: 16,
-                                  color: Colors.grey.shade600,
+                                  color: themeController.textSecondaryColor,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     suggestion,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
+                                      color: themeController.textPrimaryColor,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -233,7 +254,7 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
                                   icon: Icon(
                                     Icons.close,
                                     size: 16,
-                                    color: Colors.grey.shade400,
+                                    color: themeController.textSecondaryColor.withOpacity(0.7),
                                   ),
                                   constraints: const BoxConstraints(),
                                   padding: EdgeInsets.zero,
@@ -249,7 +270,7 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
                       );
                     },
                   ),
-          ),
+          )),
         ),
       ),
     );
@@ -257,21 +278,35 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
   
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     return CompositedTransformTarget(
       link: _layerLink,
-      child: TextField(
+      child: Obx(() => TextField(
         controller: widget.controller,
         focusNode: _focusNode,
+        style: TextStyle(
+          color: themeController.textPrimaryColor,
+        ),
         decoration: InputDecoration(
           hintText: widget.hintText,
+          hintStyle: TextStyle(
+            color: themeController.textSecondaryColor,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(
+              color: themeController.isDarkMode
+                  ? themeController.textSecondaryColor.withOpacity(0.3)
+                  : Colors.grey.shade300,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primary),
+            borderSide: BorderSide(color: themeController.primaryColor),
           ),
+          fillColor: themeController.surfaceColor,
+          filled: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,
@@ -280,7 +315,7 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
             ? IconButton(
                 icon: Icon(
                   Icons.clear,
-                  color: Colors.grey.shade600,
+                  color: themeController.textSecondaryColor,
                   size: 18,
                 ),
                 onPressed: () {
@@ -294,7 +329,7 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
             : null,
         ),
         onSubmitted: widget.onSubmitted,
-      ),
+      )),
     );
   }
 }

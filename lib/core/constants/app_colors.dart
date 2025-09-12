@@ -88,29 +88,29 @@ class AppColors {
   static const Color darkTextSecondary = Color(0xFFB8B8B8); // Warm gray
   static const Color darkTextHint = Color(0xFF7A7A7A);      // Muted gray
   
-  // 액센트 색상들 - 2025 트렌드 컬러
-  static const Color darkAccent1 = Color(0xFFFF7A5C);  // Warm coral - energy & warmth
-  static const Color darkAccent2 = Color(0xFF5CFFBA);  // Electric mint - freshness
-  static const Color darkAccent3 = Color(0xFFB47AFF);  // Soft lavender - creativity
-  static const Color darkAccent4 = Color(0xFFFFDB5C);  // Golden yellow - optimism
+  // 액센트 색상들 - 2025 트렌드 컬러 (채도 낮춤)
+  static const Color darkAccent1 = Color(0xFFCA6B5C);  // 차분한 코랄
+  static const Color darkAccent2 = Color(0xFF5BD1A8);  // 차분한 민트  
+  static const Color darkAccent3 = Color(0xFF9B7BCA);  // 차분한 라벤더
+  static const Color darkAccent4 = Color(0xFFD4C274);  // 차분한 골드
   
-  // 다크 모드 카테고리 색상들 - 기존 색상의 다크모드 버전
-  static const Color darkCate1 = Color(0xFF5BA3FF);  // Brighter blue
-  static const Color darkCate2 = Color(0xFFFFB85C);  // Warmer yellow
-  static const Color darkCate3 = Color(0xFFB8B8B8);  // Lighter gray
-  static const Color darkCate4 = Color(0xFFFF8A8A);  // Softer red
-  static const Color darkCate5 = Color(0xFFA68AFF);  // Brighter purple
-  static const Color darkCate6 = Color(0xFF5CD8FF);  // Brighter cyan
-  static const Color darkCate7 = Color(0xFF8AFF8A);  // Brighter green
-  static const Color darkCate8 = Color(0xFFFFB5B5);  // Lighter pink
-  static const Color darkCate9 = Color(0xFFFFE55C);  // Brighter yellow
-  static const Color darkCate10 = Color(0xFF5CFFA8); // Brighter mint
+  // 다크 모드 카테고리 색상들 - 채도 더 낮춘 어두운 색상
+  static const Color darkCate1 = Color(0xFF5A7AA8);  // 더 어두운 파랑
+  static const Color darkCate2 = Color(0xFFB8935F);  // 더 어두운 노랑
+  static const Color darkCate3 = Color(0xFF808080);  // 더 어두운 회색
+  static const Color darkCate4 = Color(0xFFA85555);  // 더 어두운 빨강
+  static const Color darkCate5 = Color(0xFF7E65A8);  // 더 어두운 보라
+  static const Color darkCate6 = Color(0xFF4A9BB0);  // 더 어두운 시안
+  static const Color darkCate7 = Color(0xFF3D7A4F);  // 더 어두운 초록
+  static const Color darkCate8 = Color(0xFFB8809B);  // 더 어두운 핑크
+  static const Color darkCate9 = Color(0xFFB8A65F);  // 더 어두운 골드
+  static const Color darkCate10 = Color(0xFF4AB090); // 더 어두운 민트
   
-  // 기능 색상들 - 다크모드 버전
-  static const Color darkSuccess = Color(0xFF5CFF8A);
-  static const Color darkError = Color(0xFFFF5C5C);
-  static const Color darkWarning = Color(0xFFFFB85C);
-  static const Color darkInfo = Color(0xFF5CB4FF);
+  // 기능 색상들 - 다크모드 버전 (채도 더 낮춤)
+  static const Color darkSuccess = Color(0xFF3D7A4F);  // 더 어두운 초록
+  static const Color darkError = Color(0xFFA85555);    // 더 어두운 빨강
+  static const Color darkWarning = Color(0xFFB8935F);  // 더 어두운 주황
+  static const Color darkInfo = Color(0xFF5A7AA8);     // 더 어두운 파랑
   
   // 다크모드에서 카테고리 색상 가져오기
   static Color getDarkCategoryColor(int categoryId) {

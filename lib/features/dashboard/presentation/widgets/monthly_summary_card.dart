@@ -213,22 +213,22 @@ class MonthlySummaryCard extends StatelessWidget {
     if (themeController.isDarkMode) {
       switch (cardType) {
         case 'income':
-          textColor = AppColors.darkSuccess;
-          iconBgColor = AppColors.darkSuccess.withOpacity(0.2);
-          iconColor = AppColors.darkSuccess;
+          textColor = themeController.incomeColor;
+          iconBgColor = themeController.incomeColor.withOpacity(0.2);
+          iconColor = themeController.incomeColor;
           break;
         case 'expense':
-          textColor = AppColors.darkError;
-          iconBgColor = AppColors.darkError.withOpacity(0.2);
-          iconColor = AppColors.darkError;
+          textColor = themeController.expenseColor;
+          iconBgColor = themeController.expenseColor.withOpacity(0.2);
+          iconColor = themeController.expenseColor;
           break;
         case 'assets':
-          textColor = AppColors.darkInfo;
-          iconBgColor = AppColors.darkInfo.withOpacity(0.2);
-          iconColor = AppColors.darkInfo;
+          textColor = themeController.financeColor;
+          iconBgColor = themeController.financeColor.withOpacity(0.2);
+          iconColor = themeController.financeColor;
           break;
         case 'balance':
-          textColor = amount >= 0 ? AppColors.darkSuccess : AppColors.darkError;
+          textColor = amount >= 0 ? themeController.incomeColor : themeController.expenseColor;
           iconBgColor = Colors.grey.shade800;
           iconColor = Colors.grey.shade400;
           break;
@@ -240,22 +240,22 @@ class MonthlySummaryCard extends StatelessWidget {
     } else {
       switch (cardType) {
         case 'income':
-          textColor = Colors.green.shade700;
-          iconBgColor = const Color(0xFFE6F4EA);
-          iconColor = Colors.green.shade600;
+          textColor = themeController.incomeColor;
+          iconBgColor = themeController.incomeColor.withOpacity(0.1);
+          iconColor = themeController.incomeColor;
           break;
         case 'expense':
-          textColor = Colors.red.shade700;
-          iconBgColor = const Color(0xFFFEE8EC);
-          iconColor = Colors.red.shade600;
+          textColor = themeController.expenseColor;
+          iconBgColor = themeController.expenseColor.withOpacity(0.1);
+          iconColor = themeController.expenseColor;
           break;
         case 'assets':
-          textColor = Colors.blue.shade700;
-          iconBgColor = const Color(0xFFE3F2FD);
-          iconColor = Colors.blue;
+          textColor = themeController.financeColor;
+          iconBgColor = themeController.financeColor.withOpacity(0.1);
+          iconColor = themeController.financeColor;
           break;
         case 'balance':
-          textColor = amount >= 0 ? Colors.green.shade700 : Colors.red.shade700;
+          textColor = amount >= 0 ? themeController.incomeColor : themeController.expenseColor;
           iconBgColor = const Color(0xFFF5F5F5);
           iconColor = Colors.grey;
           break;
@@ -456,17 +456,17 @@ class _CardDetailDialog extends StatelessWidget {
     
     switch (cardType) {
       case 'income':
-        headerColor = Colors.green[400]!;
+        headerColor = themeController.incomeColor;
         title = '소득 분석';
         icon = Icons.trending_up;
         break;
       case 'expense':
-        headerColor = Colors.red[400]!;
+        headerColor = themeController.expenseColor;
         title = '지출 분석';
         icon = Icons.trending_down;
         break;
       case 'assets':
-        headerColor = Colors.blue[400]!;
+        headerColor = themeController.financeColor;
         title = '재테크 분석';
         icon = Icons.account_balance;
         break;
@@ -810,13 +810,25 @@ class _CardDetailDialog extends StatelessWidget {
   }) {
     final ThemeController themeController = Get.find<ThemeController>();
     
+    // 다크모드에서는 채도를 낮춘 배경색 사용
+    Color backgroundColor;
+    Color borderColor;
+    
+    if (themeController.isDarkMode) {
+      backgroundColor = color.withOpacity(0.08); // 매우 낮은 투명도
+      borderColor = color.withOpacity(0.15);
+    } else {
+      backgroundColor = color[50]!;
+      borderColor = color[100]!;
+    }
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color[50],
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color[100]!),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -844,7 +856,11 @@ class _CardDetailDialog extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: change > 0 ? Colors.green[100] : Colors.red[100],
+                    color: themeController.isDarkMode
+                        ? (change > 0 
+                            ? themeController.incomeColor.withOpacity(0.15) 
+                            : themeController.expenseColor.withOpacity(0.15))
+                        : (change > 0 ? Colors.green[100] : Colors.red[100]),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -852,7 +868,11 @@ class _CardDetailDialog extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: change > 0 ? Colors.green[700] : Colors.red[700],
+                      color: themeController.isDarkMode
+                          ? (change > 0 
+                              ? themeController.incomeColor 
+                              : themeController.expenseColor)
+                          : (change > 0 ? Colors.green[700] : Colors.red[700]),
                     ),
                   ),
                 ),
@@ -872,11 +892,17 @@ class _CardDetailDialog extends StatelessWidget {
   ) {
     final ThemeController themeController = Get.find<ThemeController>();
     
+    // 다크모드에서는 배경색 채도를 더 낮춤
+    Color adjustedBackgroundColor = backgroundColor;
+    if (themeController.isDarkMode) {
+      adjustedBackgroundColor = textColor.withOpacity(0.1);
+    }
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: adjustedBackgroundColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

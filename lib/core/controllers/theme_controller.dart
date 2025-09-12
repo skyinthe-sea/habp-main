@@ -147,4 +147,9 @@ class ThemeController extends GetxController {
   Color get errorColor => _isDarkMode.value ? AppColors.darkError : AppColors.error;
   Color get warningColor => _isDarkMode.value ? AppColors.darkWarning : AppColors.warning;
   Color get infoColor => _isDarkMode.value ? AppColors.darkInfo : AppColors.info;
+  
+  // 카테고리별 색상 (소득/지출/재테크)
+  Color get incomeColor => _isDarkMode.value ? AppColors.darkSuccess : AppColors.success;
+  Color get expenseColor => _isDarkMode.value ? AppColors.darkError : AppColors.error;
+  Color get financeColor => _isDarkMode.value ? AppColors.darkInfo : AppColors.info;
 }

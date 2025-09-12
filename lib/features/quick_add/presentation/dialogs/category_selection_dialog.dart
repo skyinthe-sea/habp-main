@@ -48,7 +48,7 @@ class CategorySelectionDialog extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: themeController.primaryColor,
+                    color: _getTypeColor(controller.transaction.value.categoryType, themeController),
                   ),
                 ),
                 IconButton(
@@ -105,9 +105,9 @@ class CategorySelectionDialog extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: themeController.primaryColor.withOpacity(0.1),
+                    color: _getTypeColor(controller.transaction.value.categoryType, themeController).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: themeController.primaryColor.withOpacity(0.5), width: 1),
+                    border: Border.all(color: _getTypeColor(controller.transaction.value.categoryType, themeController).withOpacity(0.5), width: 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -115,7 +115,7 @@ class CategorySelectionDialog extends StatelessWidget {
                       Icon(
                         Icons.add,
                         size: 16,
-                        color: themeController.primaryColor,
+                        color: _getTypeColor(controller.transaction.value.categoryType, themeController),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -123,7 +123,7 @@ class CategorySelectionDialog extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: themeController.primaryColor,
+                          color: _getTypeColor(controller.transaction.value.categoryType, themeController),
                         ),
                       ),
                     ],
@@ -244,13 +244,13 @@ class CategorySelectionDialog extends StatelessWidget {
     // 유형별 색상 지정 - 테마 컨트롤러 색상 시스템 사용
     switch (categoryType) {
       case 'INCOME':
-        mainColor = themeController.isDarkMode ? Colors.green.shade400 : Colors.green.shade600;
+        mainColor = themeController.incomeColor;
         break;
       case 'EXPENSE':
-        mainColor = themeController.primaryColor;
+        mainColor = themeController.expenseColor;
         break;
       case 'FINANCE':
-        mainColor = themeController.isDarkMode ? Colors.blue.shade400 : Colors.blue.shade600;
+        mainColor = themeController.financeColor;
         break;
       default:
         mainColor = themeController.primaryColor;
@@ -449,6 +449,19 @@ class CategorySelectionDialog extends StatelessWidget {
     }
   }
 
+  Color _getTypeColor(String type, ThemeController themeController) {
+    switch (type) {
+      case 'INCOME':
+        return themeController.incomeColor;
+      case 'EXPENSE':
+        return themeController.expenseColor;
+      case 'FINANCE':
+        return themeController.financeColor;
+      default:
+        return themeController.primaryColor;
+    }
+  }
+
   // 카테고리 수정 다이얼로그
   void _showEditCategoryDialog(BuildContext context, int categoryId, String categoryName, QuickAddController controller, ThemeController themeController) {
     final nameController = TextEditingController(text: categoryName);
@@ -485,11 +498,12 @@ class CategorySelectionDialog extends StatelessWidget {
           TextButton(
             onPressed: () async {
               if (nameController.text.trim().isEmpty) {
-                Get.snackbar(
-                  '오류',
-                  '카테고리 이름을 입력해주세요.',
+                final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '카테고리 이름을 입력해주세요.',
                   snackPosition: SnackPosition.TOP,
-                  backgroundColor: Colors.red,
+                  backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                   colorText: Colors.white,
                 );
                 return;
@@ -499,19 +513,21 @@ class CategorySelectionDialog extends StatelessWidget {
               
               final success = await controller.updateCategory(categoryId, nameController.text.trim());
               if (success) {
-                Get.snackbar(
-                  '수정 완료',
-                  '카테고리가 수정되었습니다.',
+                final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '수정 완료',
+            '카테고리가 수정되었습니다.',
                   snackPosition: SnackPosition.TOP,
-                  backgroundColor: Colors.green,
+                  backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                   colorText: Colors.white,
                 );
               } else {
-                Get.snackbar(
-                  '수정 실패',
-                  '카테고리 수정에 실패했습니다.',
+                final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '수정 실패',
+            '카테고리 수정에 실패했습니다.',
                   snackPosition: SnackPosition.TOP,
-                  backgroundColor: Colors.red,
+                  backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                   colorText: Colors.white,
                 );
               }
@@ -547,19 +563,21 @@ class CategorySelectionDialog extends StatelessWidget {
               
               final success = await controller.deleteCategory(categoryId);
               if (success) {
-                Get.snackbar(
-                  '삭제 완료',
-                  '\'$categoryName\' 카테고리가 삭제되었습니다.',
+                final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '삭제 완료',
+            '\'$categoryName\' 카테고리가 삭제되었습니다.',
                   snackPosition: SnackPosition.TOP,
-                  backgroundColor: Colors.green,
+                  backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                   colorText: Colors.white,
                 );
               } else {
-                Get.snackbar(
-                  '삭제 실패',
-                  '해당 카테고리는 삭제할 수 없습니다.',
+                final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '삭제 실패',
+            '해당 카테고리는 삭제할 수 없습니다.',
                   snackPosition: SnackPosition.TOP,
-                  backgroundColor: Colors.red,
+                  backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                   colorText: Colors.white,
                 );
               }

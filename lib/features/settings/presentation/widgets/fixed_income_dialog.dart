@@ -479,8 +479,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            themeController.isDarkMode ? Colors.green.shade700 : Colors.green.shade600,
-            themeController.isDarkMode ? Colors.green.shade900 : Colors.green.shade800,
+            themeController.isDarkMode ? Get.find<ThemeController>().incomeColor : Get.find<ThemeController>().incomeColor,
+            themeController.isDarkMode ? Get.find<ThemeController>().incomeColor.withOpacity(0.8) : Get.find<ThemeController>().incomeColor.withOpacity(0.9),
           ],
         ),
       ),
@@ -704,12 +704,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade700.withOpacity(0.1),
+                      color: Get.find<ThemeController>().incomeColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.add_circle_outline_rounded,
-                      color: Colors.green.shade700,
+                      color: Get.find<ThemeController>().incomeColor,
                       size: 20,
                     ),
                   ),
@@ -1074,7 +1074,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 icon: const Icon(Icons.add, size: 16),
                 label: const Text('고정 소득 추가하기', style: TextStyle(fontSize: 14)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeController.primaryColor,
+                  backgroundColor: themeController.incomeColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   shape: RoundedRectangleBorder(
@@ -1175,7 +1175,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 end: Alignment.bottomRight,
                 colors: [
                   Colors.white,
-                  Colors.green.shade50,
+                  Get.find<ThemeController>().incomeColor.withOpacity(0.1),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
@@ -1212,14 +1212,14 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Colors.green.shade400,
-                                  Colors.green.shade700,
+                                  Get.find<ThemeController>().incomeColor.withOpacity(0.7),
+                                  Get.find<ThemeController>().incomeColor,
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.green.shade300.withOpacity(0.25),
+                                  color: Get.find<ThemeController>().incomeColor.withOpacity(0.25),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -1307,7 +1307,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.green.shade700,
+                                      color: Get.find<ThemeController>().incomeColor,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.visible,
@@ -1352,7 +1352,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                           Icon(
                             Icons.history,
                             size: 14,
-                            color: Colors.green.shade700,
+                            color: Get.find<ThemeController>().incomeColor,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -1360,7 +1360,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Colors.green.shade700,
+                              color: Get.find<ThemeController>().incomeColor,
                             ),
                           ),
                         ],
@@ -1410,8 +1410,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.green.shade50,
-                  Colors.green.shade100,
+                  Get.find<ThemeController>().incomeColor.withOpacity(0.1),
+                  Get.find<ThemeController>().incomeColor.withOpacity(0.2),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
@@ -1434,7 +1434,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.green.shade700,
+                        color: Get.find<ThemeController>().incomeColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -1491,7 +1491,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                           ? '₩ ${NumberFormat('#,###').format(currentSetting.amount)}'
                           : '금액 미설정',
                       icon: Icons.attach_money,
-                      iconColor: Colors.green.shade700,
+                      iconColor: Get.find<ThemeController>().incomeColor,
                     ),
                     const SizedBox(height: 12),
                     _buildInfoCard(
@@ -1647,7 +1647,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                   decoration: BoxDecoration(
                     color: isCurrentSetting
                         ? Colors.green.shade700
-                        : Colors.green.shade300,
+                        : Get.find<ThemeController>().incomeColor.withOpacity(0.6),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -1655,7 +1655,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                   Container(
                     width: 2,
                     height: 70,
-                    color: Colors.green.shade200,
+                    color: Get.find<ThemeController>().incomeColor.withOpacity(0.4),
                   ),
               ],
             ),
@@ -1668,12 +1668,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isCurrentSetting
-                    ? Colors.green.shade50
+                    ? Get.find<ThemeController>().incomeColor.withOpacity(0.1)
                     : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isCurrentSetting
-                      ? Colors.green.shade200
+                      ? Get.find<ThemeController>().incomeColor.withOpacity(0.4)
                       : Colors.grey.shade200,
                 ),
               ),
@@ -1699,7 +1699,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                         isCurrentSetting ? '현재 설정' : '',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.green.shade700,
+                          color: Get.find<ThemeController>().incomeColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1829,7 +1829,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '삭제 완료',
         '설정이 성공적으로 삭제되었습니다.',
-        backgroundColor: themeController.primaryColor.withOpacity(0.1),
+        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -1845,7 +1845,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '오류',
         '설정 삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2380,7 +2380,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                       Get.snackbar(
                         '성공',
                         '고정 소득이 추가되었습니다',
-                        backgroundColor: themeController.primaryColor.withOpacity(0.1),
+                        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                         borderRadius: 12,
                         margin: const EdgeInsets.all(12),
                         snackPosition: SnackPosition.BOTTOM,
@@ -2390,7 +2390,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                       Get.snackbar(
                         '오류',
                         '이미 존재하는 이름이거나 추가 중 오류가 발생했습니다',
-                        backgroundColor: Colors.red[100],
+                        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                         borderRadius: 12,
                         margin: const EdgeInsets.all(12),
                         snackPosition: SnackPosition.BOTTOM,
@@ -2445,7 +2445,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                 icon: const Icon(Icons.add_circle_outline, size: 18),
                 label: const Text('새 고정 소득 추가'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeController.primaryColor,
+                  backgroundColor: themeController.incomeColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2700,7 +2700,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '삭제 완료',
         '${_selectedCategory?.name ?? "고정 소득"} 항목이 완전히 삭제되었습니다.',
-        backgroundColor: themeController.primaryColor.withOpacity(0.1),
+        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2716,7 +2716,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '오류',
         '삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2784,8 +2784,8 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.green.shade600,
-                            Colors.green.shade800,
+                            Get.find<ThemeController>().incomeColor,
+                            Get.find<ThemeController>().incomeColor.withOpacity(0.8),
                           ],
                         ),
                         borderRadius: const BorderRadius.only(
@@ -2904,7 +2904,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                                       decoration: BoxDecoration(
-                                        color: Colors.green.shade50,
+                                        color: Get.find<ThemeController>().incomeColor.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
@@ -2913,7 +2913,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                             offset: const Offset(0, 5),
                                           ),
                                         ],
-                                        border: Border.all(color: Colors.green.shade200, width: 1),
+                                        border: Border.all(color: Get.find<ThemeController>().incomeColor.withOpacity(0.4), width: 1),
                                       ),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
@@ -2921,12 +2921,12 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                           Container(
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              color: Colors.green.shade100,
+                                              color: Get.find<ThemeController>().incomeColor.withOpacity(0.2),
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
                                               Icons.check,
-                                              color: Colors.green.shade700,
+                                              color: Get.find<ThemeController>().incomeColor,
                                               size: 36,
                                             ),
                                           ),
@@ -2936,7 +2936,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                             style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.green.shade700,
+                                              color: Get.find<ThemeController>().incomeColor,
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -2944,7 +2944,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                             '설정이 성공적으로 적용되었습니다',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: Colors.green.shade800,
+                                              color: Get.find<ThemeController>().incomeColor.withOpacity(0.9),
                                             ),
                                           ),
                                         ],
@@ -2970,7 +2970,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                           width: 40,
                                           height: 40,
                                           child: CircularProgressIndicator(
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade700),
+                                            valueColor: AlwaysStoppedAnimation<Color>(Get.find<ThemeController>().incomeColor),
                                             strokeWidth: 3,
                                           ),
                                         ),
@@ -2980,7 +2980,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.green.shade700,
+                                            color: Get.find<ThemeController>().incomeColor,
                                           ),
                                         ),
                                       ],
@@ -3028,7 +3028,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                     hintText: '금액 입력',
                                     filled: true,
                                     fillColor: Colors.grey[50],
-                                    prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
+                                    prefixIcon: Icon(Icons.attach_money, color: Get.find<ThemeController>().incomeColor),
                                     prefixText: '₩ ',
                                     prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
                                     border: OutlineInputBorder(
@@ -3044,7 +3044,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: isValidAmount ? Colors.green.shade700 : Colors.red[400]!,
+                                        color: isValidAmount ? Get.find<ThemeController>().incomeColor : Colors.red[400]!,
                                         width: 2,
                                       ),
                                     ),
@@ -3172,11 +3172,11 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                             cellMargin: const EdgeInsets.all(2),
                                             cellPadding: const EdgeInsets.all(3),
                                             todayDecoration: BoxDecoration(
-                                              color: themeController.isDarkMode ? Colors.green.shade400.withOpacity(0.3) : Colors.green.shade200,
+                                              color: themeController.isDarkMode ? Colors.green.shade400.withOpacity(0.3) : Get.find<ThemeController>().incomeColor.withOpacity(0.4),
                                               shape: BoxShape.circle,
                                             ),
                                             selectedDecoration: BoxDecoration(
-                                              color: themeController.isDarkMode ? Colors.green.shade400 : Colors.green.shade700,
+                                              color: themeController.isDarkMode ? Get.find<ThemeController>().incomeColor.withOpacity(0.8) : Get.find<ThemeController>().incomeColor,
                                               shape: BoxShape.circle,
                                             ),
                                             defaultTextStyle: TextStyle(
@@ -3307,13 +3307,21 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                 final amount = double.tryParse(plainAmount);
 
                                 if (amount == null || amount <= 0) {
-                                  Get.snackbar('오류', '올바른 금액을 입력해주세요');
+                                  Get.snackbar(
+                                    '오류',
+                                    '올바른 금액을 입력해주세요',
+                                    backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
+                                  );
                                   return;
                                 }
 
                                 // Check if there's a change
                                 if (amount == defaultAmount && selectedDate.day == defaultDay) {
-                                  Get.snackbar('알림', '변경된 내용이 없습니다');
+                                  Get.snackbar(
+                                    '알림',
+                                    '변경된 내용이 없습니다',
+                                    backgroundColor: themeController.isDarkMode ? AppColors.darkInfo : AppColors.info,
+                                  );
                                   return;
                                 }
 
@@ -3368,7 +3376,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                   Get.snackbar(
                                     '성공',
                                     '${category.name}의 설정이 ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 ${NumberFormat('#,###').format(amount)}원으로 변경되었습니다.',
-                                    backgroundColor: themeController.primaryColor.withOpacity(0.1),
+                                    backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                                     borderRadius: 12,
                                     margin: const EdgeInsets.all(12),
                                     snackPosition: SnackPosition.BOTTOM,
@@ -3389,7 +3397,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
                                   Get.snackbar(
                                     '오류',
                                     '설정 업데이트에 실패했습니다.',
-                                    backgroundColor: Colors.red[100],
+                                    backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                                     borderRadius: 12,
                                     margin: const EdgeInsets.all(12),
                                     snackPosition: SnackPosition.BOTTOM,
@@ -3479,7 +3487,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '삭제 완료',
         '${_deleteFromDate.toString().substring(0, 10)} 이후의 ${_selectedCategory!.name} 고정 소득이 삭제되었습니다.',
-        backgroundColor: themeController.primaryColor.withOpacity(0.1),
+        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -3490,7 +3498,7 @@ class _FixedIncomeDialogState extends State<FixedIncomeDialog> with SingleTicker
       Get.snackbar(
         '오류',
         '삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,

@@ -346,10 +346,11 @@ class _SettingsDialogState extends State<SettingsDialog>
                                     final versionService = Get.find<VersionCheckService>();
                                     final success = await versionService.openStore();
                                     if (!success) {
+                                      final ThemeController themeController = Get.find<ThemeController>();
                                       Get.snackbar(
                                         '오류',
                                         '스토어를 열 수 없습니다. 나중에 다시 시도해주세요.',
-                                        backgroundColor: Colors.red,
+                                        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                                         colorText: Colors.white,
                                         snackPosition: SnackPosition.BOTTOM,
                                         margin: const EdgeInsets.all(16),
@@ -357,10 +358,11 @@ class _SettingsDialogState extends State<SettingsDialog>
                                       );
                                     }
                                   } catch (e) {
+                                    final ThemeController themeController = Get.find<ThemeController>();
                                     Get.snackbar(
                                       '오류',
                                       '스토어 연결 중 오류가 발생했습니다.',
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                                       colorText: Colors.white,
                                       snackPosition: SnackPosition.BOTTOM,
                                       margin: const EdgeInsets.all(16),

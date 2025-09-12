@@ -43,9 +43,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
 
-  // Finance color theme
-  final Color primaryColor = Colors.blue.shade700;
-  final Color lightColor = Colors.blue.shade50;
+  // Finance color theme - using theme controller for consistency
 
   // Map to cache latest transactions for categories without settings
   final Map<int, List<Map<String, dynamic>>> _categoryTransactionHistory = {};
@@ -357,7 +355,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                         width: 50,
                         height: 50,
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(themeController.primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(Get.find<ThemeController>().financeColor),
                           strokeWidth: 3,
                         ),
                       ),
@@ -486,8 +484,8 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.shade600,
-            Colors.blue.shade700,
+            Get.find<ThemeController>().financeColor,
+            Get.find<ThemeController>().financeColor.withOpacity(0.8),
           ],
         ),
       ),
@@ -711,12 +709,12 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
+                      color: Get.find<ThemeController>().financeColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.add_circle_outline_rounded,
-                      color: primaryColor,
+                      color: Get.find<ThemeController>().financeColor,
                       size: 20,
                     ),
                   ),
@@ -760,7 +758,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: primaryColor, width: 2),
+                    borderSide: BorderSide(color: Get.find<ThemeController>().financeColor, width: 2),
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
@@ -827,7 +825,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
-                        color: _isValidAmount ? primaryColor : Colors.red.shade500,
+                        color: _isValidAmount ? Get.find<ThemeController>().financeColor : Colors.red.shade500,
                         width: 2
                     ),
                   ),
@@ -958,11 +956,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                         },
                         calendarStyle: CalendarStyle(
                           todayDecoration: BoxDecoration(
-                            color: themeController.primaryColor.withOpacity(0.3),
+                            color: Get.find<ThemeController>().financeColor.withOpacity(0.3),
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color: themeController.primaryColor,
+                            color: Get.find<ThemeController>().financeColor,
                             shape: BoxShape.circle,
                           ),
                           defaultTextStyle: TextStyle(color: themeController.textPrimaryColor),
@@ -1060,7 +1058,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('고정 금융 추가하기'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeController.primaryColor,
+                  backgroundColor: Get.find<ThemeController>().financeColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -1161,7 +1159,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                 end: Alignment.bottomRight,
                 colors: [
                   Colors.white,
-                  Colors.blue.shade50,
+                  Get.find<ThemeController>().financeColor.withOpacity(0.1),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
@@ -1199,7 +1197,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                 end: Alignment.bottomRight,
                                 colors: [
                                   Colors.green.shade400,
-                                  primaryColor,
+                                  Get.find<ThemeController>().financeColor,
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(14),
@@ -1293,7 +1291,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: primaryColor,
+                                      color: Get.find<ThemeController>().financeColor,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.visible,
@@ -1338,7 +1336,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                           Icon(
                             Icons.history,
                             size: 14,
-                            color: primaryColor,
+                            color: Get.find<ThemeController>().financeColor,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -1346,7 +1344,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: primaryColor,
+                              color: Get.find<ThemeController>().financeColor,
                             ),
                           ),
                         ],
@@ -1396,8 +1394,8 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.blue.shade50,
-                  Colors.blue.shade100,
+                  Get.find<ThemeController>().financeColor.withOpacity(0.1),
+                  Get.find<ThemeController>().financeColor.withOpacity(0.2),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
@@ -1420,7 +1418,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: primaryColor,
+                        color: Get.find<ThemeController>().financeColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -1477,7 +1475,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                           ? '₩ ${NumberFormat('#,###').format(currentSetting.amount)}'
                           : '금액 미설정',
                       icon: Icons.account_balance,
-                      iconColor: primaryColor,
+                      iconColor: Get.find<ThemeController>().financeColor,
                     ),
                     const SizedBox(height: 12),
                     _buildInfoCard(
@@ -1486,7 +1484,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                           ? '매월 ${currentSetting.day}일'
                           : '날짜 미설정',
                       icon: Icons.calendar_today,
-                      iconColor: Colors.blue.shade700,
+                      iconColor: Get.find<ThemeController>().financeColor,
                     ),
                   ],
                 ),
@@ -1632,7 +1630,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   height: 12,
                   decoration: BoxDecoration(
                     color: isCurrentSetting
-                        ? primaryColor
+                        ? Get.find<ThemeController>().financeColor
                         : Colors.green.shade300,
                     shape: BoxShape.circle,
                   ),
@@ -1641,7 +1639,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   Container(
                     width: 2,
                     height: 70,
-                    color: Colors.blue.shade200,
+                    color: Get.find<ThemeController>().financeColor.withOpacity(0.4),
                   ),
               ],
             ),
@@ -1654,12 +1652,12 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isCurrentSetting
-                    ? Colors.blue.shade50
+                    ? Get.find<ThemeController>().financeColor.withOpacity(0.1)
                     : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isCurrentSetting
-                      ? Colors.blue.shade200
+                      ? Get.find<ThemeController>().financeColor.withOpacity(0.4)
                       : Colors.grey.shade200,
                 ),
               ),
@@ -1677,7 +1675,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: isCurrentSetting
-                              ? primaryColor
+                              ? Get.find<ThemeController>().financeColor
                               : Colors.grey[700],
                         ),
                       ),
@@ -1685,7 +1683,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                         isCurrentSetting ? '현재 설정' : '',
                         style: TextStyle(
                           fontSize: 12,
-                          color: primaryColor,
+                          color: Get.find<ThemeController>().financeColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1810,10 +1808,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
       Get.find<EventBusService>().emitFixedIncomeChanged();
 
       // 성공 메시지 표시
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '삭제 완료',
         '설정이 성공적으로 삭제되었습니다.',
-        backgroundColor: Colors.green[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -1826,10 +1825,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
       }
 
       // 오류 메시지 표시
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '오류',
         '설정 삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2195,7 +2195,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
               child: ElevatedButton(
                 onPressed: () => _showUpdateDialog(_selectedCategory!),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeController.primaryColor,
+                  backgroundColor: Get.find<ThemeController>().financeColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2351,20 +2351,22 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                       // Refresh data
                       await _loadTransactionHistory();
 
+                      final ThemeController themeController = Get.find<ThemeController>();
                       Get.snackbar(
                         '성공',
                         '고정 금융이 추가되었습니다',
-                        backgroundColor: Colors.green[100],
+                        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                         borderRadius: 12,
                         margin: const EdgeInsets.all(12),
                         snackPosition: SnackPosition.BOTTOM,
                         duration: const Duration(seconds: 2),
                       );
                     } else {
+                      final ThemeController themeController = Get.find<ThemeController>();
                       Get.snackbar(
                         '오류',
                         '이미 존재하는 이름이거나 추가 중 오류가 발생했습니다',
-                        backgroundColor: Colors.red[100],
+                        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                         borderRadius: 12,
                         margin: const EdgeInsets.all(12),
                         snackPosition: SnackPosition.BOTTOM,
@@ -2374,7 +2376,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeController.primaryColor,
+                  backgroundColor: Get.find<ThemeController>().financeColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2419,7 +2421,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                 icon: const Icon(Icons.add_circle_outline, size: 18),
                 label: const Text('새 고정 금융 추가'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: themeController.primaryColor,
+                  backgroundColor: Get.find<ThemeController>().financeColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2677,7 +2679,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
       Get.snackbar(
         '삭제 완료',
         '${_selectedCategory?.name ?? "고정 금융"} 항목이 완전히 삭제되었습니다.',
-        backgroundColor: Colors.green[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2690,10 +2692,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
       }
 
       // 오류 메시지 표시
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '오류',
         '삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2762,7 +2765,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                           end: Alignment.bottomRight,
                           colors: [
                             Colors.blue.shade600,
-                            Colors.blue.shade700,
+                            Get.find<ThemeController>().financeColor,
                           ],
                         ),
                         borderRadius: const BorderRadius.only(
@@ -2881,7 +2884,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                                       decoration: BoxDecoration(
-                                        color: Colors.blue.shade50,
+                                        color: Get.find<ThemeController>().financeColor.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
@@ -2890,7 +2893,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                             offset: const Offset(0, 5),
                                           ),
                                         ],
-                                        border: Border.all(color: Colors.blue.shade200, width: 1),
+                                        border: Border.all(color: Get.find<ThemeController>().financeColor.withOpacity(0.4), width: 1),
                                       ),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
@@ -2898,12 +2901,12 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                           Container(
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              color: Colors.blue.shade100,
+                                              color: Get.find<ThemeController>().financeColor.withOpacity(0.2),
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
                                               Icons.check,
-                                              color: primaryColor,
+                                              color: Get.find<ThemeController>().financeColor,
                                               size: 36,
                                             ),
                                           ),
@@ -2913,7 +2916,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                             style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
-                                              color: primaryColor,
+                                              color: Get.find<ThemeController>().financeColor,
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -2921,7 +2924,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                             '설정이 성공적으로 적용되었습니다',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: Colors.blue.shade700,
+                                              color: Get.find<ThemeController>().financeColor,
                                             ),
                                           ),
                                         ],
@@ -2947,7 +2950,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                           width: 40,
                                           height: 40,
                                           child: CircularProgressIndicator(
-                                            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                                            valueColor: AlwaysStoppedAnimation<Color>(Get.find<ThemeController>().financeColor),
                                             strokeWidth: 3,
                                           ),
                                         ),
@@ -2957,7 +2960,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
-                                            color: primaryColor,
+                                            color: Get.find<ThemeController>().financeColor,
                                           ),
                                         ),
                                       ],
@@ -3021,7 +3024,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: isValidAmount ? primaryColor : Colors.red[400]!,
+                                        color: isValidAmount ? Get.find<ThemeController>().financeColor : Colors.red[400]!,
                                         width: 2,
                                       ),
                                     ),
@@ -3146,11 +3149,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                             cellMargin: const EdgeInsets.all(2),
                                             cellPadding: const EdgeInsets.all(3),
                                             todayDecoration: BoxDecoration(
-                                              color: themeController.primaryColor.withOpacity(0.3),
+                                              color: Get.find<ThemeController>().financeColor.withOpacity(0.3),
                                               shape: BoxShape.circle,
                                             ),
                                             selectedDecoration: BoxDecoration(
-                                              color: themeController.primaryColor,
+                                              color: Get.find<ThemeController>().financeColor,
                                               shape: BoxShape.circle,
                                             ),
                                             defaultTextStyle: TextStyle(fontSize: 13, color: themeController.textPrimaryColor),
@@ -3258,7 +3261,7 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: themeController.primaryColor,
+                                backgroundColor: Get.find<ThemeController>().financeColor,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -3272,13 +3275,23 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                 final amount = double.tryParse(plainAmount);
 
                                 if (amount == null || amount <= 0) {
-                                  Get.snackbar('오류', '올바른 금액을 입력해주세요');
+                                  final ThemeController themeController = Get.find<ThemeController>();
+                                  Get.snackbar(
+                                    '오류',
+                                    '올바른 금액을 입력해주세요',
+                                    backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
+                                  );
                                   return;
                                 }
 
                                 // Check if there's a change
                                 if (amount == defaultAmount && selectedDate.day == defaultDay) {
-                                  Get.snackbar('알림', '변경된 내용이 없습니다');
+                                  final ThemeController themeController = Get.find<ThemeController>();
+                                  Get.snackbar(
+                                    '알림',
+                                    '변경된 내용이 없습니다',
+                                    backgroundColor: themeController.isDarkMode ? AppColors.darkInfo : AppColors.info,
+                                  );
                                   return;
                                 }
 
@@ -3330,10 +3343,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                   });
 
                                   // Show external snackbar
+                                  final ThemeController themeController = Get.find<ThemeController>();
                                   Get.snackbar(
                                     '성공',
                                     '${category.name}의 설정이 ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 ${NumberFormat('#,###').format(amount)}원으로 변경되었습니다.',
-                                    backgroundColor: Colors.green[100],
+                                    backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                                     borderRadius: 12,
                                     margin: const EdgeInsets.all(12),
                                     snackPosition: SnackPosition.BOTTOM,
@@ -3351,10 +3365,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
                                     isLoading = false;
                                   });
 
+                                  final ThemeController themeController = Get.find<ThemeController>();
                                   Get.snackbar(
                                     '오류',
                                     '설정 업데이트에 실패했습니다.',
-                                    backgroundColor: Colors.red[100],
+                                    backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                                     borderRadius: 12,
                                     margin: const EdgeInsets.all(12),
                                     snackPosition: SnackPosition.BOTTOM,
@@ -3439,10 +3454,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
       });
 
       // 8. Show success message
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '삭제 완료',
         '${_deleteFromDate.toString().substring(0, 10)} 이후의 ${_selectedCategory!.name} 고정 금융이 삭제되었습니다.',
-        backgroundColor: Colors.green[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -3450,10 +3466,11 @@ class _FixedFinanceDialogState extends State<FixedFinanceDialog> with SingleTick
       );
     } catch (e) {
       // Show error message
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '오류',
         '삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,

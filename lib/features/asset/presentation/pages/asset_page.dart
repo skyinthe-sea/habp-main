@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../data/datasources/asset_local_data_source.dart';
 import '../../data/repositories/asset_repository_impl.dart';
@@ -121,27 +122,29 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
           );
         }
 
-        return Scaffold(
-          backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 1,
-            title: const Text(
-              '자산',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+        return GetBuilder<ThemeController>(
+          builder: (themeController) {
+            return Scaffold(
+              backgroundColor: themeController.backgroundColor,
+              appBar: AppBar(
+                backgroundColor: themeController.cardColor,
+                elevation: 1,
+                title: Text(
+                  '자산',
+                  style: TextStyle(
+                    color: themeController.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back, color: themeController.primaryColor),
+                  onPressed: () => Get.back(),
+                ),
               ),
-            ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-              onPressed: () => Get.back(),
-            ),
-          ),
-          body: SafeArea(
-            child: GetBuilder<AssetController>(
-              init: _controller,
+              body: SafeArea(
+                child: GetBuilder<AssetController>(
+                  init: _controller,
               builder: (controller) {
                 return Column(
                   children: [
@@ -243,11 +246,13 @@ class _AssetPageState extends State<AssetPage> with AutomaticKeepAliveClientMixi
                 builder: (context) => AddAssetDialog(controller: _controller),
               );
             },
-            child: const Icon(
+            child: Icon(
               Icons.add,
               color: Colors.white,
-            ),
-          ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

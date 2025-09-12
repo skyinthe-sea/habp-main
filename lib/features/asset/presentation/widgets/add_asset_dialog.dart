@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../controllers/asset_controller.dart';
 
@@ -114,9 +115,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
 
   void _addNewCategory() async {
     if (newCategoryController.text.isEmpty) {
-      Get.snackbar(
-        '알림',
-        '카테고리 이름을 입력해주세요.',
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '알림',
+            '카테고리 이름을 입력해주세요.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkInfo : AppColors.info,
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -152,16 +155,20 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
 
         Get.back(); // 다이얼로그 닫기
 
-        Get.snackbar(
-          '성공',
-          '새 자산 유형이 추가되었습니다.',
+        final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '성공',
+            '새 자산 유형이 추가되었습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
           snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
-      Get.snackbar(
-        '오류',
-        '자산 유형 추가 중 오류가 발생했습니다: $e',
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '자산 유형 추가 중 오류가 발생했습니다: $e',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         snackPosition: SnackPosition.TOP,
       );
     } finally {
@@ -223,9 +230,11 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
 
   void _saveAsset() async {
     if (selectedCategoryId == null || nameController.text.isEmpty || currentValueController.text.isEmpty) {
-      Get.snackbar(
-        '알림',
-        '카테고리, 이름, 현재 가치는 필수 입력사항입니다.',
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '알림',
+            '카테고리, 이름, 현재 가치는 필수 입력사항입니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkInfo : AppColors.info,
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -262,23 +271,29 @@ class _AddAssetDialogState extends State<AddAssetDialog> {
 
       if (success) {
         Navigator.of(context).pop();
-        Get.snackbar(
-          '성공',
-          '자산이 추가되었습니다.',
+        final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '성공',
+            '자산이 추가되었습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
           snackPosition: SnackPosition.TOP,
         );
       } else {
-        Get.snackbar(
-          '오류',
-          '자산 추가에 실패했습니다.',
+        final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '자산 추가에 실패했습니다.',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
           snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
       debugPrint('자산 추가 중 오류: $e');
-      Get.snackbar(
-        '오류',
-        '입력한 값을 확인해주세요: $e',
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '입력한 값을 확인해주세요: $e',
+            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         snackPosition: SnackPosition.TOP,
       );
     } finally {

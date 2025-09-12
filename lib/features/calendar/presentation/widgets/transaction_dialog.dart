@@ -29,8 +29,8 @@ class TransactionDialog extends StatelessWidget {
       Get.snackbar(
         '수정 불가',
         '고정 거래는 수정할 수 없습니다.',
-        backgroundColor: (themeController.isDarkMode ? Colors.orange.shade400 : AppColors.warning).withOpacity(0.1),
-        colorText: themeController.isDarkMode ? Colors.orange.shade400 : AppColors.warning,
+        backgroundColor: themeController.isDarkMode ? AppColors.darkWarning : AppColors.warning,
+        colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 8,
         duration: const Duration(seconds: 2),
@@ -59,8 +59,8 @@ class TransactionDialog extends StatelessWidget {
       Get.snackbar(
         '삭제 불가',
         '고정 거래는 삭제할 수 없습니다.',
-        backgroundColor: (themeController.isDarkMode ? Colors.orange.shade400 : AppColors.warning).withOpacity(0.1),
-        colorText: themeController.isDarkMode ? Colors.orange.shade400 : AppColors.warning,
+        backgroundColor: themeController.isDarkMode ? AppColors.darkWarning : AppColors.warning,
+        colorText: Colors.white,
         margin: const EdgeInsets.all(16),
         borderRadius: 8,
         duration: const Duration(seconds: 2),
@@ -200,8 +200,8 @@ class TransactionDialog extends StatelessWidget {
                 Get.snackbar(
                   '삭제 완료',
                   '거래 내역이 삭제되었습니다.',
-                  backgroundColor: (themeController.isDarkMode ? Colors.green.shade400 : Colors.green).withOpacity(0.1),
-                  colorText: themeController.isDarkMode ? Colors.green.shade400 : Colors.green[700],
+                  backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
+                  colorText: Colors.white,
                   margin: const EdgeInsets.all(16),
                   borderRadius: 8,
                   duration: const Duration(seconds: 2),
@@ -211,8 +211,8 @@ class TransactionDialog extends StatelessWidget {
                 Get.snackbar(
                   '삭제 실패',
                   e.toString(),
-                  backgroundColor: (themeController.isDarkMode ? Colors.red.shade400 : Colors.red).withOpacity(0.1),
-                  colorText: themeController.isDarkMode ? Colors.red.shade400 : Colors.red[700],
+                  backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
+                  colorText: Colors.white,
                   margin: const EdgeInsets.all(16),
                   borderRadius: 8,
                   duration: const Duration(seconds: 3),

@@ -26,40 +26,50 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   final List<String> _tabs = ['소득', '지출', '재테크'];
   // _tabColors를 제거하고 build 메서드에서 동적으로 생성
 
-  // 지출 카테고리 색상을 동적으로 생성하는 메서드로 변경
-  List<Color> _getExpenseColors(Color primaryColor) {
+  // 지출 카테고리 색상을 테마에 따라 동적으로 생성하는 메서드
+  List<Color> _getExpenseColors(ThemeController themeController) {
+    final baseColor = themeController.expenseColor;
+    
     return [
-      primaryColor, // 메인 색상
-      Color(0xFFE07777), // 빨간색 계열
-      Color(0xFFFF6B6B), // 밝은 빨간색
-      Color(0xFFE5A5A5), // 연한 빨간색
-      Color.lerp(primaryColor, Colors.red, 0.3) ?? primaryColor, // Primary와 빨강 혼합
-      Color.lerp(primaryColor, Colors.pink, 0.5) ?? primaryColor, // Primary와 핑크 혼합
-      Color(0xFFE84A5F), // 선명한 빨간색
+      baseColor, // 메인 빨강 색상
+      Color.lerp(baseColor, Colors.red.shade300, 0.5) ?? baseColor,
+      Color.lerp(baseColor, Colors.red.shade400, 0.3) ?? baseColor,
+      Color.lerp(baseColor, Colors.pink.shade300, 0.4) ?? baseColor,
+      baseColor.withOpacity(0.8),
+      baseColor.withOpacity(0.6),
+      Color.lerp(baseColor, Colors.red.shade600, 0.2) ?? baseColor,
     ];
   }
 
-  // 소득 카테고리 색상 - 초록색 계열로 통일
-  final List<Color> _incomeColors = [
-    Color(0xFF2ECC71), // 밝은 초록색
-    Color(0xFF27AE60), // 중간 초록색
-    Color(0xFF1E8449), // 진한 초록색
-    Color(0xFF52BE80), // 연한 초록색
-    Color(0xFF82E0AA), // 아주 연한 초록색
-    Color(0xFF49E292), // 민트색
-    Color(0xFF7CC576), // 옅은 초록색
-  ];
+  // 소득 카테고리 색상을 테마에 따라 동적으로 생성하는 메서드
+  List<Color> _getIncomeColors(ThemeController themeController) {
+    final baseColor = themeController.incomeColor;
+    
+    return [
+      baseColor, // 메인 초록 색상
+      Color.lerp(baseColor, Colors.green.shade300, 0.5) ?? baseColor,
+      Color.lerp(baseColor, Colors.green.shade400, 0.3) ?? baseColor,
+      Color.lerp(baseColor, Colors.teal.shade300, 0.4) ?? baseColor,
+      baseColor.withOpacity(0.8),
+      baseColor.withOpacity(0.6),
+      Color.lerp(baseColor, Colors.green.shade600, 0.2) ?? baseColor,
+    ];
+  }
 
-  // 재테크 카테고리 색상 - 파란색 계열로 통일
-  final List<Color> _financeColors = [
-    Color(0xFF3498DB), // 밝은 파란색
-    Color(0xFF2980B9), // 중간 파란색
-    Color(0xFF1F618D), // 진한 파란색
-    Color(0xFF5DADE2), // 연한 파란색
-    Color(0xFF85C1E9), // 아주 연한 파란색
-    Color(0xFF49C5E2), // 하늘색
-    Color(0xFF4990E2), // 옅은 파란색
-  ];
+  // 재테크 카테고리 색상을 테마에 따라 동적으로 생성하는 메서드  
+  List<Color> _getFinanceColors(ThemeController themeController) {
+    final baseColor = themeController.financeColor;
+    
+    return [
+      baseColor, // 메인 파랑 색상
+      Color.lerp(baseColor, Colors.blue.shade300, 0.5) ?? baseColor,
+      Color.lerp(baseColor, Colors.blue.shade400, 0.3) ?? baseColor,
+      Color.lerp(baseColor, Colors.cyan.shade300, 0.4) ?? baseColor,
+      baseColor.withOpacity(0.8),
+      baseColor.withOpacity(0.6),
+      Color.lerp(baseColor, Colors.blue.shade600, 0.2) ?? baseColor,
+    ];
+  }
 
   @override
   void initState() {
@@ -155,7 +165,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                   title: '소득',
                   isLoading: widget.controller.isCategoryIncomeLoading.value,
                   emptyMessage: '소득 데이터가 없습니다',
-                  baseColor: Colors.green.shade400,
+                  baseColor: themeController.incomeColor,
                   type: 'INCOME',
                 ),
 
@@ -165,7 +175,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                   title: '지출',
                   isLoading: widget.controller.isCategoryExpenseLoading.value,
                   emptyMessage: '지출 데이터가 없습니다',
-                  baseColor: themeController.primaryColor,
+                  baseColor: themeController.expenseColor,
                   type: 'EXPENSE',
                 ),
 
@@ -175,7 +185,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                   title: '재테크',
                   isLoading: widget.controller.isCategoryFinanceLoading.value,
                   emptyMessage: '재테크 데이터가 없습니다',
-                  baseColor: Colors.blue.shade400,
+                  baseColor: themeController.financeColor,
                   type: 'FINANCE',
                 ),
               ],
@@ -314,7 +324,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                                   if (sectionIndex >= 0 && sectionIndex < mainCategories.length) {
                                     final touchedCategory = mainCategories[sectionIndex];
                                     final color = _getCategoryColor(
-                                        touchedCategory.categoryName, sectionIndex, type, themeController.primaryColor);
+                                        touchedCategory.categoryName, sectionIndex, type, themeController);
                                     _showCategoryDetailDialog(context, touchedCategory, color, type);
                                   }
                                 }
@@ -475,7 +485,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           final item = data[index];
-          Color color = _getCategoryColor(item.categoryName, index, type, themeController.primaryColor);
+          Color color = _getCategoryColor(item.categoryName, index, type, themeController);
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 3),
@@ -738,15 +748,17 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   }
 
   // 카테고리별 색상 가져오기 (각 유형별로 일관된 색상 팔레트 사용)
-  Color _getCategoryColor(String categoryName, int index, String type, Color primaryColor) {
+  Color _getCategoryColor(String categoryName, int index, String type, ThemeController themeController) {
     // 카테고리 유형에 따라 적절한 색상 팔레트 사용
     if (type == 'EXPENSE') {
-      final expenseColors = _getExpenseColors(primaryColor);
+      final expenseColors = _getExpenseColors(themeController);
       return expenseColors[index % expenseColors.length];
     } else if (type == 'INCOME') {
-      return _incomeColors[index % _incomeColors.length];
+      final incomeColors = _getIncomeColors(themeController);
+      return incomeColors[index % incomeColors.length];
     } else {
-      return _financeColors[index % _financeColors.length];
+      final financeColors = _getFinanceColors(themeController);
+      return financeColors[index % financeColors.length];
     }
   }
 
@@ -757,7 +769,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
       Color primaryColor) {
     return categories.map((item) {
       final index = categories.indexOf(item);
-      final color = _getCategoryColor(item.categoryName, index, type, primaryColor);
+      final color = _getCategoryColor(item.categoryName, index, type, Get.find<ThemeController>());
 
       // 모든 섹션에 라벨 표시 (5% 이상인 경우)
       final showLabel = item.percentage >= 5;
@@ -828,39 +840,41 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     final themeController = Get.find<ThemeController>();
     switch (index) {
       case 0: // 소득
-        return Colors.green.shade400;
+        return themeController.incomeColor;
       case 1: // 지출
-        return themeController.primaryColor;
+        return themeController.expenseColor;
       case 2: // 재테크
-        return Colors.blue.shade400;
+        return themeController.financeColor;
       default:
-        return themeController.primaryColor;
+        return themeController.expenseColor;
     }
   }
   
   // 다크모드용 탭 색상 가져오기
   Color _getTabColorForDarkMode(int index) {
+    final themeController = Get.find<ThemeController>();
     switch (index) {
       case 0: // 소득
-        return AppColors.darkSuccess;
+        return themeController.incomeColor;
       case 1: // 지출
-        return AppColors.darkPrimary;
+        return themeController.expenseColor;
       case 2: // 재테크
-        return AppColors.darkInfo;
+        return themeController.financeColor;
       default:
-        return AppColors.darkPrimary;
+        return themeController.expenseColor;
     }
   }
   
   // 다크모드용 베이스 색상 가져오기
   Color _getBaseColorForDarkMode(String type, Color lightColor) {
+    final themeController = Get.find<ThemeController>();
     switch (type) {
       case 'INCOME':
-        return AppColors.darkSuccess;
+        return themeController.incomeColor;
       case 'EXPENSE':
-        return AppColors.darkPrimary;
+        return themeController.expenseColor;
       case 'FINANCE':
-        return AppColors.darkInfo;
+        return themeController.financeColor;
       default:
         return lightColor;
     }

@@ -151,13 +151,14 @@ class _ExpensePageState extends State<ExpensePage>
           );
         }
 
-        final ThemeController themeController = Get.find<ThemeController>();
-        return Scaffold(
-          backgroundColor: themeController.backgroundColor,
-          body: SafeArea(
-            child: GetBuilder<ExpenseController>(
-                init: _controller,
-                builder: (controller) {
+        return GetBuilder<ThemeController>(
+          builder: (themeController) {
+            return Scaffold(
+              backgroundColor: themeController.backgroundColor,
+              body: SafeArea(
+                child: GetBuilder<ExpenseController>(
+                    init: _controller,
+                    builder: (controller) {
                   return Column(
                     children: [
                       // Fixed period selector
@@ -245,7 +246,9 @@ class _ExpensePageState extends State<ExpensePage>
                     ],
                   );
                 }),
-          ),
+              ),
+            );
+          },
         );
       },
     );

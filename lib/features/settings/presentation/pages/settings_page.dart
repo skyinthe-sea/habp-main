@@ -152,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
             _buildSettingItem(
               icon: Icons.account_balance_outlined,
               title: '자산',
-              subtitle: '보유 자산을 관리하고 현황을 확인합니다',
+              subtitle: '보유 자산을 관리하고 현황을 확인합니다 (기능 삭제 예정)',
               color: Colors.blue.shade700,
               onTap: () {
                 Get.to(() => const AssetPage());
@@ -250,10 +250,11 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                   final versionService = Get.find<VersionCheckService>();
                   final success = await versionService.openStore();
                   if (!success) {
+                    final ThemeController themeController = Get.find<ThemeController>();
                     Get.snackbar(
                       '오류',
                       '스토어를 열 수 없습니다. 나중에 다시 시도해주세요.',
-                      backgroundColor: Colors.red,
+                      backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                       colorText: Colors.white,
                       snackPosition: SnackPosition.BOTTOM,
                       margin: const EdgeInsets.all(16),
@@ -261,10 +262,11 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
                     );
                   }
                 } catch (e) {
+                  final ThemeController themeController = Get.find<ThemeController>();
                   Get.snackbar(
                     '오류',
                     '스토어 연결 중 오류가 발생했습니다.',
-                    backgroundColor: Colors.red,
+                    backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                     colorText: Colors.white,
                     snackPosition: SnackPosition.BOTTOM,
                     margin: const EdgeInsets.all(16),

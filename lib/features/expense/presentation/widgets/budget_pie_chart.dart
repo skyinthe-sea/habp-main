@@ -94,19 +94,36 @@ class BudgetPieChart extends StatelessWidget {
   List<PieChartSectionData> _generatePieSections(final budgetItems, ThemeController themeController) {
     // 카테고리 색상 매핑 함수
     Color getCategoryColor(int index) {
-      final colors = [
-        AppColors.primary,
-        Color(0xFF9177E0),
-        Color(0xFF49E292),
-        Color(0xFF4990E2),
-        Color(0xFFE2A949),
-        Color(0xFFE07777),
-        Color(0xFF49C5E2),
-        Color(0xFF7CC576),
-        Color(0xFFE5A5A5),
-        Color(0xFFE2CF49),
-      ];
-      return colors[index % colors.length];
+      if (themeController.isDarkMode) {
+        // 다크모드용 낮은 채도의 색상
+        final colors = [
+          Color(0xFF8B5A7C), // 어두운 핑크/자주
+          Color(0xFF6B5B9B), // 어두운 보라
+          Color(0xFF4A8B7C), // 어두운 녹색
+          Color(0xFF5B7A9B), // 어두운 파랑
+          Color(0xFF9B8B5A), // 어두운 노랑/갈색
+          Color(0xFF9B6B6B), // 어두운 빨강
+          Color(0xFF5A9B9B), // 어두운 청록
+          Color(0xFF7A9B6B), // 어두운 올리브
+          Color(0xFF9B7A8B), // 어두운 로즈
+          Color(0xFF8B9B5A), // 어두운 라임
+        ];
+        return colors[index % colors.length];
+      } else {
+        final colors = [
+          AppColors.primary,
+          Color(0xFF9177E0),
+          Color(0xFF49E292),
+          Color(0xFF4990E2),
+          Color(0xFFE2A949),
+          Color(0xFFE07777),
+          Color(0xFF49C5E2),
+          Color(0xFF7CC576),
+          Color(0xFFE5A5A5),
+          Color(0xFFE2CF49),
+        ];
+        return colors[index % colors.length];
+      }
     }
 
     // 총 예산 계산
@@ -143,19 +160,36 @@ class BudgetPieChart extends StatelessWidget {
   Widget _buildLegend(final budgetItems, ThemeController themeController) {
     // 카테고리 색상 매핑 함수
     Color getCategoryColor(int index) {
-      final colors = [
-        AppColors.primary,
-        Color(0xFF9177E0),
-        Color(0xFF49E292),
-        Color(0xFF4990E2),
-        Color(0xFFE2A949),
-        Color(0xFFE07777),
-        Color(0xFF49C5E2),
-        Color(0xFF7CC576),
-        Color(0xFFE5A5A5),
-        Color(0xFFE2CF49),
-      ];
-      return colors[index % colors.length];
+      if (themeController.isDarkMode) {
+        // 다크모드용 낮은 채도의 색상
+        final colors = [
+          Color(0xFF8B5A7C), // 어두운 핑크/자주
+          Color(0xFF6B5B9B), // 어두운 보라
+          Color(0xFF4A8B7C), // 어두운 녹색
+          Color(0xFF5B7A9B), // 어두운 파랑
+          Color(0xFF9B8B5A), // 어두운 노랑/갈색
+          Color(0xFF9B6B6B), // 어두운 빨강
+          Color(0xFF5A9B9B), // 어두운 청록
+          Color(0xFF7A9B6B), // 어두운 올리브
+          Color(0xFF9B7A8B), // 어두운 로즈
+          Color(0xFF8B9B5A), // 어두운 라임
+        ];
+        return colors[index % colors.length];
+      } else {
+        final colors = [
+          AppColors.primary,
+          Color(0xFF9177E0),
+          Color(0xFF49E292),
+          Color(0xFF4990E2),
+          Color(0xFFE2A949),
+          Color(0xFFE07777),
+          Color(0xFF49C5E2),
+          Color(0xFF7CC576),
+          Color(0xFFE5A5A5),
+          Color(0xFFE2CF49),
+        ];
+        return colors[index % colors.length];
+      }
     }
 
     return ListView.builder(

@@ -134,7 +134,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
             TextButton(
               child: Text(
                 '삭제',
-                style: TextStyle(color: Colors.red.shade700),
+                style: TextStyle(color: Get.find<ThemeController>().expenseColor),
               ),
               onPressed: () {
                 Navigator.of(context).pop(true);
@@ -314,7 +314,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
             const Text('숫자만 입력 가능합니다'),
           ],
         ),
-        backgroundColor: Colors.red.shade700,
+        backgroundColor: Get.find<ThemeController>().expenseColor,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -342,7 +342,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 width: MediaQuery.of(context).size.width * 0.9,
                 height: 300,
                 decoration: BoxDecoration(
-                  color: themeController.cardColor,
+                  color: Get.find<ThemeController>().cardColor,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Center(
@@ -378,11 +378,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 maxHeight: MediaQuery.of(context).size.height * 0.85,
               ),
               decoration: BoxDecoration(
-                color: themeController.cardColor,
+                color: Get.find<ThemeController>().cardColor,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: themeController.isDarkMode
+                    color: Get.find<ThemeController>().isDarkMode
                         ? Colors.black.withOpacity(0.4)
                         : Colors.black.withOpacity(0.2),
                     blurRadius: 20,
@@ -482,8 +482,8 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.cate4.withOpacity(0.85),
-            AppColors.cate4,
+            Get.find<ThemeController>().expenseColor.withOpacity(0.85),
+            Get.find<ThemeController>().expenseColor,
           ],
         ),
       ),
@@ -707,12 +707,12 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.cate4.withOpacity(0.1),
+                      color: Get.find<ThemeController>().expenseColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.add_circle_outline_rounded,
-                      color: AppColors.cate4,
+                      color: Get.find<ThemeController>().expenseColor,
                       size: 20,
                     ),
                   ),
@@ -756,7 +756,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.cate4, width: 2),
+                    borderSide: BorderSide(color: Get.find<ThemeController>().expenseColor, width: 2),
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
@@ -809,7 +809,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   hintText: '숫자만 입력',
                   filled: true,
                   fillColor: Colors.grey[50],
-                  prefixIcon: const Icon(Icons.money_off, color: AppColors.cate4),
+                  prefixIcon: const Icon(Icons.money_off, color: Colors.red),
                   prefixText: '₩ ',
                   prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
                   border: OutlineInputBorder(
@@ -818,12 +818,16 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: _isValidAmount ? Colors.grey[200]! : Colors.red.shade300),
+                    borderSide: BorderSide(color: _isValidAmount ? Colors.grey[200]! : Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.3) 
+                      : Colors.red.shade300),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
-                        color: _isValidAmount ? AppColors.cate4 : Colors.red.shade500,
+                        color: _isValidAmount ? Get.find<ThemeController>().expenseColor : Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.1) 
+                      : Colors.red.shade500,
                         width: 2
                     ),
                   ),
@@ -867,10 +871,10 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
               // Calendar for selecting effective from date
               Container(
                 decoration: BoxDecoration(
-                  color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                  color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
+                    color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
                   ),
                 ),
                 child: Column(
@@ -930,7 +934,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     SizedBox(
                       height: 300,
                       child: Material(
-                        color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                        color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -1054,7 +1058,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('고정 지출 추가하기'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cate4,
+                  backgroundColor: Get.find<ThemeController>().expenseColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -1154,8 +1158,12 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white,
-                  Colors.red.shade50,
+                  Get.find<ThemeController>().cardColor,
+                  Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.1)
+                      : Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.1) 
+                      : Colors.red.shade50,
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
@@ -1192,14 +1200,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  AppColors.cate4,
-                                  AppColors.cate4,
+                                  Get.find<ThemeController>().expenseColor,
+                                  Get.find<ThemeController>().expenseColor,
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.cate4.withOpacity(0.25),
+                                  color: Get.find<ThemeController>().expenseColor.withOpacity(0.25),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -1287,7 +1295,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.cate4,
+                                      color: Get.find<ThemeController>().expenseColor,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.visible,
@@ -1332,7 +1340,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                           Icon(
                             Icons.history,
                             size: 14,
-                            color: AppColors.cate4,
+                            color: Get.find<ThemeController>().expenseColor,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -1340,7 +1348,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.cate4,
+                              color: Get.find<ThemeController>().expenseColor,
                             ),
                           ),
                         ],
@@ -1390,8 +1398,16 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.red.shade50,
-                  Colors.red.shade100,
+                  Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.08)
+                      : Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.1) 
+                      : Colors.red.shade50,
+                  Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.12)
+                      : Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.15) 
+                      : Colors.red.shade100,
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
@@ -1414,7 +1430,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.cate4,
+                        color: Get.find<ThemeController>().expenseColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -1471,7 +1487,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                           ? '₩ ${NumberFormat('#,###').format(currentSetting.amount)}'
                           : '금액 미설정',
                       icon: Icons.money_off,
-                      iconColor: AppColors.cate4,
+                      iconColor: Get.find<ThemeController>().expenseColor,
                     ),
                     const SizedBox(height: 12),
                     _buildInfoCard(
@@ -1570,12 +1586,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.only(left: 20),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade100,
+                    color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.15) 
+                      : Colors.red.shade100,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.delete_sweep,
-                    color: Colors.red.shade700,
+                    color: Get.find<ThemeController>().expenseColor,
                   ),
                 ),
                 child: GestureDetector(
@@ -1626,8 +1644,8 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   height: 12,
                   decoration: BoxDecoration(
                     color: isCurrentSetting
-                        ? AppColors.cate4
-                        : AppColors.cate4,
+                        ? Get.find<ThemeController>().expenseColor
+                        : Get.find<ThemeController>().expenseColor,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -1635,7 +1653,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   Container(
                     width: 2,
                     height: 70,
-                    color: AppColors.cate4.withOpacity(0.7),
+                    color: Get.find<ThemeController>().expenseColor.withOpacity(0.7),
                   ),
               ],
             ),
@@ -1648,12 +1666,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isCurrentSetting
-                    ? Colors.red.shade50
+                    ? Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.1) 
+                      : Colors.red.shade50
                     : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isCurrentSetting
-                      ? AppColors.cate4.withOpacity(0.7)
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.7)
                       : Colors.grey.shade200,
                 ),
               ),
@@ -1671,7 +1691,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: isCurrentSetting
-                              ? AppColors.cate4
+                              ? Get.find<ThemeController>().expenseColor
                               : Colors.grey[700],
                         ),
                       ),
@@ -1679,7 +1699,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                         isCurrentSetting ? '현재 설정' : '',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.cate4,
+                          color: Get.find<ThemeController>().expenseColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1804,10 +1824,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       Get.find<EventBusService>().emitFixedIncomeChanged();
 
       // 성공 메시지 표시
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '삭제 완료',
         '설정이 성공적으로 삭제되었습니다.',
-        backgroundColor: Colors.red.shade100,
+        backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -1820,10 +1841,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       }
 
       // 오류 메시지 표시
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '오류',
         '설정 삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -1933,12 +1955,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade100,
+                  color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.15) 
+                      : Colors.red.shade100,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.warning_amber_rounded,
-                  color: Colors.red.shade700,
+                  color: Get.find<ThemeController>().expenseColor,
                   size: 24,
                 ),
               ),
@@ -1952,7 +1976,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.red.shade700,
+                        color: Get.find<ThemeController>().expenseColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1994,10 +2018,10 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
             child: SingleChildScrollView(
               child: Container(
                 decoration: BoxDecoration(
-                  color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                  color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
+                    color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
                   ),
                 ),
                 child: Column(
@@ -2056,7 +2080,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     SizedBox(
                       height: 280,
                       child: Material(
-                        color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                        color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -2074,11 +2098,17 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                         },
                         calendarStyle: CalendarStyle(
                           todayDecoration: BoxDecoration(
-                            color: themeController.isDarkMode ? Colors.red.shade400.withOpacity(0.3) : Colors.red.shade200,
+                            color: Get.find<ThemeController>().isDarkMode ? Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.4) 
+                      : Colors.red.shade400.withOpacity(0.3) : Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.2) 
+                      : Colors.red.shade200,
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade600,
+                            color: Get.find<ThemeController>().isDarkMode ? Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.4) 
+                      : Colors.red.shade400 : Get.find<ThemeController>().expenseColor,
                             shape: BoxShape.circle,
                           ),
                           defaultTextStyle: TextStyle(color: themeController.textPrimaryColor),
@@ -2131,16 +2161,20 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
+              color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.1) 
+                      : Colors.red.shade50,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red.shade200),
+              border: Border.all(color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.2) 
+                      : Colors.red.shade200),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.warning_amber_rounded,
                   size: 18,
-                  color: Colors.red.shade700,
+                  color: Get.find<ThemeController>().expenseColor,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -2148,7 +2182,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     '이 작업은 되돌릴 수 없습니다. 삭제된 데이터는 복구할 수 없습니다.',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.red.shade700,
+                      color: Get.find<ThemeController>().expenseColor,
                     ),
                   ),
                 ),
@@ -2168,7 +2202,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: themeController.cardColor,
+          color: Get.find<ThemeController>().cardColor,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(24),
             bottomRight: Radius.circular(24),
@@ -2189,7 +2223,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
               child: ElevatedButton(
                 onPressed: () => _showUpdateDialog(_selectedCategory!),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cate4,
+                  backgroundColor: Get.find<ThemeController>().expenseColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2220,7 +2254,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 },
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
-                    color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
+                    color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -2245,7 +2279,9 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  side: BorderSide(color: Colors.red.shade300),
+                  side: BorderSide(color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.3) 
+                      : Colors.red.shade300),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -2256,13 +2292,13 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     Icon(
                       Icons.delete_outline,
                       size: 18,
-                      color: Colors.red.shade700,
+                      color: Get.find<ThemeController>().expenseColor,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '삭제',
                       style: TextStyle(
-                        color: Colors.red.shade700,
+                        color: Get.find<ThemeController>().expenseColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -2277,7 +2313,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: themeController.cardColor,
+          color: Get.find<ThemeController>().cardColor,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(24),
             bottomRight: Radius.circular(24),
@@ -2303,7 +2339,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 },
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
-                    color: themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
+                    color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade600 : Colors.grey.shade300,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -2345,20 +2381,22 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                       // Refresh data
                       await _loadTransactionHistory();
 
+                      final ThemeController themeController = Get.find<ThemeController>();
                       Get.snackbar(
                         '성공',
                         '고정 지출이 추가되었습니다',
-                        backgroundColor: Colors.red.shade100,
+                        backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkSuccess : AppColors.success,
                         borderRadius: 12,
                         margin: const EdgeInsets.all(12),
                         snackPosition: SnackPosition.BOTTOM,
                         duration: const Duration(seconds: 2),
                       );
                     } else {
+                      final ThemeController themeController = Get.find<ThemeController>();
                       Get.snackbar(
                         '오류',
                         '이미 존재하는 이름이거나 추가 중 오류가 발생했습니다',
-                        backgroundColor: Colors.red[100],
+                        backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkError : AppColors.error,
                         borderRadius: 12,
                         margin: const EdgeInsets.all(12),
                         snackPosition: SnackPosition.BOTTOM,
@@ -2368,7 +2406,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cate4,
+                  backgroundColor: Get.find<ThemeController>().expenseColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2392,7 +2430,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: themeController.cardColor,
+          color: Get.find<ThemeController>().cardColor,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(24),
             bottomRight: Radius.circular(24),
@@ -2413,7 +2451,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                 icon: const Icon(Icons.add_circle_outline, size: 18),
                 label: const Text('새 고정 지출 추가'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cate4,
+                  backgroundColor: Get.find<ThemeController>().expenseColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2462,14 +2500,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: themeController.cardColor,
+        backgroundColor: Get.find<ThemeController>().cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         title: Text(
           '${_selectedCategory!.name} 완전히 삭제',
           style: TextStyle(
-            color: Colors.red.shade700,
+            color: Get.find<ThemeController>().expenseColor,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -2485,9 +2523,13 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.1) 
+                      : Colors.red.shade50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.shade200),
+                border: Border.all(color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.2) 
+                      : Colors.red.shade200),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2497,7 +2539,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                       Icon(
                         Icons.warning_amber_rounded,
                         size: 18,
-                        color: Colors.red.shade700,
+                        color: Get.find<ThemeController>().expenseColor,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -2505,7 +2547,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.red.shade700,
+                          color: Get.find<ThemeController>().expenseColor,
                         ),
                       ),
                     ],
@@ -2515,7 +2557,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     '• 이 항목의 모든 과거 기록이 삭제됩니다',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.red.shade700,
+                      color: Get.find<ThemeController>().expenseColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2523,7 +2565,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     '• 모든 설정 이력이 삭제됩니다',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.red.shade700,
+                      color: Get.find<ThemeController>().expenseColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2531,7 +2573,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                     '• 이 작업은 되돌릴 수 없습니다',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.red.shade700,
+                      color: Get.find<ThemeController>().expenseColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -2557,7 +2599,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
               _deleteAllCategoryData();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade700,
+              backgroundColor: Get.find<ThemeController>().expenseColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -2586,7 +2628,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: themeController.cardColor,
+              color: Get.find<ThemeController>().cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -2603,7 +2645,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                   width: 50,
                   height: 50,
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.red.shade700),
+                    valueColor: AlwaysStoppedAnimation<Color>(Get.find<ThemeController>().expenseColor),
                     strokeWidth: 3,
                   ),
                 ),
@@ -2671,7 +2713,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       Get.snackbar(
         '삭제 완료',
         '${_selectedCategory?.name ?? "고정 지출"} 항목이 완전히 삭제되었습니다.',
-        backgroundColor: Colors.red.shade100,
+        backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2684,10 +2726,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       }
 
       // 오류 메시지 표시
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '오류',
         '삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -2726,7 +2769,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       barrierDismissible: false, // Prevent closing by tapping outside
       builder: (context) {
         return Dialog(
-          backgroundColor: themeController.cardColor,
+          backgroundColor: Get.find<ThemeController>().cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -2755,8 +2798,8 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            AppColors.cate4.withOpacity(0.85),
-                            AppColors.cate4,
+                            Get.find<ThemeController>().expenseColor.withOpacity(0.85),
+                            Get.find<ThemeController>().expenseColor,
                           ],
                         ),
                         borderRadius: const BorderRadius.only(
@@ -2875,7 +2918,9 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                                       decoration: BoxDecoration(
-                                        color: Colors.red.shade50,
+                                        color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.1) 
+                      : Colors.red.shade50,
                                         borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
@@ -2884,7 +2929,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                             offset: const Offset(0, 5),
                                           ),
                                         ],
-                                        border: Border.all(color: AppColors.cate4.withOpacity(0.7), width: 1),
+                                        border: Border.all(color: Get.find<ThemeController>().expenseColor.withOpacity(0.7), width: 1),
                                       ),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
@@ -2892,12 +2937,14 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                           Container(
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              color: Colors.red.shade100,
+                                              color: Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.15) 
+                      : Colors.red.shade100,
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
                                               Icons.check,
-                                              color: AppColors.cate4,
+                                              color: Get.find<ThemeController>().expenseColor,
                                               size: 36,
                                             ),
                                           ),
@@ -2907,7 +2954,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                             style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
-                                              color: AppColors.cate4,
+                                              color: Get.find<ThemeController>().expenseColor,
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -2915,7 +2962,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                             '설정이 성공적으로 적용되었습니다',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: AppColors.cate4,
+                                              color: Get.find<ThemeController>().expenseColor,
                                             ),
                                           ),
                                         ],
@@ -2941,7 +2988,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                           width: 40,
                                           height: 40,
                                           child: CircularProgressIndicator(
-                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.cate4),
+                                            valueColor: AlwaysStoppedAnimation<Color>(Get.find<ThemeController>().expenseColor),
                                             strokeWidth: 3,
                                           ),
                                         ),
@@ -2951,7 +2998,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.cate4,
+                                            color: Get.find<ThemeController>().expenseColor,
                                           ),
                                         ),
                                       ],
@@ -2999,7 +3046,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                     hintText: '금액 입력',
                                     filled: true,
                                     fillColor: Colors.grey[50],
-                                    prefixIcon: const Icon(Icons.money_off, color: AppColors.cate4),
+                                    prefixIcon: const Icon(Icons.money_off, color: Colors.red),
                                     prefixText: '₩ ',
                                     prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
                                     border: OutlineInputBorder(
@@ -3015,7 +3062,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: isValidAmount ? AppColors.cate4 : Colors.red[400]!,
+                                        color: isValidAmount ? Get.find<ThemeController>().expenseColor : Colors.red[400]!,
                                         width: 2,
                                       ),
                                     ),
@@ -3114,7 +3161,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                         height: MediaQuery.of(context).size.height < 600 ? 180.0 :
                                             (MediaQuery.of(context).size.height < 700 ? 220.0 : 265.0),
                                         child: Material(
-                                          color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
+                                          color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade800 : Colors.grey.shade50,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(16),
                                           ),
@@ -3174,7 +3221,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                           daysOfWeekHeight: 20,
                                           daysOfWeekStyle: DaysOfWeekStyle(
                                             decoration: BoxDecoration(
-                                              color: themeController.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade100,
+                                              color: Get.find<ThemeController>().isDarkMode ? Colors.grey.shade700 : Colors.grey.shade100,
                                             ),
                                             weekdayStyle: TextStyle(
                                               fontSize: 12,
@@ -3184,7 +3231,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                             weekendStyle: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
-                                              color: themeController.isDarkMode ? Colors.red.shade400 : Colors.red.shade300,
+                                              color: Get.find<ThemeController>().isDarkMode ? Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.4) 
+                      : Colors.red.shade400 : Get.find<ThemeController>().isDarkMode 
+                      ? Get.find<ThemeController>().expenseColor.withOpacity(0.3) 
+                      : Colors.red.shade300,
                                             ),
                                           ),
                                         ),
@@ -3253,7 +3304,7 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.cate4,
+                                backgroundColor: Get.find<ThemeController>().expenseColor,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -3267,13 +3318,23 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                 final amount = double.tryParse(plainAmount);
 
                                 if (amount == null || amount <= 0) {
-                                  Get.snackbar('오류', '올바른 금액을 입력해주세요');
+                                  final ThemeController themeController = Get.find<ThemeController>();
+                                  Get.snackbar(
+                                    '오류',
+                                    '올바른 금액을 입력해주세요',
+                                    backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkError : AppColors.error,
+                                  );
                                   return;
                                 }
 
                                 // Check if there's a change
                                 if (amount == defaultAmount && selectedDate.day == defaultDay) {
-                                  Get.snackbar('알림', '변경된 내용이 없습니다');
+                                  final ThemeController themeController = Get.find<ThemeController>();
+                                  Get.snackbar(
+                                    '알림',
+                                    '변경된 내용이 없습니다',
+                                    backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkInfo : AppColors.info,
+                                  );
                                   return;
                                 }
 
@@ -3325,10 +3386,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                   });
 
                                   // Show external snackbar
+                                  final ThemeController themeController = Get.find<ThemeController>();
                                   Get.snackbar(
                                     '성공',
                                     '${category.name}의 설정이 ${DateFormat('yyyy년 M월 d일').format(selectedDate)}부터 ${NumberFormat('#,###').format(amount)}원으로 변경되었습니다.',
-                                    backgroundColor: Colors.red.shade100,
+                                    backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkSuccess : AppColors.success,
                                     borderRadius: 12,
                                     margin: const EdgeInsets.all(12),
                                     snackPosition: SnackPosition.BOTTOM,
@@ -3346,10 +3408,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
                                     isLoading = false;
                                   });
 
+                                  final ThemeController themeController = Get.find<ThemeController>();
                                   Get.snackbar(
                                     '오류',
                                     '설정 업데이트에 실패했습니다.',
-                                    backgroundColor: Colors.red[100],
+                                    backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkError : AppColors.error,
                                     borderRadius: 12,
                                     margin: const EdgeInsets.all(12),
                                     snackPosition: SnackPosition.BOTTOM,
@@ -3434,10 +3497,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       });
 
       // 8. Show success message
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '삭제 완료',
         '${_deleteFromDate.toString().substring(0, 10)} 이후의 ${_selectedCategory!.name} 고정 지출이 삭제되었습니다.',
-        backgroundColor: Colors.red.shade100,
+        backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkSuccess : AppColors.success,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,
@@ -3445,10 +3509,11 @@ class _FixedExpenseDialogState extends State<FixedExpenseDialog> with SingleTick
       );
     } catch (e) {
       // Show error message
+      final ThemeController themeController = Get.find<ThemeController>();
       Get.snackbar(
         '오류',
         '삭제 중 문제가 발생했습니다: $e',
-        backgroundColor: Colors.red[100],
+        backgroundColor: Get.find<ThemeController>().isDarkMode ? AppColors.darkError : AppColors.error,
         borderRadius: 12,
         margin: const EdgeInsets.all(12),
         snackPosition: SnackPosition.BOTTOM,

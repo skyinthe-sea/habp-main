@@ -925,7 +925,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                         '성공',
                         '거래가 추가되었습니다',
                         snackPosition: SnackPosition.TOP,
-                        backgroundColor: themeController.isDarkMode ? Colors.green.shade400 : Colors.green,
+                        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                         colorText: Colors.white,
                         margin: const EdgeInsets.all(16),
                         duration: const Duration(seconds: 2),
@@ -936,7 +936,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                         '오류',
                         '거래 추가에 실패했습니다',
                         snackPosition: SnackPosition.TOP,
-                        backgroundColor: themeController.isDarkMode ? Colors.red.shade400 : Colors.red,
+                        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                         colorText: Colors.white,
                         margin: const EdgeInsets.all(16),
                       );
@@ -944,6 +944,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: themeController.primaryColor,
+                    foregroundColor: Colors.white, // 텍스트 색상 명시적 지정
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(

@@ -221,9 +221,11 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                       switch (result.status) {
                         case CategoryStatus.created:
                         // 성공 메시지
+                          final ThemeController themeController = Get.find<ThemeController>();
                           Get.snackbar(
                             '성공',
                             '카테고리가 추가되었습니다.',
+                            backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
                             snackPosition: SnackPosition.TOP,
                           );
 
@@ -233,9 +235,11 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
 
                         case CategoryStatus.existingVariable:
                         // 기존 변동 카테고리와 동일한 경우 - 성공으로 처리
+                          final ThemeController themeController = Get.find<ThemeController>();
                           Get.snackbar(
                             '정보',
                             '이미 존재하는 카테고리입니다.',
+                            backgroundColor: themeController.isDarkMode ? AppColors.darkInfo : AppColors.info,
                             snackPosition: SnackPosition.TOP,
                           );
 
@@ -256,9 +260,11 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                         case CategoryStatus.error:
                         default:
                         // 오류 메시지
+                          final ThemeController themeController = Get.find<ThemeController>();
                           Get.snackbar(
                             '오류',
                             '카테고리 추가에 실패했습니다.',
+                            backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
                             snackPosition: SnackPosition.TOP,
                           );
                           break;
@@ -266,7 +272,9 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: themeController.primaryColor,
+                      foregroundColor: Colors.white,
                       disabledBackgroundColor: themeController.primaryColor.withOpacity(0.5),
+                      disabledForegroundColor: Colors.white.withOpacity(0.7),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

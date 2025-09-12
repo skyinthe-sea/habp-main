@@ -59,9 +59,9 @@ class MonthCalendarFullscreen extends StatelessWidget {
                   onPageChanged: controller.onPageChanged,
                   calendarFormat: CalendarFormat.month,
                   startingDayOfWeek: StartingDayOfWeek.sunday,
-                  // Compact design for better fit
-                  daysOfWeekHeight: 24, // Slightly reduced for better fit
-                  rowHeight: 65, // Further reduced for improved vertical spacing
+                  // Increased size for better visibility
+                  daysOfWeekHeight: 32, // Increased from 24 for better visibility
+                  rowHeight: 90, // Increased from 65 for larger calendar cells
                   calendarStyle: CalendarStyle(
                     // Selected date style - empty style (handled in custom builder)
                     selectedDecoration: const BoxDecoration(

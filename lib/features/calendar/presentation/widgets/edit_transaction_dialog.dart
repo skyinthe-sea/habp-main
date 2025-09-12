@@ -108,10 +108,11 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
   // 수정 저장
   Future<void> _saveChanges() async {
     if (_descriptionController.text.trim().isEmpty) {
-      Get.snackbar(
-        '입력 오류',
-        '거래 내용을 입력해주세요.',
-        backgroundColor: AppColors.error.withOpacity(0.1),
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '입력 오류',
+            '거래 내용을 입력해주세요.',
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         colorText: AppColors.error,
         margin: const EdgeInsets.all(16),
         borderRadius: 8,
@@ -120,10 +121,11 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
     }
 
     if (_amountController.text.trim().isEmpty) {
-      Get.snackbar(
-        '입력 오류',
-        '금액을 입력해주세요.',
-        backgroundColor: AppColors.error.withOpacity(0.1),
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '입력 오류',
+            '금액을 입력해주세요.',
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         colorText: AppColors.error,
         margin: const EdgeInsets.all(16),
         borderRadius: 8,
@@ -170,19 +172,21 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
       await widget.onUpdate(updatedTransaction);
 
       Get.back();
-      Get.snackbar(
-        '수정 완료',
-        '거래 내역이 성공적으로 수정되었습니다.',
-        backgroundColor: AppColors.success.withOpacity(0.1),
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '수정 완료',
+            '거래 내역이 성공적으로 수정되었습니다.',
+        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
         colorText: AppColors.success,
         margin: const EdgeInsets.all(16),
         borderRadius: 8,
       );
     } catch (e) {
-      Get.snackbar(
-        '오류',
-        '거래 수정 중 오류가 발생했습니다: $e',
-        backgroundColor: AppColors.error.withOpacity(0.1),
+      final ThemeController themeController = Get.find<ThemeController>();
+            Get.snackbar(
+            '오류',
+            '거래 수정 중 오류가 발생했습니다: $e',
+        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
         colorText: AppColors.error,
         margin: const EdgeInsets.all(16),
         borderRadius: 8,
