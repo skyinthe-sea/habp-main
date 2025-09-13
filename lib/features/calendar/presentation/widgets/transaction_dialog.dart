@@ -372,16 +372,16 @@ class TransactionDialog extends StatelessWidget {
 
     if (totalNet > 0) {
       // 소득이 큰 경우
-      gradientStartColor = themeController.isDarkMode ? Colors.green.shade600 : Colors.green[300]!;
-      gradientEndColor = themeController.isDarkMode ? Colors.green.shade800 : Colors.green[100]!;
+      gradientStartColor = themeController.isDarkMode ? Colors.green.shade500.withOpacity(0.7) : Colors.green[200]!.withOpacity(0.8);
+      gradientEndColor = themeController.isDarkMode ? Colors.green.shade700.withOpacity(0.6) : Colors.green[50]!;
     } else if (totalNet < 0) {
       // 지출이 큰 경우
-      gradientStartColor = themeController.isDarkMode ? Colors.red.shade600 : Colors.red[300]!;
-      gradientEndColor = themeController.isDarkMode ? Colors.red.shade800 : Colors.red[100]!;
+      gradientStartColor = themeController.isDarkMode ? Colors.red.shade500.withOpacity(0.7) : Colors.red[200]!.withOpacity(0.8);
+      gradientEndColor = themeController.isDarkMode ? Colors.red.shade700.withOpacity(0.6) : Colors.red[50]!;
     } else {
       // 그 외 경우 (재테크 또는 밸런스)
-      gradientStartColor = themeController.primaryColor;
-      gradientEndColor = themeController.primaryColor.withOpacity(0.5);
+      gradientStartColor = themeController.primaryColor.withOpacity(0.7);
+      gradientEndColor = themeController.primaryColor.withOpacity(0.3);
     }
 
     return Container(

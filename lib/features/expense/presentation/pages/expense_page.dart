@@ -162,10 +162,7 @@ class _ExpensePageState extends State<ExpensePage>
                   return Column(
                     children: [
                       // Fixed period selector
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: PeriodSelector(controller: controller),
-                      ),
+                      PeriodSelector(controller: controller),
 
                       // Scrollable content
                       Expanded(
