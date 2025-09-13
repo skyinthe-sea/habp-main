@@ -11,7 +11,7 @@ class AdService extends GetxService {
   final Rx<BannerAd?> bannerAd = Rx<BannerAd?>(null);
   final RxBool isBannerAdLoaded = false.obs;
 
-  // 광고 ID 설정 - 릴리즈 모드에서는 무조건 실제 광고 ID 사용
+  // 광고 ID 설정 - 릴리즈 모드에서는 실제 광고 ID 사용
   final String _adUnitId = kReleaseMode
       ? (Platform.isAndroid
           ? 'ca-app-pub-6902355178006305/6345111569' // Android 실제 ID
@@ -19,8 +19,10 @@ class AdService extends GetxService {
       : 'ca-app-pub-3940256099942544/6300978111'; // Google 테스트 ID (디버그/프로파일)
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
+    // Mobile Ads SDK 초기화
+    await MobileAds.instance.initialize();
     _loadBannerAd();
   }
 
@@ -56,9 +58,11 @@ class AdService extends GetxService {
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
-          debugPrint('배너 광고 로드 성공');
+          debugPrint('=== 배너 광고 로드 성공 ===');
+          debugPrint('광고 크기: ${(ad as BannerAd).size}');
+          debugPrint('광고 ID: $_adUnitId');
           if (!isBannerAdLoaded.value) { // 중복 호출 방지
-            bannerAd.value = ad as BannerAd;
+            bannerAd.value = ad;
             isBannerAdLoaded.value = true;
           }
         },
@@ -68,8 +72,9 @@ class AdService extends GetxService {
           debugPrint('에러 메시지: ${error.message}');
           debugPrint('도메인: ${error.domain}');
           debugPrint('응답 정보: ${error.responseInfo}');
+          debugPrint('사용된 광고 ID: $_adUnitId');
           debugPrint('========================');
-          
+
           ad.dispose();
           _bannerAd = null;
           bannerAd.value = null;
