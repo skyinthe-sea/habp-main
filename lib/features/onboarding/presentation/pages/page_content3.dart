@@ -1,5 +1,4 @@
-// lib/features/onboarding/presentation/pages/page_content1.dart
-// (Apply similar modifications to PageContent2 and PageContent3)
+// lib/features/onboarding/presentation/pages/page_content3.dart
 
 import 'package:flutter/material.dart';
 import 'package:gif_view/gif_view.dart';
@@ -18,26 +17,29 @@ class PageContent3 extends StatefulWidget {
 
 class _PageContent3State extends State<PageContent3> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late List<Animation<double>> _textAnimations;
+  late List<Animation<double>> _lineAnimations;
   bool _showGif = false;
 
-  // Number of text elements
-  final int _numTextElements = 3;
+  final List<String> _lines = [
+    '재테크관련',
+    '종류와 액수를',
+    '입력해주세요',
+  ];
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize animation controller - faster animation
+    // Handwriting reveal animation - same as PageContent0
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500), // Reduced from 2 seconds
+      duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
 
-    // Create animations for each text element
-    _textAnimations = List.generate(_numTextElements, (index) {
-      final start = index * 0.15; // Faster timing
-      final end = start + 0.3;    // Faster completion
+    // Create staggered animations for each line
+    _lineAnimations = List.generate(_lines.length, (index) {
+      final start = index * 0.28; // Each line starts 28% later
+      final end = start + 0.5;    // Each line takes 50% of total time to complete
 
       return Tween<double>(
         begin: 0.0,
@@ -48,7 +50,7 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
           curve: Interval(
             start.clamp(0.0, 1.0),
             end.clamp(0.0, 1.0),
-            curve: Curves.easeOut,
+            curve: Curves.easeInOut,
           ),
         ),
       );
@@ -57,7 +59,6 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
     // Add animation status listener
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        // Show GIF when animation completes
         setState(() {
           _showGif = true;
         });
@@ -77,13 +78,13 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    // Standardized text size
-    final standardFontSize = size.width * 0.07;
+    // Same font size as PageContent0
+    final fontSize = size.width * 0.075;
 
     return Center(
       child: AnimatedOpacity(
         opacity: 1.0,
-        duration: const Duration(milliseconds: 400), // Faster fade in
+        duration: const Duration(milliseconds: 400),
         child: Stack(children: [
           const WaveBackground(
             primaryColor: AppColors.grey,
@@ -95,123 +96,100 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // GIF area - smaller size and shows after animation completes
+                  // GIF area
                   Flexible(
                     child: AnimatedOpacity(
                       opacity: _showGif ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 400), // Faster fade
+                      duration: const Duration(milliseconds: 400),
                       child: GifView.asset(
                         'assets/images/money-18548.gif',
-                        height: size.height * 0.20, // Reduced size
-                        width: size.width * 0.6,   // Reduced size
+                        height: size.height * 0.20,
+                        width: size.width * 0.6,
                         fit: BoxFit.contain,
                       ),
                     ),
                   ),
 
-                  // Text content area
+                  // Text content area with reveal animation
                   Flexible(
                     child: AnimatedBuilder(
                       animation: _controller,
                       builder: (context, child) {
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // First text
-                            AnimatedOpacity(
-                              opacity: _textAnimations[0].value,
-                              duration: const Duration(milliseconds: 200), // Faster animation
-                              child: AnimatedSlide(
-                                offset: Offset(0, 1 - _textAnimations[0].value),
-                                duration: const Duration(milliseconds: 200), // Faster animation
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    '재테크관련',
-                                    style: TextStyle(
-                                      color: AppColors.white,
-                                      fontSize: standardFontSize,
-                                      fontFamily: 'Noto Sans JP',
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: List.generate(_lines.length, (index) {
+                            final animation = _lineAnimations[index].value;
 
-                            const SizedBox(height: 8),
-
-                            // Second text (Row with BlinkingTextButton)
-                            AnimatedOpacity(
-                              opacity: _textAnimations[1].value,
-                              duration: const Duration(milliseconds: 200), // Faster animation
-                              child: AnimatedSlide(
-                                offset: Offset(0, 1 - _textAnimations[1].value),
-                                duration: const Duration(milliseconds: 200), // Faster animation
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    // Wrap BlinkingTextButton with GestureDetector to prevent tap events from propagating
-                                    GestureDetector(
-                                      onTap: () {
-                                        // Show dialog when tapped
-                                        showDialog(
-                                          context: context,
-                                          builder: (_) => const PageContent3Alert(),
-                                        );
-                                      },
-                                      // This is critical - it prevents the tap from propagating to parent
-                                      behavior: HitTestBehavior.opaque,
-                                      child: BlinkingTextButton(
-                                        text: '종류와 액수',
-                                        fontSize: standardFontSize,
-                                        onTap: () {
-                                          // Show dialog when tapped
-                                          showDialog(
-                                            context: context,
-                                            builder: (_) => const PageContent3Alert(),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        '를',
-                                        style: TextStyle(
-                                          color: AppColors.white,
-                                          fontSize: standardFontSize,
-                                          fontFamily: 'Noto Sans JP',
+                            // Special handling for line 1 (종류와 액수를) with BlinkingTextButton
+                            if (index == 1) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Center(
+                                  child: ClipRect(
+                                    clipper: _HandwritingClipper(animation),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (_) => const PageContent3Alert(),
+                                            );
+                                          },
+                                          behavior: HitTestBehavior.opaque,
+                                          child: BlinkingTextButton(
+                                            text: '종류와 액수',
+                                            fontSize: fontSize,
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (_) => const PageContent3Alert(),
+                                              );
+                                            },
+                                          ),
                                         ),
-                                      ),
+                                        Text(
+                                          '를',
+                                          style: TextStyle(
+                                            color: AppColors.white,
+                                            fontSize: fontSize,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Noto Sans JP',
+                                            height: 1.5,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            ),
+                              );
+                            }
 
-                            const SizedBox(height: 8),
-
-                            // Third text
-                            AnimatedOpacity(
-                              opacity: _textAnimations[2].value,
-                              duration: const Duration(milliseconds: 200), // Faster animation
-                              child: AnimatedSlide(
-                                offset: Offset(0, 1 - _textAnimations[2].value),
-                                duration: const Duration(milliseconds: 200), // Faster animation
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Center(
+                                child: ClipRect(
+                                  clipper: _HandwritingClipper(animation),
                                   child: Text(
-                                    '입력해주세요',
+                                    _lines[index],
+                                    textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: AppColors.white,
-                                      fontSize: standardFontSize,
+                                      fontSize: fontSize,
+                                      fontWeight: FontWeight.w600,
                                       fontFamily: 'Noto Sans JP',
+                                      height: 1.5,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            );
+                          }),
                         );
                       },
                     ),
@@ -223,5 +201,23 @@ class _PageContent3State extends State<PageContent3> with SingleTickerProviderSt
         ]),
       ),
     );
+  }
+}
+
+// Custom clipper for handwriting reveal effect from left to right
+class _HandwritingClipper extends CustomClipper<Rect> {
+  final double progress;
+
+  _HandwritingClipper(this.progress);
+
+  @override
+  Rect getClip(Size size) {
+    // Reveal from left to right (like writing)
+    return Rect.fromLTWH(0, 0, size.width * progress, size.height);
+  }
+
+  @override
+  bool shouldReclip(_HandwritingClipper oldClipper) {
+    return oldClipper.progress != progress;
   }
 }

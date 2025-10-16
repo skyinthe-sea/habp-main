@@ -13,32 +13,28 @@ class PageContent0 extends StatefulWidget {
 
 class _PageContent0State extends State<PageContent0> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late List<Animation<double>> _wordAnimations;
+  late List<Animation<double>> _lineAnimations;
 
-  final List<String> _words = [
-    '안녕하세요?',
-    '정확하고',
-    '편한',
-    '수기가계부',
-    '입니다.',
-    '재무관리를',
-    '도와드릴게요.'
+  final List<String> _lines = [
+    '하나하나 직접 작성하면서',
+    '나의 소비를 돌아보고',
+    '나를 알아가는 시간',
   ];
 
   @override
   void initState() {
     super.initState();
 
-    // Faster animation
+    // Handwriting reveal animation - each line reveals from left to right
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000), // Reduced from 3 seconds
+      duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
 
-    // Each word appears with a slight delay
-    _wordAnimations = List.generate(_words.length, (index) {
-      final start = index * 0.08; // Faster timing (0.08 instead of 0.1)
-      final end = start + 0.25;   // Faster completion (0.25 instead of 0.3)
+    // Create staggered animations for each line
+    _lineAnimations = List.generate(_lines.length, (index) {
+      final start = index * 0.28; // Each line starts 28% later
+      final end = start + 0.5;    // Each line takes 50% of total time to complete
 
       return Tween<double>(
         begin: 0.0,
@@ -47,9 +43,9 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
         CurvedAnimation(
           parent: _controller,
           curve: Interval(
-              start.clamp(0.0, 1.0),
-              end.clamp(0.0, 1.0),
-              curve: Curves.easeOut
+            start.clamp(0.0, 1.0),
+            end.clamp(0.0, 1.0),
+            curve: Curves.easeInOut, // Smoother curve for handwriting
           ),
         ),
       );
@@ -68,13 +64,13 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    // Standard text size for all pages
-    final standardFontSize = size.width * 0.07;
+    // Slightly larger font size for handwriting feel
+    final fontSize = size.width * 0.075;
 
     return Center(
       child: AnimatedOpacity(
         opacity: 1.0,
-        duration: const Duration(milliseconds: 400), // Faster fade in
+        duration: const Duration(milliseconds: 400),
         child: Stack(children: [
           const WaveBackground(
             primaryColor: AppColors.grey,
@@ -94,37 +90,30 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              alignment: Alignment.center,
-                              child: Wrap(
-                                alignment: WrapAlignment.center,
-                                spacing: 10,
-                                runSpacing: 20,
-                                children: List.generate(_words.length, (index) {
-                                  return AnimatedOpacity(
-                                    opacity: _wordAnimations[index].value,
-                                    duration: const Duration(milliseconds: 200), // Faster animation
-                                    child: AnimatedSlide(
-                                      offset: Offset(0, 1 - _wordAnimations[index].value),
-                                      duration: const Duration(milliseconds: 200), // Faster animation
-                                      child: Text(
-                                        _words[index],
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: AppColors.white,
-                                          fontSize: standardFontSize,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'Noto Sans JP',
-                                        ),
-                                      ),
+                          children: List.generate(_lines.length, (index) {
+                            final animation = _lineAnimations[index].value;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Center(
+                                child: ClipRect(
+                                  clipper: _CenterHandwritingClipper(animation),
+                                  child: Text(
+                                    _lines[index],
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppColors.white,
+                                      fontSize: fontSize,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Noto Sans JP',
+                                      height: 1.5,
+                                      letterSpacing: 0.5,
                                     ),
-                                  );
-                                }),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                            );
+                          }),
                         );
                       },
                     ),
@@ -136,5 +125,23 @@ class _PageContent0State extends State<PageContent0> with SingleTickerProviderSt
         ]),
       ),
     );
+  }
+}
+
+// Custom clipper for handwriting reveal effect from left to right
+class _CenterHandwritingClipper extends CustomClipper<Rect> {
+  final double progress;
+
+  _CenterHandwritingClipper(this.progress);
+
+  @override
+  Rect getClip(Size size) {
+    // Reveal from left to right (like writing)
+    return Rect.fromLTWH(0, 0, size.width * progress, size.height);
+  }
+
+  @override
+  bool shouldReclip(_CenterHandwritingClipper oldClipper) {
+    return oldClipper.progress != progress;
   }
 }
