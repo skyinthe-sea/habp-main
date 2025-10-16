@@ -130,6 +130,15 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
     final screenSize = MediaQuery.of(context).size;
     final safeAreaInsets = MediaQuery.of(context).padding;
 
+    // 다크모드 확인
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    final surfaceColor = isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade100;
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final subtextColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
+    final borderColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
+    final primaryColor = isDarkMode ? const Color(0xFF4CAF8E) : AppColors.primary; // 다크모드에서는 녹색
+
     // 사용 가능한 안전한 높이 계산
     final safeHeight = screenSize.height - safeAreaInsets.top - safeAreaInsets.bottom;
 
@@ -147,7 +156,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
             maxHeight: dialogMaxHeight,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -164,33 +173,33 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
               mainAxisSize: MainAxisSize.min,
               children: [
                 // 다이얼로그 헤더
-                _buildHeader(),
+                _buildHeader(isDarkMode, primaryColor),
 
                 // 날짜 선택 영역
-                _buildDateSelector(),
+                _buildDateSelector(isDarkMode, surfaceColor, textColor, subtextColor, borderColor, primaryColor),
 
                 // 캘린더 선택기 (토글)
-                if (showDatePicker) _buildCalendarPicker(),
+                if (showDatePicker) _buildCalendarPicker(isDarkMode, backgroundColor, textColor, borderColor, primaryColor),
 
                 // 검색창
-                _buildSearchBar(),
+                _buildSearchBar(isDarkMode, surfaceColor, subtextColor),
 
                 // 필터 칩
-                _buildFilterChips(),
+                _buildFilterChips(isDarkMode, surfaceColor, primaryColor),
 
                 // 로딩 중이면 로딩 인디케이터 표시
                 if (isLoading)
-                  const Expanded(
+                  Expanded(
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: AppColors.primary,
+                        color: primaryColor,
                         strokeWidth: 3,
                       ),
                     ),
                   )
                 else
                 // 거래 내역 목록
-                  _buildTransactionList(),
+                  _buildTransactionList(isDarkMode, surfaceColor, textColor, subtextColor, borderColor, primaryColor),
               ],
             ),
           ),
@@ -200,7 +209,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   }
 
   // 헤더 위젯
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isDarkMode, Color primaryColor) {
     final dateRange = startDate.year == endDate.year && startDate.month == endDate.month
         ? '${DateFormat('yyyy년 M월').format(startDate)} (${transactions.length}건)'
         : '${DateFormat('yyyy.M.d').format(startDate)} ~ ${DateFormat('yyyy.M.d').format(endDate)} (${transactions.length}건)';
@@ -211,10 +220,15 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary.withOpacity(0.8),
-            AppColors.primaryDark,
-          ],
+          colors: isDarkMode
+            ? [
+                primaryColor.withOpacity(0.8),
+                primaryColor.withOpacity(0.6),
+              ]
+            : [
+                AppColors.primary.withOpacity(0.8),
+                AppColors.primaryDark,
+              ],
         ),
       ),
       child: Row(
@@ -271,7 +285,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   }
 
   // 날짜 선택 위젯
-  Widget _buildDateSelector() {
+  Widget _buildDateSelector(bool isDarkMode, Color surfaceColor, Color textColor, Color subtextColor, Color borderColor, Color primaryColor) {
     final dateFormat = DateFormat('yyyy.MM.dd');
 
     return Padding(
@@ -280,16 +294,16 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 날짜 범위 선택 타이틀
-          const Row(
+          Row(
             children: [
-              Icon(Icons.date_range, size: 16, color: AppColors.primary),
-              SizedBox(width: 6),
+              Icon(Icons.date_range, size: 16, color: primaryColor),
+              const SizedBox(width: 6),
               Text(
                 '조회 기간',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: textColor,
                 ),
               ),
             ],
@@ -313,12 +327,12 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
                       color: isStartDateActive && showDatePicker
-                          ? AppColors.primary.withOpacity(0.1)
-                          : Colors.grey.shade100,
+                          ? primaryColor.withOpacity(0.1)
+                          : surfaceColor,
                       border: Border.all(
                         color: isStartDateActive && showDatePicker
-                            ? AppColors.primary
-                            : Colors.grey.shade300,
+                            ? primaryColor
+                            : borderColor,
                         width: 1,
                       ),
                       borderRadius: BorderRadius.circular(10),
@@ -334,15 +348,15 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                                 ? FontWeight.w600
                                 : FontWeight.normal,
                             color: isStartDateActive && showDatePicker
-                                ? AppColors.primary
-                                : Colors.black87,
+                                ? primaryColor
+                                : textColor,
                           ),
                         ),
                         Icon(
                           Icons.calendar_today,
                           size: 16,
                           color: isStartDateActive && showDatePicker
-                              ? AppColors.primary
+                              ? primaryColor
                               : Colors.grey,
                         ),
                       ],
@@ -356,7 +370,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                 margin: const EdgeInsets.symmetric(horizontal: 12),
                 width: 10,
                 height: 1,
-                color: Colors.grey.shade400,
+                color: borderColor,
               ),
 
               // 종료 날짜 선택
@@ -373,12 +387,12 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
                       color: !isStartDateActive && showDatePicker
-                          ? AppColors.primary.withOpacity(0.1)
-                          : Colors.grey.shade100,
+                          ? primaryColor.withOpacity(0.1)
+                          : surfaceColor,
                       border: Border.all(
                         color: !isStartDateActive && showDatePicker
-                            ? AppColors.primary
-                            : Colors.grey.shade300,
+                            ? primaryColor
+                            : borderColor,
                         width: 1,
                       ),
                       borderRadius: BorderRadius.circular(10),
@@ -394,15 +408,15 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                                 ? FontWeight.w600
                                 : FontWeight.normal,
                             color: !isStartDateActive && showDatePicker
-                                ? AppColors.primary
-                                : Colors.black87,
+                                ? primaryColor
+                                : textColor,
                           ),
                         ),
                         Icon(
                           Icons.calendar_today,
                           size: 16,
                           color: !isStartDateActive && showDatePicker
-                              ? AppColors.primary
+                              ? primaryColor
                               : Colors.grey,
                         ),
                       ],
@@ -430,7 +444,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                       showDatePicker = false;
                     });
                     _refreshTransactions();
-                  }),
+                  }, surfaceColor, textColor),
                   _buildDateRangeButton('7일', () {
                     final today = DateTime.now();
                     setState(() {
@@ -439,7 +453,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                       showDatePicker = false;
                     });
                     _refreshTransactions();
-                  }),
+                  }, surfaceColor, textColor),
                   _buildDateRangeButton('30일', () {
                     final today = DateTime.now();
                     setState(() {
@@ -448,7 +462,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                       showDatePicker = false;
                     });
                     _refreshTransactions();
-                  }),
+                  }, surfaceColor, textColor),
                   _buildDateRangeButton('이번달', () {
                     final today = DateTime.now();
                     setState(() {
@@ -457,7 +471,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                       showDatePicker = false;
                     });
                     _refreshTransactions();
-                  }),
+                  }, surfaceColor, textColor),
                 ],
               ),
 
@@ -472,7 +486,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                   _refreshTransactions();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -495,7 +509,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   }
 
   // 날짜 범위 바로가기 버튼
-  Widget _buildDateRangeButton(String text, VoidCallback onTap) {
+  Widget _buildDateRangeButton(String text, VoidCallback onTap, Color surfaceColor, Color textColor) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -503,14 +517,14 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
+          color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           text,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade800,
+            color: textColor,
           ),
         ),
       ),
@@ -518,7 +532,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   }
 
   // 캘린더 선택기 위젯
-  Widget _buildCalendarPicker() {
+  Widget _buildCalendarPicker(bool isDarkMode, Color backgroundColor, Color textColor, Color borderColor, Color primaryColor) {
     // 현재 표시중인 월의 날짜 목록 계산
     List<DateTime> daysInMonth = _getDaysInMonth(displayedYear, displayedMonth);
 
@@ -532,7 +546,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
       height: 320, // 높이 제한
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -579,9 +593,10 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Text(
                     '$displayedYear년 $displayedMonth월',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: textColor,
                     ),
                   ),
                 ),
@@ -618,14 +633,14 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
           // 요일 헤더
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
-              Text('일', style: TextStyle(fontSize: 12, color: Colors.red)),
-              Text('월', style: TextStyle(fontSize: 12)),
-              Text('화', style: TextStyle(fontSize: 12)),
-              Text('수', style: TextStyle(fontSize: 12)),
-              Text('목', style: TextStyle(fontSize: 12)),
-              Text('금', style: TextStyle(fontSize: 12)),
-              Text('토', style: TextStyle(fontSize: 12, color: Colors.blue)),
+            children: [
+              Text('일', style: TextStyle(fontSize: 12, color: isDarkMode ? Colors.red.shade300 : Colors.red)),
+              Text('월', style: TextStyle(fontSize: 12, color: textColor)),
+              Text('화', style: TextStyle(fontSize: 12, color: textColor)),
+              Text('수', style: TextStyle(fontSize: 12, color: textColor)),
+              Text('목', style: TextStyle(fontSize: 12, color: textColor)),
+              Text('금', style: TextStyle(fontSize: 12, color: textColor)),
+              Text('토', style: TextStyle(fontSize: 12, color: isDarkMode ? Colors.blue.shade300 : Colors.blue)),
             ],
           ),
 
@@ -708,15 +723,15 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                     margin: const EdgeInsets.all(1), // 마진 축소
                     decoration: BoxDecoration(
                       color: isActiveDate
-                          ? AppColors.primary
+                          ? primaryColor
                           : isStartDate || isEndDate
-                          ? AppColors.primary.withOpacity(0.7)
+                          ? primaryColor.withOpacity(0.7)
                           : isInRange
-                          ? AppColors.primary.withOpacity(0.2)
+                          ? primaryColor.withOpacity(0.2)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(6), // 테두리 반경 축소
                       border: isToday
-                          ? Border.all(color: AppColors.primary, width: 1)
+                          ? Border.all(color: primaryColor, width: 1)
                           : null,
                     ),
                     child: Center(
@@ -752,7 +767,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.primary, width: 1),
+                        border: Border.all(color: primaryColor, width: 1),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -769,7 +784,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: primaryColor,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -819,26 +834,26 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   }
 
   // 검색창 위젯
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(bool isDarkMode, Color surfaceColor, Color subtextColor) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
       child: Container(
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: surfaceColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: TextField(
-          style: const TextStyle(fontSize: 13),
+          style: TextStyle(fontSize: 13, color: isDarkMode ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             hintText: '거래 내역 검색',
             hintStyle: TextStyle(
-              color: Colors.grey.shade500,
+              color: subtextColor,
               fontSize: 13,
             ),
             prefixIcon: Icon(
               Icons.search,
-              color: Colors.grey.shade500,
+              color: subtextColor,
               size: 18,
             ),
             border: InputBorder.none,
@@ -858,7 +873,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   }
 
   // 필터 칩 위젯
-  Widget _buildFilterChips() {
+  Widget _buildFilterChips(bool isDarkMode, Color surfaceColor, Color primaryColor) {
     return SizedBox(
       height: 36,
       child: Padding(
@@ -868,6 +883,9 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
           children: [
             _buildFilterChip(
                 '전체',
+                isDarkMode,
+                surfaceColor,
+                primaryColor,
                 isSelected: selectedFilter == '전체',
                 onSelected: (selected) {
                   setState(() {
@@ -877,6 +895,9 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
             ),
             _buildFilterChip(
                 '수입',
+                isDarkMode,
+                surfaceColor,
+                primaryColor,
                 isSelected: selectedFilter == '수입',
                 onSelected: (selected) {
                   setState(() {
@@ -886,6 +907,9 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
             ),
             _buildFilterChip(
                 '지출',
+                isDarkMode,
+                surfaceColor,
+                primaryColor,
                 isSelected: selectedFilter == '지출',
                 onSelected: (selected) {
                   setState(() {
@@ -895,6 +919,9 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
             ),
             _buildFilterChip(
                 '재테크',
+                isDarkMode,
+                surfaceColor,
+                primaryColor,
                 isSelected: selectedFilter == '재테크',
                 onSelected: (selected) {
                   setState(() {
@@ -911,9 +938,14 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   // 필터 칩 위젯
   Widget _buildFilterChip(
       String label,
+      bool isDarkMode,
+      Color surfaceColor,
+      Color primaryColor,
       {bool isSelected = false,
         required Function(bool) onSelected}
       ) {
+    final chipTextColor = isSelected ? primaryColor : (isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700);
+
     return Container(
       margin: const EdgeInsets.only(right: 6),
       child: FilterChip(
@@ -921,15 +953,15 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
           label,
           style: TextStyle(
             fontSize: 11,
-            color: isSelected ? AppColors.primary : Colors.grey.shade700,
+            color: chipTextColor,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
         selected: isSelected,
         onSelected: onSelected,
-        selectedColor: AppColors.primary.withOpacity(0.2),
-        checkmarkColor: AppColors.primary,
-        backgroundColor: Colors.grey.shade100,
+        selectedColor: primaryColor.withOpacity(0.2),
+        checkmarkColor: primaryColor,
+        backgroundColor: surfaceColor,
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
         labelPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -937,7 +969,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: isSelected ? AppColors.primary : Colors.transparent,
+            color: isSelected ? primaryColor : Colors.transparent,
             width: 1,
           ),
         ),
@@ -946,7 +978,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   }
 
   // 거래 내역 리스트 위젯
-  Widget _buildTransactionList() {
+  Widget _buildTransactionList(bool isDarkMode, Color surfaceColor, Color textColor, Color subtextColor, Color borderColor, Color primaryColor) {
     final filtered = filteredTransactions;
 
     if (filtered.isEmpty) {
@@ -958,7 +990,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
               Icon(
                 Icons.receipt_long_outlined,
                 size: 48,
-                color: Colors.grey.shade300,
+                color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
               ),
               const SizedBox(height: 12),
               Text(
@@ -966,7 +998,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                     ? '검색 결과가 없습니다'
                     : '해당 기간의 거래 내역이 없습니다',
                 style: TextStyle(
-                  color: Colors.grey.shade500,
+                  color: subtextColor,
                   fontSize: 14,
                 ),
               ),
@@ -1023,7 +1055,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
               // 날짜 헤더
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                color: Colors.grey.shade50,
+                color: surfaceColor,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1033,21 +1065,22 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: primaryColor.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.calendar_today_rounded,
                             size: 14,
-                            color: AppColors.primary,
+                            color: primaryColor,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           displayDate,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
+                            color: textColor,
                           ),
                         ),
                       ],
@@ -1116,11 +1149,11 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
               ),
 
               // 해당 날짜의 모든 거래
-              ...dayTransactions.map((tx) => _buildTransactionItem(tx)).toList(),
+              ...dayTransactions.map((tx) => _buildTransactionItem(tx, isDarkMode, textColor, borderColor)).toList(),
 
               // 날짜 구분선
               if (index < sortedDates.length - 1)
-                const Divider(height: 1, thickness: 4, color: Color(0xFFF5F5F5)),
+                Divider(height: 1, thickness: 4, color: isDarkMode ? Colors.grey.shade900 : const Color(0xFFF5F5F5)),
             ],
           );
         },
@@ -1129,7 +1162,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   }
 
   // 거래 항목 위젯
-  Widget _buildTransactionItem(TransactionWithCategory transaction) {
+  Widget _buildTransactionItem(TransactionWithCategory transaction, bool isDarkMode, Color textColor, Color borderColor) {
     // 시간 표시 포맷팅
     final timeFormat = DateFormat('a h:mm', 'ko_KR');
     final time = timeFormat.format(transaction.transactionDate);
@@ -1143,11 +1176,13 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
     // 수입인지 확인
     final isIncome = transaction.categoryType == 'INCOME';
 
+    final subtextColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.grey.shade100),
+          bottom: BorderSide(color: borderColor),
         ),
       ),
       child: Row(
@@ -1183,9 +1218,10 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                     Expanded(
                       child: Text(
                         transaction.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
+                          color: textColor,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1216,7 +1252,7 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
                       time,
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade600,
+                        color: subtextColor,
                       ),
                     ),
 
