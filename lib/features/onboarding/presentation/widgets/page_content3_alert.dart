@@ -467,52 +467,48 @@ class _PageContent3AlertState extends State<PageContent3Alert>
                 contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
                 backgroundColor: Colors.white,
                 elevation: 10,
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Title
-                    const Text(
-                      '재테크 정보',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Income type and date selection
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Income type button
-                        _buildIncomeTypeButton(),
-
-                        // Only monthly frequency is active
-                        const Text(
-                          '매월',
+                content: SizedBox(
+                  width: 300,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      const Center(
+                        child: Text(
+                          '재테크 정보',
                           style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 22,
                             color: primaryColor,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 28),
 
-                        // Day button (opens grid dialog)
-                        _buildDayButton(),
-                      ],
-                    ),
+                      // Income type and date selection in clean cards
+                      Row(
+                        children: [
+                          // Income type button
+                          Expanded(child: _buildIncomeTypeButton()),
+                          const SizedBox(width: 12),
+                          // Day button
+                          Expanded(child: _buildDayButton()),
+                        ],
+                      ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-                    // Amount input (text field or button based on mode)
-                    _isEditing ? _buildTextField() : _buildAmountButton(),
+                      // Amount input (text field or button based on mode)
+                      _isEditing ? _buildTextField() : _buildAmountButton(),
 
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
-                    // Action buttons
-                    _buildActionButtons(),
-                  ],
+                      // Action buttons
+                      _buildActionButtons(),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -556,25 +552,38 @@ class _PageContent3AlertState extends State<PageContent3Alert>
     );
   }
 
-  // Income type selection button
+  // Income type selection button - redesigned
   Widget _buildIncomeTypeButton() {
     return InkWell(
-      onTap: () {
-        // Show income type options
-        _showIncomeTypeOptions();
-      },
-      child: Column(
-        children: [
-          Text(
-            _selectedIncomeType,
-            style: const TextStyle(
-              color: primaryColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+      onTap: _showIncomeTypeOptions,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: primaryColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: primaryColor.withOpacity(0.2),
+            width: 1.5,
           ),
-          const Icon(Icons.arrow_drop_down, color: primaryColor),
-        ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                _selectedIncomeType,
+                style: const TextStyle(
+                  color: primaryColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor, size: 20),
+          ],
+        ),
       ),
     );
   }
@@ -649,88 +658,143 @@ class _PageContent3AlertState extends State<PageContent3Alert>
     );
   }
 
-  // Day selection button
+  // Day selection button - redesigned
   Widget _buildDayButton() {
-    // Create day label with 말일 for 31st
-    final dayText = _selectedDay == 31 ? '말일(31일)' : '${_selectedDay}일';
+    final dayText = _selectedDay == 31 ? '말일' : '${_selectedDay}일';
 
     return InkWell(
-      onTap: _showDayPickerDialog, // Open the day picker dialog
+      onTap: _showDayPickerDialog,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: primaryColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: primaryColor.withOpacity(0.2),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                dayText,
+                style: const TextStyle(
+                  color: primaryColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Amount button - redesigned
+  Widget _buildAmountButton() {
+    return InkWell(
+      onTap: _startEditing,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: primaryColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: primaryColor.withOpacity(0.2),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            const Text(
+              '금액',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            BlinkingTextButton(
+              text: '숫자 입력',
+              fontSize: 20,
+              textColor: primaryColor,
+              onTap: _startEditing,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Text field for amount input - redesigned
+  Widget _buildTextField() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: primaryColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: primaryColor,
+          width: 2,
+        ),
+      ),
       child: Column(
         children: [
-          Text(
-            dayText,
-            style: const TextStyle(
-              color: primaryColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          const Text(
+            '금액',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const Icon(Icons.arrow_drop_down, color: primaryColor),
-        ],
-      ),
-    );
-  }
-
-  // Amount button
-  Widget _buildAmountButton() {
-    return BlinkingTextButton(
-      text: '금액',
-      fontSize: 32,
-      textColor: primaryColor,
-      onTap: () => _startEditing(),
-    );
-  }
-
-  // Text field for amount input
-  Widget _buildTextField() {
-    final Color textColor = primaryColor;
-
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _textController,
+            focusNode: _focusNode,
+            style: const TextStyle(
+              color: primaryColor,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Noto Sans JP',
+            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              contentPadding: EdgeInsets.zero,
+              hintText: '0',
+              hintStyle: TextStyle(
+                color: primaryColor.withOpacity(0.3),
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+              ),
+              border: InputBorder.none,
+              isDense: true,
+            ),
+            onChanged: (value) {
+              final formatted = _formatNumber(value.replaceAll(',', ''));
+              if (formatted != value) {
+                _textController.value = TextEditingValue(
+                  text: formatted,
+                  selection: TextSelection.collapsed(offset: formatted.length),
+                );
+              }
+            },
           ),
         ],
-      ),
-      child: TextField(
-        controller: _textController,
-        focusNode: _focusNode,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 32,
-          fontFamily: 'Noto Sans JP',
-        ),
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        textAlign: TextAlign.center,
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          hintText: '숫자 입력',
-          hintStyle: TextStyle(
-            color: textColor.withOpacity(0.5),
-            fontSize: 24,
-          ),
-          border: InputBorder.none,
-        ),
-        onChanged: (value) {
-          // Add commas for thousands
-          final formatted = _formatNumber(value.replaceAll(',', ''));
-          if (formatted != value) {
-            _textController.value = TextEditingValue(
-              text: formatted,
-              selection: TextSelection.collapsed(offset: formatted.length),
-            );
-          }
-        },
       ),
     );
   }
