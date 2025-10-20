@@ -6,6 +6,7 @@ class Transaction {
   final String description;
   final DateTime transactionDate;
   final String transactionNum;
+  final String? emotionTag;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -17,6 +18,7 @@ class Transaction {
     required this.description,
     required this.transactionDate,
     required this.transactionNum,
+    this.emotionTag,
     required this.createdAt,
     required this.updatedAt,
   });

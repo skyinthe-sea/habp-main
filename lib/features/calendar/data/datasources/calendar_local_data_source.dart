@@ -26,7 +26,9 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
 
       // 변동 거래 내역 가져오기 (실제 해당 월에 있는 거래)
       final List<Map<String, dynamic>> variableTransactions = await db.rawQuery('''
-        SELECT tr.*, c.name AS category_name, c.type AS category_type, c.is_fixed
+        SELECT tr.id, tr.category_id, tr.amount, tr.description, tr.transaction_date,
+               tr.transaction_num, tr.emotion_tag,
+               c.name AS category_name, c.type AS category_type, c.is_fixed
         FROM transaction_record tr
         JOIN category c ON tr.category_id = c.id
         WHERE date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
@@ -37,7 +39,9 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
 
       // 고정 거래 내역 가져오기 (모든 고정 거래)
       final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
-        SELECT tr.*, c.name AS category_name, c.type AS category_type, c.is_fixed
+        SELECT tr.id, tr.category_id, tr.amount, tr.description, tr.transaction_date,
+               tr.transaction_num, tr.emotion_tag,
+               c.name AS category_name, c.type AS category_type, c.is_fixed
         FROM transaction_record2 tr
         JOIN category c ON tr.category_id = c.id
         WHERE c.is_fixed = 1
@@ -57,6 +61,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
             description: transaction['description'],
             transactionDate: DateTime.parse(transaction['transaction_date']),
             isFixed: false,
+            emotionTag: transaction['emotion_tag'],
           ));
         }
       }
@@ -130,6 +135,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
             description: transaction['description'],
             transactionDate: validDate,
             isFixed: true,
+            emotionTag: transaction['emotion_tag'],
           ));
         }
         else if (description.contains('매주')) {
@@ -163,6 +169,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
                 description: transaction['description'],
                 transactionDate: date,
                 isFixed: true,
+                emotionTag: transaction['emotion_tag'],
               ));
             }
           }
@@ -196,6 +203,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               description: transaction['description'],
               transactionDate: date,
               isFixed: true,
+              emotionTag: transaction['emotion_tag'],
             ));
           }
         }
@@ -249,7 +257,9 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
 
       // 변동 거래 내역
       final List<Map<String, dynamic>> variableTransactions = await db.rawQuery('''
-        SELECT tr.*, c.name AS category_name, c.type AS category_type, c.is_fixed
+        SELECT tr.id, tr.category_id, tr.amount, tr.description, tr.transaction_date,
+               tr.transaction_num, tr.emotion_tag,
+               c.name AS category_name, c.type AS category_type, c.is_fixed
         FROM transaction_record tr
         JOIN category c ON tr.category_id = c.id
         WHERE date(substr(tr.transaction_date, 1, 10)) = date(?)
@@ -257,7 +267,9 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
 
       // 고정 거래 내역
       final List<Map<String, dynamic>> fixedTransactions = await db.rawQuery('''
-        SELECT tr.*, c.name AS category_name, c.type AS category_type, c.is_fixed
+        SELECT tr.id, tr.category_id, tr.amount, tr.description, tr.transaction_date,
+               tr.transaction_num, tr.emotion_tag,
+               c.name AS category_name, c.type AS category_type, c.is_fixed
         FROM transaction_record2 tr
         JOIN category c ON tr.category_id = c.id
         WHERE c.is_fixed = 1
@@ -295,6 +307,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
             description: transaction['description'],
             transactionDate: DateTime.parse(transaction['transaction_date']),
             isFixed: false,
+            emotionTag: transaction['emotion_tag'],
           ));
         }
       }
@@ -382,6 +395,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               description: transaction['description'],
               transactionDate: transactionDateTime,
               isFixed: true,
+              emotionTag: transaction['emotion_tag'],
             ));
           }
         }
@@ -433,6 +447,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               description: transaction['description'],
               transactionDate: transactionDateTime,
               isFixed: true,
+              emotionTag: transaction['emotion_tag'],
             ));
           }
         }
@@ -483,6 +498,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               description: transaction['description'],
               transactionDate: transactionDateTime,
               isFixed: true,
+              emotionTag: transaction['emotion_tag'],
             ));
           }
         }
@@ -518,6 +534,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
           'amount': transaction.amount,
           'description': transaction.description,
           'transaction_date': transaction.transactionDate.toIso8601String(),
+          'emotion_tag': transaction.emotionTag,
           'updated_at': now,
         },
         where: 'id = ?',

@@ -1,6 +1,7 @@
 // lib/features/dashboard/data/datasources/transaction_local_data_source.dart
 import 'package:flutter/foundation.dart';
 import '../../../../core/database/db_helper.dart';
+import '../../domain/entities/emotion_stats.dart';
 import '../entities/category_expense.dart';
 import '../entities/monthly_expense.dart';
 import '../entities/transaction_with_category.dart';
@@ -20,6 +21,7 @@ abstract class TransactionLocalDataSource {
   Future<Map<String, dynamic>> getMonthlySummary(int year, int month);
   Future<List<TransactionWithCategory>> getRecentTransactionsForRange(
       DateTime startDate, DateTime endDate, int limit);
+  Future<List<EmotionStats>> getEmotionStats(int year, int month);
 }
 
 class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
@@ -1140,5 +1142,43 @@ class TransactionLocalDataSourceImpl implements TransactionLocalDataSource {
     return description.contains('매월') ||
         description.contains('매주') ||
         description.contains('매일');
+  }
+
+  @override
+  Future<List<EmotionStats>> getEmotionStats(int year, int month) async {
+    try {
+      final db = await dbHelper.database;
+
+      // 선택된 월의 시작과 끝 날짜
+      final startOfMonth = DateTime(year, month, 1);
+      final endOfMonth = DateTime(year, month + 1, 0);
+
+      final startDateStr = "${startOfMonth.year}-${startOfMonth.month.toString().padLeft(2, '0')}-01";
+      final endDateStr = "${endOfMonth.year}-${endOfMonth.month.toString().padLeft(2, '0')}-${endOfMonth.day.toString().padLeft(2, '0')}";
+
+      // 감정 태그별 지출 통계 조회 (EXPENSE만)
+      final List<Map<String, dynamic>> emotionStats = await db.rawQuery('''
+        SELECT
+          emotion_tag,
+          SUM(ABS(amount)) as total_amount,
+          COUNT(*) as count
+        FROM transaction_record tr
+        JOIN category c ON tr.category_id = c.id
+        WHERE c.type = 'EXPENSE'
+        AND date(substr(tr.transaction_date, 1, 10)) BETWEEN date(?) AND date(?)
+        GROUP BY emotion_tag
+      ''', [startDateStr, endDateStr]);
+
+      debugPrint('감정 태그별 통계 조회 결과: $emotionStats');
+
+      return emotionStats.map((row) => EmotionStats(
+        emotionTag: row['emotion_tag'],
+        totalAmount: (row['total_amount'] as num).toDouble(),
+        count: row['count'] as int,
+      )).toList();
+    } catch (e) {
+      debugPrint('감정 태그별 통계 가져오기 오류: $e');
+      return [];
+    }
   }
 }

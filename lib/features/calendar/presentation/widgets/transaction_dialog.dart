@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/emotion_constants.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/calendar_controller.dart';
 import '../controllers/calendar_filter_controller.dart';
@@ -802,6 +803,13 @@ class TransactionDialog extends StatelessWidget {
                         color: themeController.textSecondaryColor,
                       ),
                     ),
+                    if (transaction.emotionTag != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        EmotionTagHelper.getEmoji(transaction.emotionTag),
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
                     if (isFixed)
                       Row(
                         children: [

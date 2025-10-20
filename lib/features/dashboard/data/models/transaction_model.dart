@@ -9,6 +9,7 @@ class TransactionModel extends Transaction {
     required String description,
     required DateTime transactionDate,
     required String transactionNum,
+    String? emotionTag,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : super(
@@ -19,6 +20,7 @@ class TransactionModel extends Transaction {
     description: description,
     transactionDate: transactionDate,
     transactionNum: transactionNum,
+    emotionTag: emotionTag,
     createdAt: createdAt,
     updatedAt: updatedAt,
   );
@@ -32,6 +34,7 @@ class TransactionModel extends Transaction {
       description: json['description'],
       transactionDate: DateTime.parse(json['transaction_date']),
       transactionNum: json['transaction_num'].toString(),
+      emotionTag: json['emotion_tag'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );

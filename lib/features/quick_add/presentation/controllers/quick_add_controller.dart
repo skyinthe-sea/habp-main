@@ -86,6 +86,13 @@ class QuickAddController extends GetxController {
     });
   }
 
+  /// Set the emotion tag
+  void setEmotionTag(String? emotionTag) {
+    transaction.update((val) {
+      val?.emotionTag = emotionTag;
+    });
+  }
+
   /// Load categories from database based on type
   Future<void> loadCategoriesForType(String type) async {
     isLoading.value = true;
@@ -135,6 +142,7 @@ class QuickAddController extends GetxController {
             : transaction.value.description,
         'transaction_date': transaction.value.transactionDate.toIso8601String(),
         'transaction_num': transactionNum,
+        'emotion_tag': transaction.value.emotionTag,
         'created_at': now,
         'updated_at': now,
       });

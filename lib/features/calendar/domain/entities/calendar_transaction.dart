@@ -7,6 +7,7 @@ class CalendarTransaction {
   final String description;
   final DateTime transactionDate;
   final bool isFixed;
+  final String? emotionTag;
 
   CalendarTransaction({
     required this.id,
@@ -17,5 +18,6 @@ class CalendarTransaction {
     required this.description,
     required this.transactionDate,
     required this.isFixed,
+    this.emotionTag,
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/emotion_constants.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../../domain/entities/calendar_transaction.dart';
 
@@ -25,6 +26,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
   late TextEditingController _amountController;
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
+  String? _selectedEmotionTag;
   bool _isLoading = false;
 
   @override
@@ -40,6 +42,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
       widget.transaction.transactionDate.day,
     );
     _selectedTime = TimeOfDay.fromDateTime(widget.transaction.transactionDate);
+    _selectedEmotionTag = widget.transaction.emotionTag;
   }
 
   @override
@@ -166,6 +169,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
         description: _descriptionController.text.trim(),
         transactionDate: newDateTime,
         isFixed: widget.transaction.isFixed,
+        emotionTag: _selectedEmotionTag,
       );
 
       // 콜백 호출
@@ -249,9 +253,14 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
                         
                         // 날짜 및 시간 선택
                         _buildDateTimeFields(),
-                        
+
+                        const SizedBox(height: 20),
+
+                        // 감정 선택
+                        _buildEmotionField(),
+
                         const SizedBox(height: 30),
-                        
+
                         // 저장 버튼
                         _buildSaveButton(),
                       ],
@@ -552,6 +561,207 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildEmotionField() {
+    final ThemeController themeController = Get.find<ThemeController>();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '감정 태그 (선택사항)',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: themeController.textPrimaryColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _selectedEmotionTag != null
+                  ? AppColors.primary.withOpacity(0.3)
+                  : (themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
+            ),
+            color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
+          ),
+          child: Column(
+            children: [
+              // 현재 선택된 감정 표시
+              InkWell(
+                onTap: () {
+                  // 감정 선택 바텀시트 표시
+                  _showEmotionPicker();
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      Text(
+                        _selectedEmotionTag != null
+                            ? EmotionTagHelper.getEmoji(_selectedEmotionTag)
+                            : '😊',
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _selectedEmotionTag != null
+                              ? EmotionTagHelper.getLabel(_selectedEmotionTag)
+                              : '감정을 선택해주세요',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: _selectedEmotionTag != null
+                                ? FontWeight.w500
+                                : FontWeight.normal,
+                            color: _selectedEmotionTag != null
+                                ? themeController.textPrimaryColor
+                                : themeController.textSecondaryColor,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        color: themeController.textSecondaryColor,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showEmotionPicker() {
+    final ThemeController themeController = Get.find<ThemeController>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: themeController.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '감정 선택',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: themeController.textPrimaryColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Happy
+            _buildEmotionOption(EmotionTag.happy, '기분 좋을 때'),
+            const SizedBox(height: 12),
+
+            // Neutral
+            _buildEmotionOption(EmotionTag.neutral, '보통'),
+            const SizedBox(height: 12),
+
+            // Stressed
+            _buildEmotionOption(EmotionTag.stressed, '스트레스받을 때'),
+            const SizedBox(height: 12),
+
+            // None
+            _buildEmotionOption(null, '선택 안함'),
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmotionOption(String? emotionTag, String label) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    final isSelected = _selectedEmotionTag == emotionTag;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedEmotionTag = emotionTag;
+        });
+        Get.back();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primary
+                : (themeController.isDarkMode
+                    ? Colors.grey.shade600
+                    : AppColors.lightGrey),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.transparent,
+        ),
+        child: Row(
+          children: [
+            if (emotionTag != null) ...[
+              Text(
+                EmotionTagHelper.getEmoji(emotionTag),
+                style: const TextStyle(fontSize: 28),
+              ),
+              const SizedBox(width: 16),
+            ] else ...[
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: themeController.textSecondaryColor.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.block,
+                  size: 18,
+                  color: themeController.textSecondaryColor,
+                ),
+              ),
+              const SizedBox(width: 16),
+            ],
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected
+                      ? AppColors.primary
+                      : themeController.textPrimaryColor,
+                ),
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: AppColors.primary,
+                size: 24,
+              ),
+          ],
+        ),
+      ),
     );
   }
 

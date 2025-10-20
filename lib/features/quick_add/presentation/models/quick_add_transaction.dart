@@ -20,6 +20,9 @@ class QuickAddTransaction {
   /// Optional description
   String description = '';
 
+  /// Optional emotion tag (HAPPY, NEUTRAL, STRESSED)
+  String? emotionTag;
+
   QuickAddTransaction({
     this.categoryType = '',
     this.categoryId,
@@ -27,6 +30,7 @@ class QuickAddTransaction {
     DateTime? transactionDate,
     this.amount = 0.0,
     this.description = '',
+    this.emotionTag,
   }) : transactionDate = transactionDate ?? DateTime.now();
 
   /// Check if this transaction has all required fields

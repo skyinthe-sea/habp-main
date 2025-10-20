@@ -25,9 +25,24 @@ class DBHelper {
     final String path = join(await getDatabasesPath(), 'finance_manager.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  // 데이터베이스 업그레이드
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Version 2: emotion_tag 컬럼 추가
+      await db.execute('''
+        ALTER TABLE transaction_record ADD COLUMN emotion_tag TEXT
+      ''');
+      await db.execute('''
+        ALTER TABLE transaction_record2 ADD COLUMN emotion_tag TEXT
+      ''');
+      debugPrint('데이터베이스 업그레이드 완료: emotion_tag 컬럼 추가');
+    }
   }
 
   // 데이터베이스 테이블 생성
@@ -69,6 +84,7 @@ class DBHelper {
         description TEXT,
         transaction_date TEXT NOT NULL,
         transaction_num TEXT,
+        emotion_tag TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES user (id),
@@ -86,6 +102,7 @@ class DBHelper {
         description TEXT,
         transaction_date TEXT NOT NULL,
         transaction_num TEXT,
+        emotion_tag TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES user (id),

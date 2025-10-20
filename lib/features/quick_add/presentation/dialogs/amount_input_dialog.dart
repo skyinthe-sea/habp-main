@@ -4,12 +4,14 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/emotion_constants.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../controllers/quick_add_controller.dart';
 import '../widgets/autocomplete_text_field.dart';
 import 'date_selection_dialog.dart';
 import 'category_selection_dialog.dart';
 import 'calculator_dialog.dart';
+import 'emotion_selection_dialog.dart';
 
 /// Final dialog in the quick add flow
 /// Allows inputting the transaction amount with improved UX
@@ -889,6 +891,90 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     hintText: '내용을 입력하세요',
                     autocompleteService: controller.autocompleteService,
                   ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Emotion selection
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Obx(() => Text(
+                    '감정 태그 (선택사항)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      color: themeController.textPrimaryColor,
+                    ),
+                  )),
+                  const SizedBox(height: 8),
+                  Obx(() {
+                    final emotionTag = controller.transaction.value.emotionTag;
+                    return InkWell(
+                      onTap: () {
+                        // 포커스 해제하여 자동완성 UI 숨김
+                        FocusScope.of(context).unfocus();
+
+                        showDialog(
+                          context: context,
+                          builder: (context) => const EmotionSelectionDialog(),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: themeController.isDarkMode
+                              ? themeController.cardColor
+                              : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: emotionTag != null
+                                ? AppColors.primary.withOpacity(0.3)
+                                : (themeController.isDarkMode
+                                    ? themeController.textSecondaryColor.withOpacity(0.2)
+                                    : Colors.grey.shade200),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              emotionTag != null
+                                  ? EmotionTagHelper.getEmoji(emotionTag)
+                                  : '😊',
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                emotionTag != null
+                                    ? EmotionTagHelper.getLabel(emotionTag)
+                                    : '지금 기분을 선택해주세요',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: emotionTag != null
+                                      ? FontWeight.w500
+                                      : FontWeight.normal,
+                                  color: emotionTag != null
+                                      ? themeController.textPrimaryColor
+                                      : themeController.textSecondaryColor,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: themeController.textSecondaryColor,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
                 ],
               ),
 
