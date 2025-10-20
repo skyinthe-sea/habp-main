@@ -243,23 +243,23 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
                       children: [
                         // 거래 내용 입력
                         _buildDescriptionField(),
-                        
-                        const SizedBox(height: 20),
-                        
+
+                        const SizedBox(height: 16),
+
                         // 금액 입력
                         _buildAmountField(),
-                        
-                        const SizedBox(height: 20),
-                        
+
+                        const SizedBox(height: 16),
+
                         // 날짜 및 시간 선택
                         _buildDateTimeFields(),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
 
                         // 감정 선택
                         _buildEmotionField(),
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 24),
 
                         // 저장 버튼
                         _buildSaveButton(),
@@ -385,16 +385,16 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
           child: TextField(
             controller: _descriptionController,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               color: themeController.textPrimaryColor,
             ),
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               border: InputBorder.none,
               hintText: '거래 내용을 입력하세요',
               hintStyle: TextStyle(
                 color: themeController.textSecondaryColor,
-                fontSize: 16,
+                fontSize: 15,
               ),
             ),
           ),
@@ -427,7 +427,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
           child: TextField(
             controller: _amountController,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               color: themeController.textPrimaryColor,
               fontWeight: FontWeight.w500,
             ),
@@ -447,17 +447,17 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
               }),
             ],
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               border: InputBorder.none,
               hintText: '0',
               hintStyle: TextStyle(
                 color: themeController.textSecondaryColor,
-                fontSize: 16,
+                fontSize: 15,
               ),
               suffix: Text(
                 '원',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   color: themeController.textSecondaryColor,
                 ),
               ),
@@ -470,7 +470,14 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
 
   Widget _buildDateTimeFields() {
     final ThemeController themeController = Get.find<ThemeController>();
-    
+
+    // 시간을 24시간 형식으로 포맷
+    String formatTime24(TimeOfDay time) {
+      final hour = time.hour.toString().padLeft(2, '0');
+      final minute = time.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -483,82 +490,64 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            // 날짜 선택
-            Expanded(
-              flex: 3,
-              child: GestureDetector(
-                onTap: _selectDate,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
-                    color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 18,
-                        color: themeController.primaryColor,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          DateFormat('M월 d일').format(_selectedDate),
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: themeController.textPrimaryColor,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+        // 날짜 선택
+        GestureDetector(
+          onTap: _selectDate,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
+              color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 18,
+                  color: themeController.primaryColor,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  DateFormat('yyyy년 M월 d일').format(_selectedDate),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: themeController.textPrimaryColor,
                   ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: 12),
-            // 시간 선택
-            Expanded(
-              flex: 2,
-              child: GestureDetector(
-                onTap: _selectTime,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
-                    color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 18,
-                        color: themeController.primaryColor,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          _selectedTime.format(context),
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: themeController.textPrimaryColor,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        // 시간 선택
+        GestureDetector(
+          onTap: _selectTime,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: themeController.isDarkMode ? Colors.grey.shade600 : AppColors.lightGrey),
+              color: themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey[50],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  size: 18,
+                  color: themeController.primaryColor,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  formatTime24(_selectedTime),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: themeController.textPrimaryColor,
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ],
     );
@@ -599,14 +588,14 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     children: [
                       Text(
                         _selectedEmotionTag != null
                             ? EmotionTagHelper.getEmoji(_selectedEmotionTag)
                             : '😊',
-                        style: const TextStyle(fontSize: 24),
+                        style: const TextStyle(fontSize: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
