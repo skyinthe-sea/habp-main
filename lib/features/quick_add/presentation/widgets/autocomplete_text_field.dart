@@ -155,9 +155,14 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
   // 추천 항목 오버레이 빌드
   Widget _buildSuggestionsOverlay() {
     final ThemeController themeController = Get.find<ThemeController>();
-    
+
+    // 로딩 중이 아니고 추천 항목이 없으면 아예 표시하지 않음
+    if (!_isLoading && _suggestions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Positioned(
-      width: MediaQuery.of(context).size.width - 56,
+      width: MediaQuery.of(context).size.width - 40, // 양쪽 패딩 20씩 = 40
       child: CompositedTransformFollower(
         link: _layerLink,
         showWhenUnlinked: false,
@@ -168,7 +173,7 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
           child: Obx(() => Container(
             constraints: BoxConstraints(
               maxHeight: 200,
-              maxWidth: MediaQuery.of(context).size.width - 56,
+              maxWidth: MediaQuery.of(context).size.width - 40,
             ),
             decoration: BoxDecoration(
               color: themeController.surfaceColor,
@@ -204,72 +209,60 @@ class _AutocompleteTextFieldState extends State<AutocompleteTextField> {
                     ),
                   ),
                 )
-              : _suggestions.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Text(
-                      '추천 항목이 없습니다',
-                      style: TextStyle(
-                        color: themeController.textSecondaryColor,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                : ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: _suggestions.length,
-                    itemBuilder: (context, index) {
-                      final suggestion = _suggestions[index];
-                      return Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => _selectSuggestion(suggestion),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.history,
+              : ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: _suggestions.length,
+                  itemBuilder: (context, index) {
+                    final suggestion = _suggestions[index];
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _selectSuggestion(suggestion),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.history,
+                                size: 16,
+                                color: themeController.textSecondaryColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  suggestion,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: themeController.textPrimaryColor,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.close,
                                   size: 16,
-                                  color: themeController.textSecondaryColor,
+                                  color: themeController.textSecondaryColor.withOpacity(0.7),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    suggestion,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: themeController.textPrimaryColor,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.close,
-                                    size: 16,
-                                    color: themeController.textSecondaryColor.withOpacity(0.7),
-                                  ),
-                                  constraints: const BoxConstraints(),
-                                  padding: EdgeInsets.zero,
-                                  onPressed: () async {
-                                    await widget.autocompleteService.removeDescription(suggestion);
-                                    _updateSuggestions();
-                                  },
-                                ),
-                              ],
-                            ),
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
+                                onPressed: () async {
+                                  await widget.autocompleteService.removeDescription(suggestion);
+                                  _updateSuggestions();
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
+                ),
           )),
         ),
       ),

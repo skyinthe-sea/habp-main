@@ -916,10 +916,13 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                         // 포커스 해제하여 자동완성 UI 숨김
                         FocusScope.of(context).unfocus();
 
-                        showDialog(
-                          context: context,
-                          builder: (context) => const EmotionSelectionDialog(),
-                        );
+                        // 약간의 딜레이 후 다이얼로그 표시 (포커스 해제가 완전히 처리되도록)
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => const EmotionSelectionDialog(),
+                          );
+                        });
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(

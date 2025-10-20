@@ -583,8 +583,13 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
               // 현재 선택된 감정 표시
               InkWell(
                 onTap: () {
+                  // 포커스 해제
+                  FocusScope.of(context).unfocus();
+
                   // 감정 선택 바텀시트 표시
-                  _showEmotionPicker();
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    _showEmotionPicker();
+                  });
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
@@ -675,7 +680,14 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
           ],
         ),
       ),
-    );
+    ).then((_) {
+      // 바텀시트가 닫힌 후 포커스 해제
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          FocusScope.of(context).unfocus();
+        }
+      });
+    });
   }
 
   Widget _buildEmotionOption(String? emotionTag, String label) {
@@ -688,6 +700,12 @@ class _EditTransactionDialogState extends State<EditTransactionDialog> {
           _selectedEmotionTag = emotionTag;
         });
         Get.back();
+        // 바텀시트 닫은 후 포커스 해제
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            FocusScope.of(context).unfocus();
+          }
+        });
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(

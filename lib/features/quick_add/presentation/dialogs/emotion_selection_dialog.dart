@@ -63,6 +63,22 @@ class _EmotionSelectionDialogState extends State<EmotionSelectionDialog>
   void _confirm() {
     _controller.setEmotionTag(_selectedEmotion);
     Get.back();
+    // 다이얼로그 닫은 후 포커스 해제
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (Get.context != null) {
+        FocusScope.of(Get.context!).unfocus();
+      }
+    });
+  }
+
+  void _cancel() {
+    Get.back();
+    // 다이얼로그 닫은 후 포커스 해제
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (Get.context != null) {
+        FocusScope.of(Get.context!).unfocus();
+      }
+    });
   }
 
   @override
@@ -173,7 +189,7 @@ class _EmotionSelectionDialogState extends State<EmotionSelectionDialog>
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Get.back(),
+                      onPressed: _cancel,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         side: BorderSide(
