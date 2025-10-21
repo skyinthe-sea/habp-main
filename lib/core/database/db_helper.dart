@@ -25,7 +25,7 @@ class DBHelper {
     final String path = join(await getDatabasesPath(), 'finance_manager.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -42,6 +42,27 @@ class DBHelper {
         ALTER TABLE transaction_record2 ADD COLUMN emotion_tag TEXT
       ''');
       debugPrint('데이터베이스 업그레이드 완료: emotion_tag 컬럼 추가');
+    }
+
+    if (oldVersion < 3) {
+      // Version 3: monthly_diary 테이블 추가
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS monthly_diary (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          year INTEGER NOT NULL,
+          month INTEGER NOT NULL,
+          title TEXT,
+          memo TEXT,
+          images TEXT,
+          stickers TEXT,
+          monthly_summary TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES user (id)
+        )
+      ''');
+      debugPrint('데이터베이스 업그레이드 완료: monthly_diary 테이블 추가');
     }
   }
 
@@ -189,6 +210,24 @@ class DBHelper {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (category_id) REFERENCES category (id)
+    )
+  ''');
+
+    // 월별 다이어리 테이블
+    await db.execute('''
+    CREATE TABLE monthly_diary (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      year INTEGER NOT NULL,
+      month INTEGER NOT NULL,
+      title TEXT,
+      memo TEXT,
+      images TEXT,
+      stickers TEXT,
+      monthly_summary TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES user (id)
     )
   ''');
 

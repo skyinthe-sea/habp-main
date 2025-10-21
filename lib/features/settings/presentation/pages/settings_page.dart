@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/services/version_check_service.dart';
-import '../../../asset/presentation/pages/asset_page.dart';
+import '../../../diary/presentation/pages/diary_list_page.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/fixed_income_dialog.dart';
 import '../widgets/fixed_expense_dialog.dart';
@@ -127,37 +127,37 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               color: themeController.isDarkMode ? AppColors.darkAccent3 : AppColors.primary,
             )),
 
-            // 자산 관리 섹션
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.account_balance,
-                    size: 16,
-                    color: themeController.textSecondaryColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '자산 관리',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: themeController.textSecondaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            _buildSettingItem(
-              icon: Icons.account_balance_outlined,
-              title: '자산',
-              subtitle: '보유 자산을 관리하고 현황을 확인합니다 (기능 삭제 예정)',
-              color: Colors.blue.shade700,
-              onTap: () {
-                Get.to(() => const AssetPage());
-              },
-            ),
+            // 다이어리 섹션 (임시 주석 처리)
+            // Padding(
+            //   padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+            //   child: Row(
+            //     children: [
+            //       Icon(
+            //         Icons.menu_book,
+            //         size: 16,
+            //         color: themeController.textSecondaryColor,
+            //       ),
+            //       const SizedBox(width: 8),
+            //       Text(
+            //         '다이어리',
+            //         style: TextStyle(
+            //           fontSize: 14,
+            //           fontWeight: FontWeight.bold,
+            //           color: themeController.textSecondaryColor,
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // _buildSettingItem(
+            //   icon: Icons.auto_stories,
+            //   title: '다이어리',
+            //   subtitle: '월별로 나를 돌아보는 가계부 다이어리',
+            //   color: AppColors.primary,
+            //   onTap: () {
+            //     Get.to(() => const DiaryListPage());
+            //   },
+            // ),
 
             // 고정 거래 관리 섹션
             Padding(

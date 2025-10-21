@@ -11,16 +11,21 @@ import '../../../features/expense/domain/usecases/get_variable_categories.dart';
 import '../../../features/expense/domain/usecases/update_budget.dart';
 import '../../../features/expense/domain/usecases/update_category.dart';
 import '../../../features/expense/presentation/controllers/expense_controller.dart';
+import '../../../features/diary/data/datasources/monthly_diary_local_data_source.dart';
+import '../../../features/diary/data/repositories/monthly_diary_repository_impl.dart';
+import '../../../features/diary/presentation/controllers/diary_controller.dart';
 import '../../database/db_helper.dart';
 
 class MainController extends GetxController {
   final RxInt selectedIndex = 0.obs;
   late ExpenseController expenseController;
+  late DiaryController diaryController;
 
   @override
   void onInit() {
     super.onInit();
     _initExpenseController();
+    _initDiaryController();
   }
 
   void changeTab(int index) {
@@ -57,6 +62,21 @@ class MainController extends GetxController {
     Get.put(expenseController);
   }
 
+  void _initDiaryController() {
+    // DiaryController 초기화 및 의존성 주입
+    final dbHelper = DBHelper();
+    final dataSource = MonthlyDiaryLocalDataSource(dbHelper);
+    final repository = MonthlyDiaryRepositoryImpl(dataSource, 1); // userId = 1 (기본 사용자)
+
+    diaryController = DiaryController(repository);
+
+    // GetX DI에 등록
+    Get.put(diaryController);
+  }
+
   // ExpensePage에서도 사용할 수 있도록 ExpenseController를 반환하는 getter
   ExpenseController get getExpenseController => expenseController;
+
+  // DiaryPage에서도 사용할 수 있도록 DiaryController를 반환하는 getter
+  DiaryController get getDiaryController => diaryController;
 }

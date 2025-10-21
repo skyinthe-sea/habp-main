@@ -50,6 +50,7 @@ dependencies:
   syncfusion_flutter_charts: ^31.1.19
   google_mobile_ads: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  image_picker: ^1.1.2
 
 flutter_launcher_icons:
   android: "launcher_icon"  # Android에서 사용할 아이콘 이름

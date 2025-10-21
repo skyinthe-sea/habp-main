@@ -241,5 +241,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>다이어리에 사진을 추가하기 위해 갤러리 접근이 필요합니다</string>
+	<key>NSCameraUsageDescription</key>
+	<string>다이어리에 사진을 촬영하여 추가하기 위해 카메라 접근이 필요합니다</string>
 </dict>
 </plist>
