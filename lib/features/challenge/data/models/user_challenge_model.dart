@@ -18,6 +18,7 @@ class UserChallengeModel extends UserChallenge {
     required super.createdAt,
     required super.updatedAt,
     super.completedAt,
+    super.resultViewed,
   });
 
   factory UserChallengeModel.fromEntity(UserChallenge entity) {
@@ -38,6 +39,7 @@ class UserChallengeModel extends UserChallenge {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       completedAt: entity.completedAt,
+      resultViewed: entity.resultViewed,
     );
   }
 
@@ -61,6 +63,7 @@ class UserChallengeModel extends UserChallenge {
       completedAt: map['completed_at'] != null
           ? DateTime.parse(map['completed_at'] as String)
           : null,
+      resultViewed: (map['result_viewed'] as int?) == 1,
     );
   }
 
@@ -82,6 +85,7 @@ class UserChallengeModel extends UserChallenge {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       if (completedAt != null) 'completed_at': completedAt!.toIso8601String(),
+      'result_viewed': resultViewed ? 1 : 0,
     };
   }
 
@@ -103,6 +107,7 @@ class UserChallengeModel extends UserChallenge {
       createdAt: createdAt,
       updatedAt: updatedAt,
       completedAt: completedAt,
+      resultViewed: resultViewed,
     );
   }
 }

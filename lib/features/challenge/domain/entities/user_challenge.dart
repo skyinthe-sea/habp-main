@@ -16,6 +16,7 @@ class UserChallenge {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? completedAt;
+  final bool resultViewed; // 결과 다이얼로그를 본 적이 있는지
 
   const UserChallenge({
     this.id,
@@ -34,6 +35,7 @@ class UserChallenge {
     required this.createdAt,
     required this.updatedAt,
     this.completedAt,
+    this.resultViewed = false,
   });
 
   /// 챌린지가 진행 중인지
@@ -84,6 +86,7 @@ class UserChallenge {
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? completedAt,
+    bool? resultViewed,
   }) {
     return UserChallenge(
       id: id ?? this.id,
@@ -102,6 +105,7 @@ class UserChallenge {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       completedAt: completedAt ?? this.completedAt,
+      resultViewed: resultViewed ?? this.resultViewed,
     );
   }
 }

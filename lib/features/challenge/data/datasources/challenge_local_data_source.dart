@@ -82,6 +82,20 @@ class ChallengeLocalDataSource {
     );
   }
 
+  // 챌린지 결과 확인 완료 표시
+  Future<void> markResultAsViewed(int id) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'user_challenge',
+      {
+        'result_viewed': 1,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   // 챌린지 완료 처리
   Future<void> completeChallenge(int id) async {
     final db = await _dbHelper.database;

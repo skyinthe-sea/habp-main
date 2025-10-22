@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../../domain/entities/user_challenge.dart';
 import '../../domain/repositories/challenge_repository.dart';
 import '../../../../core/services/event_bus_service.dart';
+import '../widgets/challenge_result_dialog.dart';
 
 class ChallengeController extends GetxController {
   final ChallengeRepository _repository;
@@ -55,16 +56,16 @@ class ChallengeController extends GetxController {
       final completed = await _repository.getUserChallenges(status: 'COMPLETED');
       final failed = await _repository.getUserChallenges(status: 'FAILED');
 
-      // 새로 완료된 챌린지 확인
+      // 새로 완료된 챌린지 확인 (resultViewed가 false인 경우만 표시)
       for (var challenge in completed) {
-        if (!previousCompletedIds.contains(challenge.id)) {
+        if (!challenge.resultViewed) {
           _showSuccessMessage(challenge);
         }
       }
 
-      // 새로 실패한 챌린지 확인
+      // 새로 실패한 챌린지 확인 (resultViewed가 false인 경우만 표시)
       for (var challenge in failed) {
-        if (!previousCompletedIds.contains(challenge.id)) {
+        if (!challenge.resultViewed) {
           _showFailureMessage(challenge);
         }
       }
@@ -80,38 +81,23 @@ class ChallengeController extends GetxController {
 
   /// 성공 메시지 표시
   void _showSuccessMessage(UserChallenge challenge) {
-    final messages = [
-      '축하합니다! 🎉 "${challenge.title}" 챌린지를 완료했어요!',
-      '대단해요! 🌟 "${challenge.title}" 성공! 계속 이 기세로!',
-      '완벽해요! 🏆 "${challenge.title}" 챌린지 클리어!',
-      '멋져요! 💪 "${challenge.title}"를 해냈네요!',
-    ];
-
-    Get.snackbar(
-      '챌린지 성공! 🎉',
-      messages[DateTime.now().millisecond % messages.length],
-      backgroundColor: Get.theme.colorScheme.primary,
-      colorText: Get.theme.colorScheme.onPrimary,
-      duration: const Duration(seconds: 4),
-      snackPosition: SnackPosition.TOP,
+    Get.dialog(
+      ChallengeResultDialog(
+        challenge: challenge,
+        isSuccess: true,
+      ),
+      barrierDismissible: false,
     );
   }
 
   /// 실패 메시지 표시
   void _showFailureMessage(UserChallenge challenge) {
-    final messages = [
-      '아쉬워요 😢 "${challenge.title}" 챌린지가 종료되었어요. 다음엔 성공!',
-      '괜찮아요! 💙 "${challenge.title}"는 다음 기회에 도전해봐요!',
-      '포기하지 마세요! 🌈 "${challenge.title}"를 다시 시작해보는 건 어때요?',
-    ];
-
-    Get.snackbar(
-      '챌린지 종료',
-      messages[DateTime.now().millisecond % messages.length],
-      backgroundColor: Get.theme.colorScheme.error.withOpacity(0.8),
-      colorText: Get.theme.colorScheme.onError,
-      duration: const Duration(seconds: 4),
-      snackPosition: SnackPosition.TOP,
+    Get.dialog(
+      ChallengeResultDialog(
+        challenge: challenge,
+        isSuccess: false,
+      ),
+      barrierDismissible: false,
     );
   }
 
@@ -163,6 +149,15 @@ class ChallengeController extends GetxController {
       await loadStats();
     } catch (e) {
       print('진행률 갱신 오류: $e');
+    }
+  }
+
+  /// 챌린지 결과 확인 완료 표시
+  Future<void> markChallengeResultAsViewed(int id) async {
+    try {
+      await _repository.markResultAsViewed(id);
+    } catch (e) {
+      print('결과 확인 표시 오류: $e');
     }
   }
 }

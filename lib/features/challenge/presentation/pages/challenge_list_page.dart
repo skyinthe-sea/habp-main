@@ -4,6 +4,7 @@ import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../controllers/challenge_controller.dart';
 import '../widgets/create_challenge_dialog.dart';
+import 'challenge_stats_page.dart';
 import 'package:intl/intl.dart';
 
 /// 챌린지 목록 페이지 (게임 스타일)
@@ -76,9 +77,14 @@ class ChallengeListPage extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Obx(() => _buildStatsCard(
-                themeController,
-                challengeController,
+              child: Obx(() => GestureDetector(
+                onTap: () {
+                  Get.to(() => const ChallengeStatsPage());
+                },
+                child: _buildStatsCard(
+                  themeController,
+                  challengeController,
+                ),
               )),
             ),
           ),
@@ -165,71 +171,6 @@ class ChallengeListPage extends StatelessWidget {
               ),
             );
           }),
-
-          // 추천 챌린지 섹션
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-              child: Row(
-                children: [
-                  const Text(
-                    '✨',
-                    style: TextStyle(fontSize: 24),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '추천 챌린지',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: themeController.isDarkMode
-                          ? AppColors.darkTextPrimary
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 추천 챌린지 그리드
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.85,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  // 다크모드 여부에 따라 다른 색상 사용
-                  final templates = themeController.isDarkMode
-                      ? [
-                          {'icon': '🛍️', 'title': '쇼핑 금지령', 'difficulty': '어려움', 'color': AppColors.darkPrimary},
-                          {'icon': '🍽️', 'title': '외식 절제', 'difficulty': '보통', 'color': AppColors.darkAccent2},
-                          {'icon': '📝', 'title': '완벽한 기록', 'difficulty': '쉬움', 'color': AppColors.darkAccent3},
-                        ]
-                      : [
-                          {'icon': '🛍️', 'title': '쇼핑 금지령', 'difficulty': '어려움', 'color': const Color(0xFFFF1493)},
-                          {'icon': '🍽️', 'title': '외식 절제', 'difficulty': '보통', 'color': const Color(0xFFFF6347)},
-                          {'icon': '📝', 'title': '완벽한 기록', 'difficulty': '쉬움', 'color': const Color(0xFF4169E1)},
-                        ];
-
-                  final template = templates[index];
-                  return _buildTemplateCard(
-                    themeController,
-                    icon: template['icon'] as String,
-                    title: template['title'] as String,
-                    difficulty: template['difficulty'] as String,
-                    color: template['color'] as Color,
-                  );
-                },
-                childCount: 3,
-              ),
-            ),
-          ),
         ],
       ),
       floatingActionButton: Obx(() {
@@ -257,6 +198,11 @@ class ChallengeListPage extends StatelessWidget {
   }
 
   Widget _buildStatsCard(ThemeController themeController, ChallengeController controller) {
+    final totalCompleted = controller.completedChallenges.length;
+    final successCount = controller.completedChallenges.where((c) => c.status == 'COMPLETED').length;
+    final failedCount = controller.completedChallenges.where((c) => c.status == 'FAILED').length;
+    final successRate = totalCompleted > 0 ? (successCount / totalCompleted * 100).toInt() : 0;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -281,12 +227,34 @@ class ChallengeListPage extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          _buildStatItem(themeController, '🏆', '완료', '${controller.completedCount.value}'),
-          _buildStatItem(themeController, '🔥', '연속', '${controller.streakCount.value}'),
-          _buildStatItem(themeController, '📊', '성공률', '${controller.successRate.value.toInt()}%'),
+          // 상단 메인 통계 (총 챌린지)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem(themeController, '🎯', '진행 중', '${controller.inProgressChallenges.length}개'),
+              _buildStatItem(themeController, '📊', '총 완료', '$totalCompleted개'),
+            ],
+          ),
+          if (totalCompleted > 0) ...[
+            const SizedBox(height: 20),
+            Divider(
+              color: themeController.isDarkMode
+                  ? Colors.grey.shade800
+                  : Colors.grey.shade300,
+            ),
+            const SizedBox(height: 20),
+            // 하단 성공/실패 통계
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildSuccessFailItem(themeController, '✅', '성공', '$successCount개', true),
+                _buildSuccessFailItem(themeController, '❌', '실패', '$failedCount개', false),
+                _buildStatItem(themeController, '📈', '성공률', '$successRate%'),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -307,6 +275,43 @@ class ChallengeListPage extends StatelessWidget {
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: primaryColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: themeController.isDarkMode
+                ? AppColors.darkTextSecondary
+                : AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSuccessFailItem(
+    ThemeController themeController,
+    String icon,
+    String label,
+    String value,
+    bool isSuccess,
+  ) {
+    final color = isSuccess
+        ? (themeController.isDarkMode ? AppColors.darkPrimary : const Color(0xFF4CAF50))
+        : const Color(0xFFFF6B6B);
+
+    return Column(
+      children: [
+        Text(icon, style: const TextStyle(fontSize: 28)),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: color,
           ),
         ),
         const SizedBox(height: 4),
@@ -840,79 +845,6 @@ class ChallengeListPage extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTemplateCard(
-    ThemeController themeController, {
-    required String icon,
-    required String title,
-    required String difficulty,
-    required Color color,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        Get.snackbar(
-          '준비 중',
-          '$title 챌린지를 시작하시겠습니까? (곧 추가됩니다)',
-          backgroundColor: color,
-          colorText: Colors.white,
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: themeController.isDarkMode
-              ? AppColors.darkSurface
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 48)),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: themeController.isDarkMode
-                    ? AppColors.darkTextPrimary
-                    : AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                difficulty,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

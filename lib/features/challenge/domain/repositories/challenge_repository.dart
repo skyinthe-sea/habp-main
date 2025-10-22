@@ -20,6 +20,9 @@ abstract class ChallengeRepository {
   // 챌린지 진행률 업데이트
   Future<void> updateChallengeProgress(int id, double currentAmount, double progress);
 
+  // 챌린지 결과 확인 완료 표시
+  Future<void> markResultAsViewed(int id);
+
   // 통계
   Future<int> getCompletedChallengesCount();
   Future<int> getStreakCount(); // 연속 성공 횟수

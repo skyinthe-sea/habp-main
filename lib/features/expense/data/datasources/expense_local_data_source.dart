@@ -104,16 +104,17 @@ class ExpenseLocalDataSourceImpl implements ExpenseLocalDataSource {
     final db = await dbHelper.database;
 
     try {
+      // EXPENSE와 INCOME 타입 모두 가져오기 (재테크 카테고리 포함)
       final result = await db.query(
         'category',
-        where: 'type = ? AND is_fixed = ? AND is_deleted = ?',
-        whereArgs: ['EXPENSE', 0, 0],  // is_deleted = 0 조건 추가
+        where: 'is_fixed = ? AND is_deleted = ?',
+        whereArgs: [0, 0],  // type 조건 제거하여 모든 타입 포함
         orderBy: 'name',
       );
 
       return result.map((map) => CategoryModel.fromMap(map)).toList();
     } catch (e) {
-      debugPrint('변동 지출 카테고리 조회 중 오류: $e');
+      debugPrint('변동 카테고리 조회 중 오류: $e');
       return [];
     }
   }

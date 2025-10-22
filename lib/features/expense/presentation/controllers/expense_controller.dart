@@ -307,6 +307,7 @@ class ExpenseController extends GetxController {
 
   Future<CategoryModel?> addCategory({
     required String name,
+    String type = 'EXPENSE', // 기본값은 EXPENSE
   }) async {
     try {
       if (name.trim().isEmpty) {
@@ -315,7 +316,7 @@ class ExpenseController extends GetxController {
 
       final category = await addCategoryUseCase(
         name: name.trim(),
-        type: 'EXPENSE',
+        type: type,
         isFixed: 0,
       );
 

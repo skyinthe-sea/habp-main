@@ -67,6 +67,11 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
   }
 
   @override
+  Future<void> markResultAsViewed(int id) async {
+    await _localDataSource.markResultAsViewed(id);
+  }
+
+  @override
   Future<int> getCompletedChallengesCount() async {
     return await _localDataSource.getCompletedCount();
   }
@@ -113,6 +118,21 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
         }
 
         await updateChallengeProgress(challenge.id!, currentAmount, progress);
+
+        // 실시간으로 목표 달성/초과 체크
+        final updatedChallenge = challenge.copyWith(
+          currentAmount: currentAmount,
+          progress: progress,
+        );
+
+        // 지출 제한 챌린지: 목표 금액 초과 시 즉시 실패 처리
+        if (updatedChallenge.type == 'EXPENSE_LIMIT' && currentAmount > updatedChallenge.targetAmount) {
+          await failChallenge(challenge.id!);
+        }
+        // 저축 목표 챌린지: 목표 금액 달성 시 즉시 성공 처리
+        else if (updatedChallenge.type == 'SAVING_GOAL' && currentAmount >= updatedChallenge.targetAmount) {
+          await completeChallenge(challenge.id!);
+        }
       }
     }
   }

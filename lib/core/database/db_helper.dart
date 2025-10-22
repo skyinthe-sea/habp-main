@@ -25,7 +25,7 @@ class DBHelper {
     final String path = join(await getDatabasesPath(), 'finance_manager.db');
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -105,6 +105,7 @@ class DBHelper {
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL,
           completed_at TEXT,
+          result_viewed INTEGER DEFAULT 0,
           FOREIGN KEY (user_id) REFERENCES user (id),
           FOREIGN KEY (template_id) REFERENCES challenge_template (id),
           FOREIGN KEY (category_id) REFERENCES category (id)
@@ -165,6 +166,14 @@ class DBHelper {
       ''');
 
       debugPrint('데이터베이스 업그레이드 완료: 챌린지 모드 테이블 추가');
+    }
+
+    if (oldVersion < 5) {
+      // Version 5: user_challenge 테이블에 result_viewed 컬럼 추가
+      await db.execute('''
+        ALTER TABLE user_challenge ADD COLUMN result_viewed INTEGER DEFAULT 0
+      ''');
+      debugPrint('데이터베이스 업그레이드 완료: result_viewed 컬럼 추가');
     }
   }
 

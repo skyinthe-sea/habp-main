@@ -185,7 +185,9 @@ class _CreateChallengeDialogState extends State<CreateChallengeDialog> {
               TextField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  hintText: '예: 커피 다이어트',
+                  hintText: _selectedType == 'EXPENSE_LIMIT'
+                      ? '예: 커피 다이어트'
+                      : '예: 매달 10만원 모으기',
                   filled: true,
                   fillColor: themeController.isDarkMode
                       ? AppColors.darkBackground
@@ -211,9 +213,13 @@ class _CreateChallengeDialogState extends State<CreateChallengeDialog> {
               ),
               const SizedBox(height: 8),
               Obx(() {
+                // 챌린지 타입에 따라 카테고리 필터링
+                final categoryType = _selectedType == 'EXPENSE_LIMIT' ? 'EXPENSE' : 'FINANCE';
                 final categories = expenseController.variableCategories
-                    .where((c) => c.type == 'EXPENSE')
+                    .where((c) => c.type == categoryType)
                     .toList();
+
+                final categoryLabel = _selectedType == 'EXPENSE_LIMIT' ? '지출' : '재테크';
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +247,7 @@ class _CreateChallengeDialogState extends State<CreateChallengeDialog> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '+ 지출 카테고리 추가',
+                              '+ $categoryLabel 카테고리 추가',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -485,7 +491,13 @@ class _CreateChallengeDialogState extends State<CreateChallengeDialog> {
     final isSelected = _selectedType == type;
     final primaryColor = _getPrimaryColor(themeController);
     return GestureDetector(
-      onTap: () => setState(() => _selectedType = type),
+      onTap: () {
+        setState(() {
+          _selectedType = type;
+          // 타입 변경 시 선택된 카테고리 초기화
+          _selectedCategory = null;
+        });
+      },
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -643,15 +655,19 @@ class _CreateChallengeDialogState extends State<CreateChallengeDialog> {
     ExpenseController expenseController,
     ThemeController themeController,
   ) async {
+    // 챌린지 타입에 따른 카테고리 타입 결정
+    final categoryType = _selectedType == 'EXPENSE_LIMIT' ? 'EXPENSE' : 'FINANCE';
+
     await Get.dialog(
       _AddCategoryDialogContent(
         expenseController: expenseController,
         themeController: themeController,
+        categoryType: categoryType,
         onCategoryAdded: (newCategory) {
           // 추가된 카테고리를 ID로 찾아서 설정 (객체 참조 대신 ID로 매칭)
           setState(() {
             final categories = expenseController.variableCategories
-                .where((c) => c.type == 'EXPENSE')
+                .where((c) => c.type == categoryType)
                 .toList();
             _selectedCategory = categories.firstWhere(
               (c) => c.id == newCategory.id,
@@ -668,11 +684,13 @@ class _CreateChallengeDialogState extends State<CreateChallengeDialog> {
 class _AddCategoryDialogContent extends StatefulWidget {
   final ExpenseController expenseController;
   final ThemeController themeController;
+  final String categoryType; // 'EXPENSE' or 'FINANCE'
   final Function(CategoryModel) onCategoryAdded;
 
   const _AddCategoryDialogContent({
     required this.expenseController,
     required this.themeController,
+    required this.categoryType,
     required this.onCategoryAdded,
   });
 
@@ -769,7 +787,7 @@ class _AddCategoryDialogContentState extends State<_AddCategoryDialogContent> {
                 controller: _nameController,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: '예: 커피',
+                  hintText: widget.categoryType == 'EXPENSE' ? '예: 커피' : '예: 예금',
                   filled: true,
                   fillColor: widget.themeController.isDarkMode
                       ? AppColors.darkBackground
@@ -799,7 +817,9 @@ class _AddCategoryDialogContentState extends State<_AddCategoryDialogContent> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '지출 카테고리로 추가됩니다',
+                        widget.categoryType == 'EXPENSE'
+                            ? '지출 카테고리로 추가됩니다'
+                            : '재테크 카테고리로 추가됩니다',
                         style: TextStyle(
                           fontSize: 12,
                           color: primaryColor,
@@ -838,6 +858,7 @@ class _AddCategoryDialogContentState extends State<_AddCategoryDialogContent> {
                         // 카테고리 추가
                         final newCategory = await widget.expenseController.addCategory(
                           name: _nameController.text.trim(),
+                          type: widget.categoryType,
                         );
 
                         if (newCategory != null) {
