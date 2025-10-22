@@ -310,45 +310,29 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
 
               return Positioned(
                 left: adjustedPosition,
-                top: 0,
-                bottom: 0,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // 세로 구분선
-                    Container(
-                      width: 1,
-                      color: Colors.grey.withOpacity(0.3),
-                    ),
-                    // 년도 표시 뱃지
-                    Positioned(
-                      top: 10,
-                      left: 2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: themeController.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: themeController.primaryColor.withOpacity(0.4)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 2,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          year,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: themeController.primaryColor,
-                          ),
-                        ),
+                top: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: themeController.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: themeController.primaryColor.withOpacity(0.4)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
                       ),
+                    ],
+                  ),
+                  child: Text(
+                    year,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: themeController.primaryColor,
                     ),
-                  ],
+                  ),
                 ),
               );
             }).toList(),
