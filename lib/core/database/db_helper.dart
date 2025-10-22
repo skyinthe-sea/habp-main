@@ -25,7 +25,7 @@ class DBHelper {
     final String path = join(await getDatabasesPath(), 'finance_manager.db');
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -63,6 +63,108 @@ class DBHelper {
         )
       ''');
       debugPrint('데이터베이스 업그레이드 완료: monthly_diary 테이블 추가');
+    }
+
+    if (oldVersion < 4) {
+      // Version 4: 챌린지 모드 테이블 추가
+
+      // 챌린지 템플릿 테이블
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS challenge_template (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          description TEXT,
+          type TEXT NOT NULL,
+          target_amount REAL,
+          category_id INTEGER,
+          duration_type TEXT NOT NULL,
+          icon TEXT,
+          color TEXT,
+          difficulty TEXT,
+          badge_reward TEXT,
+          created_at TEXT NOT NULL
+        )
+      ''');
+
+      // 사용자 챌린지 테이블
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_challenge (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          template_id INTEGER,
+          title TEXT NOT NULL,
+          description TEXT,
+          type TEXT NOT NULL,
+          target_amount REAL NOT NULL,
+          current_amount REAL DEFAULT 0,
+          category_id INTEGER,
+          start_date TEXT NOT NULL,
+          end_date TEXT NOT NULL,
+          status TEXT NOT NULL,
+          progress REAL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          completed_at TEXT,
+          FOREIGN KEY (user_id) REFERENCES user (id),
+          FOREIGN KEY (template_id) REFERENCES challenge_template (id),
+          FOREIGN KEY (category_id) REFERENCES category (id)
+        )
+      ''');
+
+      // 뱃지 테이블
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS badge (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          icon TEXT NOT NULL,
+          type TEXT NOT NULL,
+          rarity TEXT NOT NULL,
+          unlock_condition TEXT,
+          created_at TEXT NOT NULL
+        )
+      ''');
+
+      // 사용자 획득 뱃지 테이블
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_badge (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          badge_id INTEGER,
+          earned_at TEXT NOT NULL,
+          is_new INTEGER DEFAULT 1,
+          FOREIGN KEY (user_id) REFERENCES user (id),
+          FOREIGN KEY (badge_id) REFERENCES badge (id)
+        )
+      ''');
+
+      // 보상 테이블 (테마, 스티커 등)
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS reward (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          type TEXT NOT NULL,
+          data TEXT,
+          unlock_condition TEXT,
+          created_at TEXT NOT NULL
+        )
+      ''');
+
+      // 사용자 획득 보상 테이블
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_reward (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          reward_id INTEGER,
+          unlocked_at TEXT NOT NULL,
+          is_active INTEGER DEFAULT 0,
+          FOREIGN KEY (user_id) REFERENCES user (id),
+          FOREIGN KEY (reward_id) REFERENCES reward (id)
+        )
+      ''');
+
+      debugPrint('데이터베이스 업그레이드 완료: 챌린지 모드 테이블 추가');
     }
   }
 
@@ -231,8 +333,107 @@ class DBHelper {
     )
   ''');
 
+    // 챌린지 템플릿 테이블
+    await db.execute('''
+    CREATE TABLE challenge_template (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT,
+      type TEXT NOT NULL,
+      target_amount REAL,
+      category_id INTEGER,
+      duration_type TEXT NOT NULL,
+      icon TEXT,
+      color TEXT,
+      difficulty TEXT,
+      badge_reward TEXT,
+      created_at TEXT NOT NULL
+    )
+  ''');
+
+    // 사용자 챌린지 테이블
+    await db.execute('''
+    CREATE TABLE user_challenge (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      template_id INTEGER,
+      title TEXT NOT NULL,
+      description TEXT,
+      type TEXT NOT NULL,
+      target_amount REAL NOT NULL,
+      current_amount REAL DEFAULT 0,
+      category_id INTEGER,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      status TEXT NOT NULL,
+      progress REAL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      completed_at TEXT,
+      FOREIGN KEY (user_id) REFERENCES user (id),
+      FOREIGN KEY (template_id) REFERENCES challenge_template (id),
+      FOREIGN KEY (category_id) REFERENCES category (id)
+    )
+  ''');
+
+    // 뱃지 테이블
+    await db.execute('''
+    CREATE TABLE badge (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      icon TEXT NOT NULL,
+      type TEXT NOT NULL,
+      rarity TEXT NOT NULL,
+      unlock_condition TEXT,
+      created_at TEXT NOT NULL
+    )
+  ''');
+
+    // 사용자 획득 뱃지 테이블
+    await db.execute('''
+    CREATE TABLE user_badge (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      badge_id INTEGER,
+      earned_at TEXT NOT NULL,
+      is_new INTEGER DEFAULT 1,
+      FOREIGN KEY (user_id) REFERENCES user (id),
+      FOREIGN KEY (badge_id) REFERENCES badge (id)
+    )
+  ''');
+
+    // 보상 테이블
+    await db.execute('''
+    CREATE TABLE reward (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      type TEXT NOT NULL,
+      data TEXT,
+      unlock_condition TEXT,
+      created_at TEXT NOT NULL
+    )
+  ''');
+
+    // 사용자 획득 보상 테이블
+    await db.execute('''
+    CREATE TABLE user_reward (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      reward_id INTEGER,
+      unlocked_at TEXT NOT NULL,
+      is_active INTEGER DEFAULT 0,
+      FOREIGN KEY (user_id) REFERENCES user (id),
+      FOREIGN KEY (reward_id) REFERENCES reward (id)
+    )
+  ''');
+
     // 기본 카테고리 데이터 추가
     await _insertDefaultCategories(db);
+
+    // 기본 챌린지 템플릿 및 뱃지 데이터 추가
+    await _insertDefaultChallengeData(db);
   }
 
   // 기본 카테고리 데이터 삽입
@@ -289,6 +490,159 @@ class DBHelper {
       debugPrint('기본 카테고리 추가 완료: ${allCategories.length}개');
     } catch (e) {
       debugPrint('기본 카테고리 추가 중 오류: $e');
+    }
+  }
+
+  // 기본 챌린지 템플릿 및 뱃지 데이터 삽입
+  Future<void> _insertDefaultChallengeData(Database db) async {
+    final now = DateTime.now().toIso8601String();
+
+    try {
+      // 기본 챌린지 템플릿
+      final challengeTemplates = [
+        {
+          'title': '커피 다이어트',
+          'description': '이번 주 커피값 1만 원 이하로!',
+          'type': 'EXPENSE_LIMIT',
+          'target_amount': 10000.0,
+          'duration_type': 'WEEKLY',
+          'icon': '☕',
+          'color': '#8B4513',
+          'difficulty': 'EASY',
+          'badge_reward': 'coffee_master',
+        },
+        {
+          'title': '쇼핑 금지령',
+          'description': '이번 주 쇼핑 없이 버티기!',
+          'type': 'EXPENSE_LIMIT',
+          'target_amount': 0.0,
+          'duration_type': 'WEEKLY',
+          'icon': '🛍️',
+          'color': '#FF1493',
+          'difficulty': 'HARD',
+          'badge_reward': 'shopping_free',
+        },
+        {
+          'title': '저축왕',
+          'description': '이번 달 저축 목표 30만 원 달성하기!',
+          'type': 'SAVING_GOAL',
+          'target_amount': 300000.0,
+          'duration_type': 'MONTHLY',
+          'icon': '💰',
+          'color': '#FFD700',
+          'difficulty': 'NORMAL',
+          'badge_reward': 'saving_master',
+        },
+        {
+          'title': '완벽한 기록',
+          'description': '일주일 동안 매일 지출 기록하기!',
+          'type': 'STREAK',
+          'target_amount': 7.0,
+          'duration_type': 'WEEKLY',
+          'icon': '📝',
+          'color': '#4169E1',
+          'difficulty': 'EASY',
+          'badge_reward': 'record_keeper',
+        },
+        {
+          'title': '외식 절제',
+          'description': '이번 주 외식비 5만 원 이하!',
+          'type': 'EXPENSE_LIMIT',
+          'target_amount': 50000.0,
+          'duration_type': 'WEEKLY',
+          'icon': '🍽️',
+          'color': '#FF6347',
+          'difficulty': 'NORMAL',
+          'badge_reward': 'dining_saver',
+        },
+      ];
+
+      for (var template in challengeTemplates) {
+        await db.insert('challenge_template', {
+          ...template,
+          'created_at': now,
+        });
+      }
+
+      // 기본 뱃지
+      final badges = [
+        {
+          'name': '첫 걸음',
+          'description': '첫 챌린지 도전!',
+          'icon': '🥉',
+          'type': 'BEGINNER',
+          'rarity': 'COMMON',
+          'unlock_condition': 'FIRST_CHALLENGE',
+        },
+        {
+          'name': '챌린지 정복자',
+          'description': '첫 챌린지 성공!',
+          'icon': '🥈',
+          'type': 'ACHIEVEMENT',
+          'rarity': 'RARE',
+          'unlock_condition': 'COMPLETE_CHALLENGE',
+        },
+        {
+          'name': '3연속 성공',
+          'description': '챌린지 3개 연속 성공!',
+          'icon': '🥇',
+          'type': 'STREAK',
+          'rarity': 'EPIC',
+          'unlock_condition': 'COMPLETE_3_STREAK',
+        },
+        {
+          'name': '전설의 절약왕',
+          'description': '챌린지 10개 성공!',
+          'icon': '💎',
+          'type': 'MASTER',
+          'rarity': 'LEGENDARY',
+          'unlock_condition': 'COMPLETE_10_CHALLENGES',
+        },
+        {
+          'name': '커피 마스터',
+          'description': '커피 다이어트 성공!',
+          'icon': '☕',
+          'type': 'SPECIFIC',
+          'rarity': 'RARE',
+          'unlock_condition': 'coffee_master',
+        },
+        {
+          'name': '쇼핑 프리',
+          'description': '쇼핑 금지령 성공!',
+          'icon': '🛍️',
+          'type': 'SPECIFIC',
+          'rarity': 'EPIC',
+          'unlock_condition': 'shopping_free',
+        },
+        {
+          'name': '저축 마스터',
+          'description': '저축왕 챌린지 성공!',
+          'icon': '💰',
+          'type': 'SPECIFIC',
+          'rarity': 'EPIC',
+          'unlock_condition': 'saving_master',
+        },
+        {
+          'name': '기록의 달인',
+          'description': '완벽한 기록 성공!',
+          'icon': '📝',
+          'type': 'SPECIFIC',
+          'rarity': 'RARE',
+          'unlock_condition': 'record_keeper',
+        },
+      ];
+
+      for (var badge in badges) {
+        await db.insert('badge', {
+          ...badge,
+          'created_at': now,
+        });
+      }
+
+      debugPrint('기본 챌린지 템플릿 추가 완료: ${challengeTemplates.length}개');
+      debugPrint('기본 뱃지 추가 완료: ${badges.length}개');
+    } catch (e) {
+      debugPrint('기본 챌린지 데이터 추가 중 오류: $e');
     }
   }
 

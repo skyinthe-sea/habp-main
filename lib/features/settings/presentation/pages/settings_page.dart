@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/services/version_check_service.dart';
 import '../../../diary/presentation/pages/diary_list_page.dart';
+import '../../../challenge/presentation/pages/challenge_list_page.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/fixed_income_dialog.dart';
 import '../widgets/fixed_expense_dialog.dart';
@@ -126,6 +127,38 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               onChanged: (value) => themeController.toggleTheme(),
               color: themeController.isDarkMode ? AppColors.darkAccent3 : AppColors.primary,
             )),
+
+            // 챌린지 섹션
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.emoji_events,
+                    size: 16,
+                    color: themeController.textSecondaryColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '챌린지',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: themeController.textSecondaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _buildSettingItem(
+              icon: Icons.sports_esports,
+              title: '챌린지 모드',
+              subtitle: '게임처럼 즐기는 절약 챌린지! 🎮',
+              color: AppColors.primary,
+              onTap: () {
+                Get.to(() => const ChallengeListPage());
+              },
+            ),
 
             // 다이어리 섹션 (임시 주석 처리)
             // Padding(

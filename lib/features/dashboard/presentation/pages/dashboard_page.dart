@@ -19,6 +19,7 @@ import '../widgets/monthly_summary_card.dart';
 import '../widgets/monthly_expense_chart.dart';
 import '../widgets/category_chart_tabs.dart';
 import '../widgets/recent_transactions_list.dart';
+import '../../../challenge/presentation/widgets/challenge_progress_widget.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -111,6 +112,9 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                       // 월간 요약 카드 (월 선택 제외)
                       MonthlySummaryCard(controller: _controller, excludeMonthSelector: true),
                       const SizedBox(height: 10),
+
+                      // 진행 중인 챌린지
+                      const ChallengeProgressWidget(),
 
                       // 월별 지출 추이 차트
                       Container(

@@ -14,18 +14,23 @@ import '../../../features/expense/presentation/controllers/expense_controller.da
 import '../../../features/diary/data/datasources/monthly_diary_local_data_source.dart';
 import '../../../features/diary/data/repositories/monthly_diary_repository_impl.dart';
 import '../../../features/diary/presentation/controllers/diary_controller.dart';
+import '../../../features/challenge/data/datasources/challenge_local_data_source.dart';
+import '../../../features/challenge/data/repositories/challenge_repository_impl.dart';
+import '../../../features/challenge/presentation/controllers/challenge_controller.dart';
 import '../../database/db_helper.dart';
 
 class MainController extends GetxController {
   final RxInt selectedIndex = 0.obs;
   late ExpenseController expenseController;
   late DiaryController diaryController;
+  late ChallengeController challengeController;
 
   @override
   void onInit() {
     super.onInit();
     _initExpenseController();
     _initDiaryController();
+    _initChallengeController();
   }
 
   void changeTab(int index) {
@@ -74,9 +79,24 @@ class MainController extends GetxController {
     Get.put(diaryController);
   }
 
+  void _initChallengeController() {
+    // ChallengeController 초기화 및 의존성 주입
+    final dbHelper = DBHelper();
+    final dataSource = ChallengeLocalDataSource(dbHelper);
+    final repository = ChallengeRepositoryImpl(dataSource, 1); // userId = 1 (기본 사용자)
+
+    challengeController = ChallengeController(repository);
+
+    // GetX DI에 등록
+    Get.put(challengeController);
+  }
+
   // ExpensePage에서도 사용할 수 있도록 ExpenseController를 반환하는 getter
   ExpenseController get getExpenseController => expenseController;
 
   // DiaryPage에서도 사용할 수 있도록 DiaryController를 반환하는 getter
   DiaryController get getDiaryController => diaryController;
+
+  // ChallengeListPage에서도 사용할 수 있도록 ChallengeController를 반환하는 getter
+  ChallengeController get getChallengeController => challengeController;
 }
