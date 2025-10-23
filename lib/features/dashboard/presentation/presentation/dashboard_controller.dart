@@ -99,8 +99,11 @@ class DashboardController extends GetxController {
 
     // 트랜잭션 변경 이벤트 구독
     ever(_eventBusService.transactionChanged, (_) {
-      debugPrint('거래 변경 이벤트 감지됨: 대시보드 데이터 새로고침');
-      _refreshAllData();
+      debugPrint('거래 변경 이벤트 감지됨: 월간 요약만 새로고침');
+      // 전체 데이터가 아닌 월간 요약과 최근 거래만 업데이트
+      fetchMonthlySummary();
+      fetchRecentTransactions();
+      // 카테고리별 데이터와 차트는 유지 (깜빡임 방지)
     });
 
     ever(_eventBusService.fixedIncomeChanged, (_) {

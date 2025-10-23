@@ -12,6 +12,7 @@ import 'date_selection_dialog.dart';
 import 'category_selection_dialog.dart';
 import 'calculator_dialog.dart';
 import 'emotion_selection_dialog.dart';
+import '../services/save_animation_service.dart';
 
 /// Final dialog in the quick add flow
 /// Allows inputting the transaction amount with improved UX
@@ -31,6 +32,9 @@ class _AmountInputDialogState extends State<AmountInputDialog>
   final TextEditingController _descriptionController = TextEditingController();
   final FocusNode _amountFocusNode = FocusNode();
   bool _saveEnabled = false;
+
+  // GlobalKey for tracking dialog position during animation
+  final GlobalKey _dialogKey = GlobalKey();
 
   // Current amount stored as an integer
   int _currentAmount = 0;
@@ -55,15 +59,17 @@ class _AmountInputDialogState extends State<AmountInputDialog>
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 300),
+      reverseDuration: const Duration(milliseconds: 300),  // 빠르게 작아짐
     );
 
     _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
+      begin: 0.0,  // 0.0부터 시작 (완전히 작아진 상태)
+      end: 1.0,    // 1.0까지 (정상 크기)
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOut,
+      reverseCurve: Curves.easeInCubic,  // 빠르게 가속하면서 작아짐
     ));
 
     // Start animation after a short delay
@@ -660,6 +666,7 @@ class _AmountInputDialogState extends State<AmountInputDialog>
   Widget build(BuildContext context) {
     final controller = Get.find<QuickAddController>();
     final ThemeController themeController = Get.find<ThemeController>();
+    final screenSize = MediaQuery.of(context).size;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -667,30 +674,52 @@ class _AmountInputDialogState extends State<AmountInputDialog>
       child: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          );
-        },
-        child: Container(
-          width: double.infinity,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: themeController.surfaceColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: themeController.isDarkMode
-                    ? Colors.black.withOpacity(0.3)
-                    : Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
+          // 애니메이션 진행도 (1.0 = 열림, 0.0 = 닫힘)
+          final progress = _scaleAnimation.value;
+          final reverseProgress = 1.0 - progress;
+
+          // Scale: 1.0 → 0.0 (완전히 작아짐)
+          final scale = progress * progress; // 제곱으로 더 빠르게 작아짐
+
+          // Opacity: 처음엔 유지하다가 마지막에 빠르게 사라짐
+          final opacity = progress > 0.3 ? 1.0 : (progress / 0.3);
+
+          // 화면 아래쪽으로 이동 (캘린더 위치로 - Y축으로 이동)
+          final translateY = reverseProgress * screenSize.height * 0.4;
+
+          // 약간 뒤로 밀리는 효과 (perspective)
+          final translateX = reverseProgress * 20;
+
+          // Border radius 애니메이션 (20 → 10 → 5로 작아짐)
+          final borderRadius = 20.0 * progress;
+
+          return Transform.translate(
+            offset: Offset(translateX, translateY),
+            child: Transform.scale(
+              scale: scale,
+              alignment: Alignment.center,
+              child: Opacity(
+                opacity: opacity,
+                child: Container(
+                  key: _dialogKey,
+                  width: double.infinity,
+                  constraints: BoxConstraints(
+                    maxHeight: screenSize.height * 0.85,
+                  ),
+                  decoration: BoxDecoration(
+                    color: themeController.surfaceColor,
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    boxShadow: [
+                      BoxShadow(
+                        color: themeController.isDarkMode
+                            ? Colors.black.withOpacity(0.3 * progress)
+                            : Colors.black.withOpacity(0.1 * progress),
+                        blurRadius: 10 * progress,
+                        offset: Offset(0, 5 * progress),
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1002,13 +1031,27 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                           .setDescription(_descriptionController.text);
                     }
 
-                    // Save transaction
+                    // Get transaction info for animation
+                    final targetDate = controller.transaction.value.transactionDate;
+
+                    // Animate dialog shrinking to center point
+                    await _animationController.reverse();
+
+                    // Close dialog after animation completes
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                    }
+
+                    // Trigger calendar marker pulse
+                    SaveAnimationService.triggerMarkerPulse(
+                      targetDate: targetDate,
+                    );
+
+                    // Save transaction after animation completes
                     final success = await controller.saveTransaction();
 
-                    // Close dialog and show success message if successful
+                    // Show success message if successful
                     if (success) {
-                      Navigator.of(context).pop();
-
                       // Show success snackbar
                       Get.snackbar(
                         '성공',
@@ -1065,8 +1108,12 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                 const SizedBox(height: 8),
               ],
             ),
-          ),
-        ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

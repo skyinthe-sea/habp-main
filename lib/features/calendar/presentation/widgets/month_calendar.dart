@@ -5,6 +5,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../controllers/calendar_controller.dart';
+import '../../../quick_add/presentation/services/save_animation_service.dart';
 
 class MonthCalendar extends StatelessWidget {
   final CalendarController controller;
@@ -142,12 +143,20 @@ class MonthCalendar extends StatelessWidget {
                       // Determine if we should stack vertically based on indicator count
                       bool useVerticalStack = indicatorCount > 2;
 
-                      // Create a more compact display
+                      // Check if this date should be pulsing
+                      final saveAnimController = Get.isRegistered<SaveAnimationController>()
+                          ? Get.find<SaveAnimationController>()
+                          : null;
+                      final isPulsing = saveAnimController?.isPulsing(date) ?? false;
+
+                      // Create a more compact display with pulse animation
                       return Positioned(
                         bottom: 1,
                         left: 0,
                         right: 0,
-                        child: useVerticalStack
+                        child: _PulsingMarker(
+                          isPulsing: isPulsing,
+                          child: useVerticalStack
                         // Vertical stack for 3 indicators
                             ? Column(
                           mainAxisSize: MainAxisSize.min,
@@ -235,6 +244,7 @@ class MonthCalendar extends StatelessWidget {
                                 ),
                               ),
                           ],
+                        ),
                         ),
                       );
                     },
@@ -359,5 +369,77 @@ class MonthCalendar extends StatelessWidget {
         ),
       );
     });
+  }
+}
+
+/// Pulsing marker widget with 0.5 → 1.5 → 1.0 scale animation
+class _PulsingMarker extends StatefulWidget {
+  final bool isPulsing;
+  final Widget child;
+
+  const _PulsingMarker({
+    required this.isPulsing,
+    required this.child,
+  });
+
+  @override
+  State<_PulsingMarker> createState() => _PulsingMarkerState();
+}
+
+class _PulsingMarkerState extends State<_PulsingMarker>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    // Scale: 0.5 -> 1.5 -> 1.0
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.5, end: 1.5)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.5, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 50,
+      ),
+    ]).animate(_controller);
+  }
+
+  @override
+  void didUpdateWidget(_PulsingMarker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPulsing && !oldWidget.isPulsing) {
+      // Trigger pulse animation
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: widget.isPulsing ? _scaleAnimation.value : 1.0,
+          child: widget.child,
+        );
+      },
+      child: widget.child,
+    );
   }
 }

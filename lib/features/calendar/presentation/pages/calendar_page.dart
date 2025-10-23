@@ -16,6 +16,7 @@ import '../widgets/month_calendar_fullscreen.dart';
 import '../widgets/transaction_dialog.dart';
 import '../widgets/filter_modal.dart';
 import '../widgets/filter_button.dart'; // Import our new filter button
+import '../../../quick_add/presentation/services/save_animation_service.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({Key? key}) : super(key: key);
@@ -35,6 +36,8 @@ class _CalendarPageState extends State<CalendarPage> with AutomaticKeepAliveClie
   @override
   void initState() {
     super.initState();
+    // Initialize SaveAnimationController for marker pulse animations
+    Get.put(SaveAnimationController(), permanent: true);
     _filterController = _initFilterController();
     _controller = _initController();
     // Create a Future to ensure data is loaded before rendering the screen
