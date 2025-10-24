@@ -921,190 +921,306 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                       ),
                     ],
                   ),
-                  child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-              // Dialog title and back button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Obx(() => Text(
-                    '금액 입력',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: themeController.primaryColor,
-                    ),
-                  )),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, size: 20),
-                    onPressed: () {
-                      // Go back to the previous dialog
-                      Navigator.of(context).pop();
-
-                      // Show the category selection dialog again
-                      showGeneralDialog(
-                        context: context,
-                        pageBuilder: (_, __, ___) => const CategorySelectionDialog(),
-                        transitionBuilder: (context, animation, secondaryAnimation, child) {
-                          final curve = CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.elasticOut,
-                          );
-
-                          return ScaleTransition(
-                            scale: curve,
-                            child: FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            ),
-                          );
-                        },
-                        transitionDuration: const Duration(milliseconds: 150),
-                        barrierDismissible: true,
-                        barrierLabel: '',
-                        barrierColor: themeController.isDarkMode
-                            ? Colors.black.withOpacity(0.7)
-                            : Colors.black.withOpacity(0.5),
-                      );
-                    },
-                    color: themeController.textSecondaryColor,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Transaction info
-              Obx(() => Container(
-                padding: const EdgeInsets.all(16),
+                  child: Column(
+            children: [
+              // Fixed header section
+              Container(
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: themeController.isDarkMode
-                      ? themeController.cardColor
-                      : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: themeController.isDarkMode
-                        ? themeController.textSecondaryColor.withOpacity(0.2)
-                        : Colors.grey.shade200,
+                  color: themeController.surfaceColor,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Dialog title and back button
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '카테고리:',
+                        Obx(() => Text(
+                          '금액 입력',
                           style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: themeController.textSecondaryColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: themeController.primaryColor,
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Obx(() => Text(
-                            controller.transaction.value.categoryName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: themeController.textPrimaryColor,
-                            ),
-                          )),
+                        )),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, size: 20),
+                          onPressed: () {
+                            // Go back to the previous dialog
+                            Navigator.of(context).pop();
+
+                            // Show the category selection dialog again
+                            showGeneralDialog(
+                              context: context,
+                              pageBuilder: (_, __, ___) => const CategorySelectionDialog(),
+                              transitionBuilder: (context, animation, secondaryAnimation, child) {
+                                final curve = CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.elasticOut,
+                                );
+
+                                return ScaleTransition(
+                                  scale: curve,
+                                  child: FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              transitionDuration: const Duration(milliseconds: 150),
+                              barrierDismissible: true,
+                              barrierLabel: '',
+                              barrierColor: themeController.isDarkMode
+                                  ? Colors.black.withOpacity(0.7)
+                                  : Colors.black.withOpacity(0.5),
+                            );
+                          },
+                          color: themeController.textSecondaryColor,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          '날짜:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: themeController.textSecondaryColor,
-                          ),
+
+                    const SizedBox(height: 20),
+
+                    // Transaction info
+                    Obx(() => Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: themeController.isDarkMode
+                            ? themeController.cardColor
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: themeController.isDarkMode
+                              ? themeController.textSecondaryColor.withOpacity(0.2)
+                              : Colors.grey.shade200,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Obx(() => Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => _showDateSelectionDialog(context, controller),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8, 
-                                  horizontal: 12
-                                ),
-                                decoration: BoxDecoration(
-                                  color: themeController.primaryColor.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: themeController.primaryColor.withOpacity(0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today,
-                                      size: 16,
-                                      color: themeController.primaryColor,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      DateFormat('yyyy년 MM월 dd일').format(
-                                          controller.transaction.value.transactionDate),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        color: themeController.primaryColor,
-                                      ),
-                                    ),
-                                  ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '카테고리:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: themeController.textSecondaryColor,
                                 ),
                               ),
-                            ),
-                          )),
-                        ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Obx(() => Text(
+                                  controller.transaction.value.categoryName,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: themeController.textPrimaryColor,
+                                  ),
+                                )),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text(
+                                '날짜:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: themeController.textSecondaryColor,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Obx(() => Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _showDateSelectionDialog(context, controller),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 12
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: themeController.primaryColor.withOpacity(0.05),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: themeController.primaryColor.withOpacity(0.2),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today,
+                                            size: 16,
+                                            color: themeController.primaryColor,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            DateFormat('yyyy년 MM월 dd일').format(
+                                                controller.transaction.value.transactionDate),
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              color: themeController.primaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    )),
+
+                    const SizedBox(height: 20),
+
+                    // Amount input field
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Obx(() => Text(
+                          '금액',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            color: themeController.textPrimaryColor,
+                          ),
+                        )),
+                        const SizedBox(height: 12),
+
+                        // 수정된 금액 입력 필드 (계산기 버튼 추가)
+                        _buildAmountField(),
                       ],
                     ),
                   ],
                 ),
-              )),
-
-              const SizedBox(height: 20),
-
-              // Amount input field
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Obx(() => Text(
-                    '금액',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      color: themeController.textPrimaryColor,
-                    ),
-                  )),
-                  const SizedBox(height: 12),
-
-                  // 수정된 금액 입력 필드 (계산기 버튼 추가)
-                  _buildAmountField(),
-                ],
               ),
 
-              const SizedBox(height: 16),
+              // Scrollable content section
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Quick amount selection buttons with add/subtract functionality
+                      _buildQuickAmountButtons(),
 
-              // Quick amount selection buttons with add/subtract functionality
-              _buildQuickAmountButtons(),
+                      const SizedBox(height: 20),
 
-              const SizedBox(height: 16),
+                      // Save button - moved here right after quick amount buttons
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Obx(() => ElevatedButton(
+                          onPressed: !_saveEnabled || controller.isLoading.value
+                              ? null
+                              : () async {
+                            // Parse amount
+                            final amount = double.parse(
+                                _amountController.text.replaceAll(',', ''));
+                            controller.setAmount(amount);
 
-              // Description input field
+                            // Set description if provided
+                            if (_descriptionController.text.isNotEmpty) {
+                              controller
+                                  .setDescription(_descriptionController.text);
+                            }
+
+                            // Set image path if selected
+                            if (_selectedImage != null) {
+                              controller.setImagePath(_selectedImage!.path);
+                            }
+
+                            // Get transaction info for animation
+                            final targetDate = controller.transaction.value.transactionDate;
+
+                            // Animate dialog shrinking to center point
+                            await _animationController.reverse();
+
+                            // Close dialog after animation completes
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                            }
+
+                            // Trigger calendar marker pulse
+                            SaveAnimationService.triggerMarkerPulse(
+                              targetDate: targetDate,
+                            );
+
+                            // Save transaction after animation completes
+                            final success = await controller.saveTransaction();
+
+                            // Show success message if successful
+                            if (success) {
+                              // Show success snackbar
+                              Get.snackbar(
+                                '성공',
+                                '거래가 추가되었습니다',
+                                snackPosition: SnackPosition.TOP,
+                                backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
+                                colorText: Colors.white,
+                                margin: const EdgeInsets.all(16),
+                                duration: const Duration(seconds: 2),
+                              );
+                            } else {
+                              // Show error message
+                              Get.snackbar(
+                                '오류',
+                                '거래 추가에 실패했습니다',
+                                snackPosition: SnackPosition.TOP,
+                                backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
+                                colorText: Colors.white,
+                                margin: const EdgeInsets.all(16),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: themeController.primaryColor,
+                            foregroundColor: Colors.white, // 텍스트 색상 명시적 지정
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            disabledBackgroundColor:
+                            themeController.primaryColor.withOpacity(0.3),
+                            elevation: 2,
+                          ),
+                          child: controller.isLoading.value
+                              ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                              : const Text(
+                            '저장하기',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Description input field
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1250,195 +1366,98 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
               const SizedBox(height: 20),
 
-              // Emotion selection
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Obx(() => Text(
-                    '감정 태그 (선택사항)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      color: themeController.textPrimaryColor,
-                    ),
-                  )),
-                  const SizedBox(height: 8),
-                  Obx(() {
-                    final emotionTag = controller.transaction.value.emotionTag;
-                    return InkWell(
-                      onTap: () {
-                        // 포커스 해제하여 자동완성 UI 숨김
-                        FocusScope.of(context).unfocus();
-
-                        // 약간의 딜레이 후 다이얼로그 표시 (포커스 해제가 완전히 처리되도록)
-                        Future.delayed(const Duration(milliseconds: 100), () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => const EmotionSelectionDialog(),
-                          );
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: themeController.isDarkMode
-                              ? themeController.cardColor
-                              : Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: emotionTag != null
-                                ? AppColors.primary.withOpacity(0.3)
-                                : (themeController.isDarkMode
-                                    ? themeController.textSecondaryColor.withOpacity(0.2)
-                                    : Colors.grey.shade200),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              emotionTag != null
-                                  ? EmotionTagHelper.getEmoji(emotionTag)
-                                  : '😊',
-                              style: const TextStyle(fontSize: 24),
+                      // Emotion selection
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Obx(() => Text(
+                            '감정 태그 (선택사항)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: themeController.textPrimaryColor,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                emotionTag != null
-                                    ? EmotionTagHelper.getLabel(emotionTag)
-                                    : '지금 기분을 선택해주세요',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: emotionTag != null
-                                      ? FontWeight.w500
-                                      : FontWeight.normal,
-                                  color: emotionTag != null
-                                      ? themeController.textPrimaryColor
-                                      : themeController.textSecondaryColor,
+                          )),
+                          const SizedBox(height: 8),
+                          Obx(() {
+                            final emotionTag = controller.transaction.value.emotionTag;
+                            return InkWell(
+                              onTap: () {
+                                // 포커스 해제하여 자동완성 UI 숨김
+                                FocusScope.of(context).unfocus();
+
+                                // 약간의 딜레이 후 다이얼로그 표시 (포커스 해제가 완전히 처리되도록)
+                                Future.delayed(const Duration(milliseconds: 100), () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => const EmotionSelectionDialog(),
+                                  );
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: themeController.isDarkMode
+                                      ? themeController.cardColor
+                                      : Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: emotionTag != null
+                                        ? AppColors.primary.withOpacity(0.3)
+                                        : (themeController.isDarkMode
+                                            ? themeController.textSecondaryColor.withOpacity(0.2)
+                                            : Colors.grey.shade200),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      emotionTag != null
+                                          ? EmotionTagHelper.getEmoji(emotionTag)
+                                          : '😊',
+                                      style: const TextStyle(fontSize: 24),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        emotionTag != null
+                                            ? EmotionTagHelper.getLabel(emotionTag)
+                                            : '지금 기분을 선택해주세요',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: emotionTag != null
+                                              ? FontWeight.w500
+                                              : FontWeight.normal,
+                                          color: emotionTag != null
+                                              ? themeController.textPrimaryColor
+                                              : themeController.textSecondaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: themeController.textSecondaryColor,
+                                      size: 20,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            Icon(
-                              Icons.chevron_right,
-                              color: themeController.textSecondaryColor,
-                              size: 20,
-                            ),
-                          ],
-                        ),
+                            );
+                          }),
+                        ],
                       ),
-                    );
-                  }),
-                ],
+
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
               ),
-
-              const SizedBox(height: 30),
-
-              // Save button
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                child: Obx(() => ElevatedButton(
-                  onPressed: !_saveEnabled || controller.isLoading.value
-                      ? null
-                      : () async {
-                    // Parse amount
-                    final amount = double.parse(
-                        _amountController.text.replaceAll(',', ''));
-                    controller.setAmount(amount);
-
-                    // Set description if provided
-                    if (_descriptionController.text.isNotEmpty) {
-                      controller
-                          .setDescription(_descriptionController.text);
-                    }
-
-                    // Set image path if selected
-                    if (_selectedImage != null) {
-                      controller.setImagePath(_selectedImage!.path);
-                    }
-
-                    // Get transaction info for animation
-                    final targetDate = controller.transaction.value.transactionDate;
-
-                    // Animate dialog shrinking to center point
-                    await _animationController.reverse();
-
-                    // Close dialog after animation completes
-                    if (mounted) {
-                      Navigator.of(context).pop();
-                    }
-
-                    // Trigger calendar marker pulse
-                    SaveAnimationService.triggerMarkerPulse(
-                      targetDate: targetDate,
-                    );
-
-                    // Save transaction after animation completes
-                    final success = await controller.saveTransaction();
-
-                    // Show success message if successful
-                    if (success) {
-                      // Show success snackbar
-                      Get.snackbar(
-                        '성공',
-                        '거래가 추가되었습니다',
-                        snackPosition: SnackPosition.TOP,
-                        backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
-                        colorText: Colors.white,
-                        margin: const EdgeInsets.all(16),
-                        duration: const Duration(seconds: 2),
-                      );
-                    } else {
-                      // Show error message
-                      Get.snackbar(
-                        '오류',
-                        '거래 추가에 실패했습니다',
-                        snackPosition: SnackPosition.TOP,
-                        backgroundColor: themeController.isDarkMode ? AppColors.darkError : AppColors.error,
-                        colorText: Colors.white,
-                        margin: const EdgeInsets.all(16),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: themeController.primaryColor,
-                    foregroundColor: Colors.white, // 텍스트 색상 명시적 지정
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    disabledBackgroundColor:
-                    themeController.primaryColor.withOpacity(0.3),
-                    elevation: 2,
-                  ),
-                  child: controller.isLoading.value
-                      ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                      : const Text(
-                    '저장하기',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )),
-              ),
-
-                const SizedBox(height: 8),
-              ],
-            ),
-                  ),
+            ],
+          ),
                 ),
               ),
             ),
