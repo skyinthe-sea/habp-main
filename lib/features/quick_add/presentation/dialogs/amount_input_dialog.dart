@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/emotion_constants.dart';
 import '../../../../core/controllers/theme_controller.dart';
@@ -42,6 +46,12 @@ class _AmountInputDialogState extends State<AmountInputDialog>
   // Flag for highlight animation on amount changes
   bool _isHighlighted = false;
 
+  // Image picker instance
+  final ImagePicker _imagePicker = ImagePicker();
+
+  // Selected image file
+  File? _selectedImage;
+
   // Preset amounts for quick selection (in KRW)
   final List<int> _presetAmounts = [
     1000, 5000, 10000, 50000, 100000
@@ -55,6 +65,8 @@ class _AmountInputDialogState extends State<AmountInputDialog>
   @override
   void initState() {
     super.initState();
+
+    final controller = Get.find<QuickAddController>();
 
     // Initialize animation controller
     _animationController = AnimationController(
@@ -86,6 +98,15 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
     // Initialize with a default amount of 0
     _amountController.text = '0';
+
+    // Load existing image if editing transaction with imagePath
+    final existingImagePath = controller.transaction.value.imagePath;
+    if (existingImagePath != null && existingImagePath.isNotEmpty) {
+      final imageFile = File(existingImagePath);
+      if (imageFile.existsSync()) {
+        _selectedImage = imageFile;
+      }
+    }
   }
 
   @override
@@ -96,6 +117,187 @@ class _AmountInputDialogState extends State<AmountInputDialog>
     _amountFocusNode.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  /// Pick image from gallery
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image from gallery: $e');
+    }
+  }
+
+  /// Pick image from camera
+  Future<void> _pickImageFromCamera() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image from camera: $e');
+    }
+  }
+
+  /// Save image to app documents directory and return the path
+  Future<String?> _saveImageToLocal(File imageFile) async {
+    try {
+      final Directory appDocDir = await getApplicationDocumentsDirectory();
+      final String imagesDir = path.join(appDocDir.path, 'transaction_images');
+
+      // Create directory if it doesn't exist
+      await Directory(imagesDir).create(recursive: true);
+
+      // Generate unique filename with timestamp
+      final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final String fileName = 'IMG_$timestamp${path.extension(imageFile.path)}';
+      final String savePath = path.join(imagesDir, fileName);
+
+      // Copy image to app directory
+      await imageFile.copy(savePath);
+
+      return savePath;
+    } catch (e) {
+      debugPrint('Error saving image to local: $e');
+      return null;
+    }
+  }
+
+  /// Show image in fullscreen preview
+  void _showImagePreview(File imageFile) {
+    final ThemeController themeController = Get.find<ThemeController>();
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(20),
+        child: Stack(
+          children: [
+            // Image
+            Center(
+              child: InteractiveViewer(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+            // Close button
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show bottom sheet for image source selection
+  void _showImageSourceSelection() {
+    final ThemeController themeController = Get.find<ThemeController>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: themeController.surfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: themeController.textSecondaryColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.photo_library, color: themeController.primaryColor),
+              title: Text(
+                '갤러리에서 선택',
+                style: TextStyle(color: themeController.textPrimaryColor),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromGallery();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.camera_alt, color: themeController.primaryColor),
+              title: Text(
+                '카메라로 촬영',
+                style: TextStyle(color: themeController.textPrimaryColor),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromCamera();
+              },
+            ),
+            if (_selectedImage != null)
+              ListTile(
+                leading: Icon(Icons.delete, color: Colors.red.shade400),
+                title: Text(
+                  '사진 삭제',
+                  style: TextStyle(color: Colors.red.shade400),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _selectedImage = null;
+                  });
+                },
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Updates the enabled state of the save button based on input validity
@@ -925,6 +1127,129 @@ class _AmountInputDialogState extends State<AmountInputDialog>
 
               const SizedBox(height: 20),
 
+              // Photo attachment section
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Obx(() => Text(
+                    '영수증·사진 (선택사항)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      color: themeController.textPrimaryColor,
+                    ),
+                  )),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _selectedImage == null
+                        ? _showImageSourceSelection
+                        : null,  // Disable tap when image exists (handled by GestureDetector below)
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: themeController.isDarkMode
+                            ? themeController.cardColor
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedImage != null
+                              ? AppColors.primary.withOpacity(0.3)
+                              : (themeController.isDarkMode
+                                  ? themeController.textSecondaryColor.withOpacity(0.2)
+                                  : Colors.grey.shade200),
+                        ),
+                      ),
+                      child: _selectedImage == null
+                          ? Row(
+                              children: [
+                                Icon(
+                                  Icons.add_photo_alternate_outlined,
+                                  color: themeController.textSecondaryColor,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    '영수증이나 사진을 첨부하세요',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: themeController.textSecondaryColor,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: themeController.textSecondaryColor,
+                                  size: 20,
+                                ),
+                              ],
+                            )
+                          : Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Image preview - tap to view fullscreen
+                                GestureDetector(
+                                  onTap: () => _showImagePreview(_selectedImage!),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.file(
+                                      _selectedImage!,
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '사진이 첨부되었습니다',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: themeController.primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '사진 탭하여 크게 보기',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: themeController.textSecondaryColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Change/Remove image button
+                                GestureDetector(
+                                  onTap: _showImageSourceSelection,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: themeController.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.edit,
+                                      color: themeController.primaryColor,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
               // Emotion selection
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1029,6 +1354,11 @@ class _AmountInputDialogState extends State<AmountInputDialog>
                     if (_descriptionController.text.isNotEmpty) {
                       controller
                           .setDescription(_descriptionController.text);
+                    }
+
+                    // Set image path if selected
+                    if (_selectedImage != null) {
+                      controller.setImagePath(_selectedImage!.path);
                     }
 
                     // Get transaction info for animation

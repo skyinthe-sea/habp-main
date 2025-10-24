@@ -27,7 +27,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
       // 변동 거래 내역 가져오기 (실제 해당 월에 있는 거래)
       final List<Map<String, dynamic>> variableTransactions = await db.rawQuery('''
         SELECT tr.id, tr.category_id, tr.amount, tr.description, tr.transaction_date,
-               tr.transaction_num, tr.emotion_tag,
+               tr.transaction_num, tr.emotion_tag, tr.image_path,
                c.name AS category_name, c.type AS category_type, c.is_fixed
         FROM transaction_record tr
         JOIN category c ON tr.category_id = c.id
@@ -62,6 +62,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
             transactionDate: DateTime.parse(transaction['transaction_date']),
             isFixed: false,
             emotionTag: transaction['emotion_tag'],
+            imagePath: transaction['image_path'],
           ));
         }
       }
@@ -136,6 +137,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
             transactionDate: validDate,
             isFixed: true,
             emotionTag: transaction['emotion_tag'],
+            imagePath: null,  // 고정 거래는 이미지 없음
           ));
         }
         else if (description.contains('매주')) {
@@ -170,6 +172,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
                 transactionDate: date,
                 isFixed: true,
                 emotionTag: transaction['emotion_tag'],
+                imagePath: null,  // 고정 거래는 이미지 없음
               ));
             }
           }
@@ -204,6 +207,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               transactionDate: date,
               isFixed: true,
               emotionTag: transaction['emotion_tag'],
+              imagePath: null,  // 고정 거래는 이미지 없음
             ));
           }
         }
@@ -258,7 +262,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
       // 변동 거래 내역
       final List<Map<String, dynamic>> variableTransactions = await db.rawQuery('''
         SELECT tr.id, tr.category_id, tr.amount, tr.description, tr.transaction_date,
-               tr.transaction_num, tr.emotion_tag,
+               tr.transaction_num, tr.emotion_tag, tr.image_path,
                c.name AS category_name, c.type AS category_type, c.is_fixed
         FROM transaction_record tr
         JOIN category c ON tr.category_id = c.id
@@ -308,6 +312,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
             transactionDate: DateTime.parse(transaction['transaction_date']),
             isFixed: false,
             emotionTag: transaction['emotion_tag'],
+            imagePath: transaction['image_path'],
           ));
         }
       }
@@ -396,6 +401,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               transactionDate: transactionDateTime,
               isFixed: true,
               emotionTag: transaction['emotion_tag'],
+              imagePath: null,  // 고정 거래는 이미지 없음
             ));
           }
         }
@@ -448,6 +454,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               transactionDate: transactionDateTime,
               isFixed: true,
               emotionTag: transaction['emotion_tag'],
+              imagePath: null,  // 고정 거래는 이미지 없음
             ));
           }
         }
@@ -499,6 +506,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
               transactionDate: transactionDateTime,
               isFixed: true,
               emotionTag: transaction['emotion_tag'],
+              imagePath: null,  // 고정 거래는 이미지 없음
             ));
           }
         }
@@ -527,6 +535,9 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
       final db = await dbHelper.database;
       final now = DateTime.now().toIso8601String();
 
+      debugPrint('💾 [CalendarLocalDataSource] Updating transaction ID: ${transaction.id}');
+      debugPrint('💾 [CalendarLocalDataSource] imagePath to save: ${transaction.imagePath}');
+
       // transaction_record 테이블의 일반 거래만 업데이트
       final result = await db.update(
         'transaction_record',
@@ -535,6 +546,7 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
           'description': transaction.description,
           'transaction_date': transaction.transactionDate.toIso8601String(),
           'emotion_tag': transaction.emotionTag,
+          'image_path': transaction.imagePath,  // imagePath 추가!
           'updated_at': now,
         },
         where: 'id = ?',
@@ -545,9 +557,9 @@ class CalendarLocalDataSourceImpl implements CalendarLocalDataSource {
         throw Exception('거래 내역을 찾을 수 없습니다.');
       }
 
-      debugPrint('거래 수정 완료: ID ${transaction.id}');
+      debugPrint('✅ [CalendarLocalDataSource] 거래 수정 완료: ID ${transaction.id}, rows affected: $result');
     } catch (e) {
-      debugPrint('거래 수정 오류: $e');
+      debugPrint('❌ [CalendarLocalDataSource] 거래 수정 오류: $e');
       rethrow;
     }
   }

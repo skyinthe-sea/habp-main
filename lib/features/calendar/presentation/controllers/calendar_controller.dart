@@ -194,20 +194,23 @@ class CalendarController extends GetxController {
   Future<void> updateTransactionRecord(CalendarTransaction transaction) async {
     try {
       isLoading.value = true;
-      
+
+      debugPrint('📝 [CalendarController] Updating transaction: ${transaction.description}');
+      debugPrint('📝 [CalendarController] Transaction imagePath: ${transaction.imagePath}');
+
       // 거래 수정 실행
       await updateTransaction.call(transaction);
-      
+
       // 데이터 새로고침
       await fetchMonthEvents(focusedDay.value);
       await fetchDaySummary(selectedDay.value);
-      
+
       // 이벤트 버스로 변경 알림
       _eventBusService.emitTransactionChanged();
-      
-      debugPrint('거래 수정 완료: ${transaction.description}');
+
+      debugPrint('✅ [CalendarController] 거래 수정 완료: ${transaction.description}');
     } catch (e) {
-      debugPrint('거래 수정 오류: $e');
+      debugPrint('❌ [CalendarController] 거래 수정 오류: $e');
       rethrow;
     } finally {
       isLoading.value = false;

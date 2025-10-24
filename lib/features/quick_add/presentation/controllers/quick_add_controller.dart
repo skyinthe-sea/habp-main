@@ -93,6 +93,13 @@ class QuickAddController extends GetxController {
     });
   }
 
+  /// Set the image path (영수증/사진)
+  void setImagePath(String? imagePath) {
+    transaction.update((val) {
+      val?.imagePath = imagePath;
+    });
+  }
+
   /// Load categories from database based on type
   Future<void> loadCategoriesForType(String type) async {
     isLoading.value = true;
@@ -133,6 +140,10 @@ class QuickAddController extends GetxController {
       // Transaction number - can be used for reference, currently just timestamp
       final transactionNum = DateTime.now().millisecondsSinceEpoch.toString();
 
+      debugPrint('💾 [QuickAddController] Saving transaction...');
+      debugPrint('💾 [QuickAddController] imagePath: ${transaction.value.imagePath}');
+      debugPrint('💾 [QuickAddController] description: ${transaction.value.description}');
+
       await db.insert('transaction_record', {
         'user_id': userId,
         'category_id': transaction.value.categoryId,
@@ -143,9 +154,12 @@ class QuickAddController extends GetxController {
         'transaction_date': transaction.value.transactionDate.toIso8601String(),
         'transaction_num': transactionNum,
         'emotion_tag': transaction.value.emotionTag,
+        'image_path': transaction.value.imagePath,
         'created_at': now,
         'updated_at': now,
       });
+
+      debugPrint('✅ [QuickAddController] Transaction saved successfully');
 
       isSuccess.value = true;
       Get.find<EventBusService>().emitTransactionChanged();

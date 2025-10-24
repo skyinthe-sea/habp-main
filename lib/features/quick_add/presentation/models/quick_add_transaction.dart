@@ -23,6 +23,9 @@ class QuickAddTransaction {
   /// Optional emotion tag (HAPPY, NEUTRAL, STRESSED)
   String? emotionTag;
 
+  /// Optional image path (영수증/사진)
+  String? imagePath;
+
   QuickAddTransaction({
     this.categoryType = '',
     this.categoryId,
@@ -31,6 +34,7 @@ class QuickAddTransaction {
     this.amount = 0.0,
     this.description = '',
     this.emotionTag,
+    this.imagePath,
   }) : transactionDate = transactionDate ?? DateTime.now();
 
   /// Check if this transaction has all required fields

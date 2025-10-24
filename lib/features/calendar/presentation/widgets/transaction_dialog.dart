@@ -1,4 +1,5 @@
 // lib/features/calendar/presentation/widgets/transaction_dialog.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -47,6 +48,43 @@ class TransactionDialog extends StatelessWidget {
           // 실제 데이터베이스 업데이트
           await controller.updateTransactionRecord(updatedTransaction);
         },
+      ),
+      barrierDismissible: true,
+    );
+  }
+
+  /// Show image preview dialog
+  void _showImagePreview(String imagePath) {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        child: Stack(
+          children: [
+            // Image
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.file(
+                  File(imagePath),
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            // Close button
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 32,
+                ),
+                onPressed: () => Navigator.of(Get.overlayContext!).pop(),
+              ),
+            ),
+          ],
+        ),
       ),
       barrierDismissible: true,
     );
@@ -808,6 +846,17 @@ class TransactionDialog extends StatelessWidget {
                       Text(
                         EmotionTagHelper.getEmoji(transaction.emotionTag),
                         style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                    if (transaction.imagePath != null) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _showImagePreview(transaction.imagePath!),
+                        child: Icon(
+                          Icons.photo,
+                          size: 14,
+                          color: themeController.primaryColor,
+                        ),
                       ),
                     ],
                     if (isFixed)

@@ -8,6 +8,7 @@ class CalendarTransaction {
   final DateTime transactionDate;
   final bool isFixed;
   final String? emotionTag;
+  final String? imagePath;  // 영수증/사진 경로
 
   CalendarTransaction({
     required this.id,
@@ -19,5 +20,6 @@ class CalendarTransaction {
     required this.transactionDate,
     required this.isFixed,
     this.emotionTag,
+    this.imagePath,
   });
 }

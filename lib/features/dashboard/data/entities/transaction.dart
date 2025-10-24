@@ -7,6 +7,7 @@ class Transaction {
   final DateTime transactionDate;
   final String transactionNum;
   final String? emotionTag;
+  final String? imagePath;  // 영수증/사진 경로
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +20,7 @@ class Transaction {
     required this.transactionDate,
     required this.transactionNum,
     this.emotionTag,
+    this.imagePath,
     required this.createdAt,
     required this.updatedAt,
   });

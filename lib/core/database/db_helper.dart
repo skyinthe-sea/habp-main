@@ -25,7 +25,7 @@ class DBHelper {
     final String path = join(await getDatabasesPath(), 'finance_manager.db');
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,  // 버전 6으로 업그레이드
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -175,6 +175,17 @@ class DBHelper {
       ''');
       debugPrint('데이터베이스 업그레이드 완료: result_viewed 컬럼 추가');
     }
+
+    if (oldVersion < 6) {
+      // Version 6: image_path 컬럼 추가 (영수증/사진 첨부 기능)
+      await db.execute('''
+        ALTER TABLE transaction_record ADD COLUMN image_path TEXT
+      ''');
+      await db.execute('''
+        ALTER TABLE transaction_record2 ADD COLUMN image_path TEXT
+      ''');
+      debugPrint('데이터베이스 업그레이드 완료: image_path 컬럼 추가');
+    }
   }
 
   // 데이터베이스 테이블 생성
@@ -217,6 +228,7 @@ class DBHelper {
         transaction_date TEXT NOT NULL,
         transaction_num TEXT,
         emotion_tag TEXT,
+        image_path TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES user (id),
@@ -235,6 +247,7 @@ class DBHelper {
         transaction_date TEXT NOT NULL,
         transaction_num TEXT,
         emotion_tag TEXT,
+        image_path TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES user (id),
