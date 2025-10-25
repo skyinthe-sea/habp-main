@@ -7,9 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/presentation/pages/main_page.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/event_bus_service.dart';
+import 'core/services/notification_service.dart';
 import 'core/utils/super_error_silencer.dart'; // 강력한 에러 무시 처리기 추가
 import 'core/controllers/theme_controller.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
+
+// Global key for navigator to handle notification actions
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,9 +30,14 @@ void main() async {
   // 서비스 초기화 및 등록
   await Get.putAsync(() => EventBusService().init());
   await Get.putAsync(() => AdService().init());
-  
+
   // 테마 컨트롤러 초기화
   Get.put(ThemeController());
+
+  // 알림 서비스 초기화 및 스케줄링
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  await notificationService.scheduleDailyNotification();
 
   await initializeDateFormatting('ko_KR');
 
@@ -43,10 +52,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeController themeController = Get.find<ThemeController>();
-    
+
     return GetMaterialApp(
       title: '나의 장부',
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey, // Add navigator key for notification handling
       theme: themeController.lightTheme,
       darkTheme: themeController.darkTheme,
       themeMode: ThemeMode.system, // 시스템 설정을 따르되, 컨트롤러에서 오버라이드

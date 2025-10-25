@@ -2,11 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/services/version_check_service.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../diary/presentation/pages/diary_list_page.dart';
 import '../../../challenge/presentation/pages/challenge_list_page.dart';
+import '../../../quote_collection/presentation/pages/quote_gallery_page.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/fixed_income_dialog.dart';
 import '../widgets/fixed_expense_dialog.dart';
@@ -33,6 +36,9 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
   late SettingsController _settingsController;
   String _appVersion = "1.0.0";
   bool _isLoadingVersion = true;
+  bool _notificationEnabled = false;
+  DateTime? _nextNotificationTime;
+  final NotificationService _notificationService = NotificationService();
 
   @override
   bool get wantKeepAlive => true;
@@ -42,6 +48,18 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
     super.initState();
     _initSettingsController();
     _getAppVersion();
+    _checkNotificationStatus();
+  }
+
+  /// Check notification status
+  Future<void> _checkNotificationStatus() async {
+    final isScheduled = await _notificationService.isNotificationScheduled();
+    final nextTime = await _notificationService.getNextScheduledTime();
+
+    setState(() {
+      _notificationEnabled = isScheduled;
+      _nextNotificationTime = nextTime;
+    });
   }
 
   Future<void> _getAppVersion() async {
@@ -128,6 +146,45 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               color: themeController.isDarkMode ? AppColors.darkAccent3 : AppColors.primary,
             )),
 
+            // 하루 마감 리마인더 토글
+            _buildThemeToggleItem(
+              icon: Icons.notifications_active,
+              title: '하루 마감 리마인더',
+              subtitle: _notificationEnabled
+                  ? '매일 저녁 9시 · ${_nextNotificationTime != null ? DateFormat('HH:mm').format(_nextNotificationTime!) : ''}'
+                  : '매일 저녁 9시에 오늘의 소비를 기록하도록 알려드립니다',
+              value: _notificationEnabled,
+              onChanged: (value) async {
+                if (value) {
+                  // Enable notification
+                  await _notificationService.scheduleDailyNotification();
+                  Get.snackbar(
+                    '알림 설정 완료',
+                    '매일 저녁 9시에 알림을 보내드려요',
+                    snackPosition: SnackPosition.TOP,
+                    backgroundColor: themeController.isDarkMode ? AppColors.darkSuccess : AppColors.success,
+                    colorText: Colors.white,
+                    margin: const EdgeInsets.all(16),
+                    duration: const Duration(seconds: 2),
+                  );
+                } else {
+                  // Disable notification
+                  await _notificationService.cancelAllNotifications();
+                  Get.snackbar(
+                    '알림 해제',
+                    '하루 마감 알림이 해제되었습니다',
+                    snackPosition: SnackPosition.TOP,
+                    backgroundColor: themeController.textSecondaryColor,
+                    colorText: Colors.white,
+                    margin: const EdgeInsets.all(16),
+                    duration: const Duration(seconds: 2),
+                  );
+                }
+                await _checkNotificationStatus();
+              },
+              color: AppColors.primary,
+            ),
+
             // 챌린지 섹션
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
@@ -157,6 +214,15 @@ class _SettingsPageState extends State<SettingsPage> with AutomaticKeepAliveClie
               color: AppColors.primary,
               onTap: () {
                 Get.to(() => const ChallengeListPage());
+              },
+            ),
+            _buildSettingItem(
+              icon: Icons.workspace_premium,
+              title: '명언 컬렉션',
+              subtitle: '경제 명언을 수집하고 동기부여를 받으세요 💎',
+              color: const Color(0xFF8B5CF6),
+              onTap: () {
+                Get.to(() => const QuoteGalleryPage());
               },
             ),
 

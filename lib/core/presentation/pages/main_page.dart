@@ -4,11 +4,14 @@ import 'package:habp/features/expense/presentation/pages/expense_page.dart';
 import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../services/ad_service.dart';
 import '../../services/version_check_service.dart';
+import '../../services/daily_quote_service.dart';
 import '../controllers/main_controller.dart';
 import '../../../features/calendar/presentation/pages/calendar_page.dart';
 import '../../../features/quick_add/presentation/widgets/quick_add_button.dart';
 import '../../../features/settings/presentation/pages/settings_page.dart';
 import '../../controllers/theme_controller.dart';
+import '../../../features/quick_add/presentation/dialogs/category_selection_dialog.dart';
+import '../dialogs/daily_quote_dialog.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -25,11 +28,42 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     // MainController 주입
     controller = Get.put(MainController());
-    
+
     // 버전 체크 (앱 실행 시)
     _checkAppVersion();
+
+    // Check and show daily quote
+    _checkAndShowDailyQuote();
   }
-  
+
+  /// Check and show daily quote if needed (after 5 AM, once per day)
+  void _checkAndShowDailyQuote() async {
+    try {
+      final quoteService = DailyQuoteService();
+
+      // Wait a bit for UI to settle
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      // Check if should show quote
+      final shouldShow = await quoteService.shouldShowQuote();
+
+      if (shouldShow && mounted) {
+        final quote = await quoteService.getTodaysQuote();
+
+        if (quote != null) {
+          // Show quote dialog with animation
+          showDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (context) => DailyQuoteDialog(quote: quote),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error showing daily quote: $e');
+    }
+  }
+
   void _checkAppVersion() async {
     try {
       // VersionCheckService가 등록되어 있지 않다면 등록

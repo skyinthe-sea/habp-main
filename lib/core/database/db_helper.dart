@@ -25,7 +25,7 @@ class DBHelper {
     final String path = join(await getDatabasesPath(), 'finance_manager.db');
     return await openDatabase(
       path,
-      version: 6,  // 버전 6으로 업그레이드
+      version: 7,  // 버전 7으로 업그레이드 (명언 시스템 추가)
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -186,6 +186,301 @@ class DBHelper {
       ''');
       debugPrint('데이터베이스 업그레이드 완료: image_path 컬럼 추가');
     }
+
+    if (oldVersion < 7) {
+      // Version 7: 오늘의 명언 시스템 테이블 추가
+
+      // 명언 마스터 테이블 (200개의 명언)
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS daily_quote (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          quote_text TEXT NOT NULL,
+          author TEXT,
+          category TEXT,
+          created_at TEXT NOT NULL
+        )
+      ''');
+
+      // 사용자 명언 조회 기록 테이블
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_quote_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          quote_id INTEGER,
+          viewed_date TEXT NOT NULL,
+          is_collected INTEGER DEFAULT 1,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES user (id),
+          FOREIGN KEY (quote_id) REFERENCES daily_quote (id)
+        )
+      ''');
+
+      // 사용자 마지막 명언 표시 날짜 테이블
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_last_quote_date (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER UNIQUE,
+          last_shown_date TEXT NOT NULL,
+          last_quote_id INTEGER,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES user (id),
+          FOREIGN KEY (last_quote_id) REFERENCES daily_quote (id)
+        )
+      ''');
+
+      debugPrint('데이터베이스 업그레이드 완료: 오늘의 명언 테이블 추가');
+
+      // 200개의 명언 데이터 초기화
+      await _initializeQuotes(db);
+    }
+  }
+
+  /// Initialize 200 financial wisdom quotes
+  Future<void> _initializeQuotes(Database db) async {
+    final quotes = _getFinancialQuotes();
+    final now = DateTime.now().toIso8601String();
+
+    for (var quote in quotes) {
+      await db.insert('daily_quote', {
+        'quote_text': quote['text'],
+        'author': quote['author'],
+        'category': quote['category'],
+        'created_at': now,
+      });
+    }
+
+    debugPrint('✅ 200개의 명언 데이터 초기화 완료');
+  }
+
+  /// Get 200 curated financial wisdom quotes
+  List<Map<String, String>> _getFinancialQuotes() {
+    return [
+      // 저축과 절약 (40개)
+      {'text': '부자가 되는 비결은 많이 버는 것이 아니라, 적게 쓰는 것이다', 'author': '워렌 버핏', 'category': '저축'},
+      {'text': '작은 돈도 모으면 큰돈이 된다', 'author': '벤자민 프랭클린', 'category': '저축'},
+      {'text': '오늘의 절약이 내일의 여유를 만든다', 'author': '', 'category': '저축'},
+      {'text': '커피 한 잔 값도 10년이면 차 한 대 값', 'author': '', 'category': '저축'},
+      {'text': '필요와 욕구를 구분하는 것이 현명한 소비의 시작', 'author': '', 'category': '저축'},
+      {'text': '지출을 기록하는 습관이 당신의 재산을 지킨다', 'author': '', 'category': '저축'},
+      {'text': '한 달에 수입의 10%는 반드시 저축하라', 'author': '바빌론 부자들', 'category': '저축'},
+      {'text': '절약은 미덕이 아니라 생존 전략이다', 'author': '', 'category': '저축'},
+      {'text': '돈을 아끼는 것은 미래의 나에게 투자하는 것', 'author': '', 'category': '저축'},
+      {'text': '작은 새는 작은 둥지로도 충분하다', 'author': '', 'category': '저축'},
+
+      {'text': '절약한 돈은 벌어들인 돈이나 마찬가지다', 'author': '', 'category': '저축'},
+      {'text': '오늘 아낀 1만원은 내일의 10만원', 'author': '', 'category': '저축'},
+      {'text': '부자는 남는 돈을 쓰고, 가난한 사람은 쓰고 남는 돈을 저축한다', 'author': '워렌 버핏', 'category': '저축'},
+      {'text': '충동구매 3초만 참으면 평생 후회 안 합니다', 'author': '', 'category': '저축'},
+      {'text': '필요한 것과 원하는 것을 구분하세요', 'author': '', 'category': '저축'},
+      {'text': '세일이라고 다 사지 마세요, 안 쓰는 게 가장 큰 세일', 'author': '', 'category': '저축'},
+      {'text': '고정비를 줄이면 가계부가 편해진다', 'author': '', 'category': '저축'},
+      {'text': '구독 서비스, 정말 다 쓰고 계신가요?', 'author': '', 'category': '저축'},
+      {'text': '월급날 가장 먼저 나에게 월급을 주세요', 'author': '', 'category': '저축'},
+      {'text': '재테크의 첫걸음은 씀씀이 줄이기', 'author': '', 'category': '저축'},
+
+      {'text': '배달비도 모으면 여행경비가 됩니다', 'author': '', 'category': '저축'},
+      {'text': '브랜드 로고를 위해 돈을 쓰지 마세요', 'author': '', 'category': '저축'},
+      {'text': '싸다고 사면 결국 비싼 쇼핑', 'author': '', 'category': '저축'},
+      {'text': '가격표를 보기 전에 필요성을 생각하세요', 'author': '', 'category': '저축'},
+      {'text': '할인쿠폰보다 지출을 줄이는 게 먼저', 'author': '', 'category': '저축'},
+      {'text': '가계부를 쓰면 돈이 보인다', 'author': '', 'category': '저축'},
+      {'text': '지금 아끼는 작은 돈이 미래의 큰 자산', 'author': '', 'category': '저축'},
+      {'text': '편의점보다 마트가, 마트보다 집밥이 경제적', 'author': '', 'category': '저축'},
+      {'text': '택시 대신 대중교통, 작은 선택이 큰 차이', 'author': '', 'category': '저축'},
+      {'text': '명품 하나보다 미래의 여유가 더 멋지다', 'author': '', 'category': '저축'},
+
+      {'text': '오늘의 절약은 내일의 선택지를 넓혀준다', 'author': '', 'category': '저축'},
+      {'text': '돈을 아껴야 돈이 모인다', 'author': '', 'category': '저축'},
+      {'text': '부자의 첫 습관은 절약입니다', 'author': '', 'category': '저축'},
+      {'text': '지출을 통제할 수 없으면 수입도 의미없다', 'author': '', 'category': '저축'},
+      {'text': '작은 돈을 무시하면 큰돈도 모을 수 없다', 'author': '', 'category': '저축'},
+      {'text': '매일 천원씩이면 1년에 36만원', 'author': '', 'category': '저축'},
+      {'text': '지출 습관이 당신의 미래를 결정한다', 'author': '', 'category': '저축'},
+      {'text': '카드보다 현금, 눈에 보여야 아낄 수 있다', 'author': '', 'category': '저축'},
+      {'text': '욕망을 통제하는 자가 돈을 통제한다', 'author': '', 'category': '저축'},
+      {'text': '알뜰한 소비가 부자의 시작', 'author': '', 'category': '저축'},
+
+      // 투자와 재테크 (40개)
+      {'text': '돈을 위해 일하지 말고, 돈이 당신을 위해 일하게 하라', 'author': '로버트 기요사키', 'category': '투자'},
+      {'text': '가장 좋은 투자는 자기 자신에게 하는 투자다', 'author': '워렌 버핏', 'category': '투자'},
+      {'text': '시간은 훌륭한 투자자의 친구이다', 'author': '워렌 버핏', 'category': '투자'},
+      {'text': '계란을 한 바구니에 담지 마라', 'author': '전통 속담', 'category': '투자'},
+      {'text': '투자의 핵심은 인내심이다', 'author': '', 'category': '투자'},
+      {'text': '복리의 마법을 믿어라', 'author': '알버트 아인슈타인', 'category': '투자'},
+      {'text': '오늘 심은 씨앗이 내일의 숲이 된다', 'author': '', 'category': '투자'},
+      {'text': '모르는 것에 투자하지 마라', 'author': '피터 린치', 'category': '투자'},
+      {'text': '시장을 이기려 하지 말고 시장과 함께 가라', 'author': '', 'category': '투자'},
+      {'text': '장기 투자가 가장 안전한 투자', 'author': '', 'category': '투자'},
+
+      {'text': '주식은 10년 가졌을 때 의미가 있다', 'author': '', 'category': '투자'},
+      {'text': '리스크를 이해하고 관리하는 것이 투자', 'author': '', 'category': '투자'},
+      {'text': '변동성은 위험이 아니라 기회다', 'author': '', 'category': '투자'},
+      {'text': '투자 원칙을 지키는 것이 수익을 지킨다', 'author': '', 'category': '투자'},
+      {'text': '감정이 아닌 데이터로 투자하라', 'author': '', 'category': '투자'},
+      {'text': '시장이 두려울 때가 기회다', 'author': '', 'category': '투자'},
+      {'text': '남이 탐욕적일 때 두려워하고, 남이 두려워할 때 탐욕적이 되라', 'author': '워렌 버핏', 'category': '투자'},
+      {'text': '분산투자는 무지에 대한 보호책', 'author': '', 'category': '투자'},
+      {'text': '투자 수익률보다 중요한 것은 원금 보존', 'author': '', 'category': '투자'},
+      {'text': '천천히 부자가 되려는 사람은 없지만, 빨리 가난해지는 사람은 많다', 'author': '', 'category': '투자'},
+
+      {'text': '재테크는 마라톤, 단거리 달리기가 아니다', 'author': '', 'category': '투자'},
+      {'text': '수익보다 손실 방지가 먼저', 'author': '', 'category': '투자'},
+      {'text': '투자 전에 목표를 정하라', 'author': '', 'category': '투자'},
+      {'text': '부동산은 위치, 주식은 기업', 'author': '', 'category': '투자'},
+      {'text': '경제 공부가 최고의 재테크', 'author': '', 'category': '투자'},
+      {'text': '금융문맹은 현대의 무기가 아니다', 'author': '', 'category': '투자'},
+      {'text': '자산배분이 수익의 90%를 결정한다', 'author': '', 'category': '투자'},
+      {'text': '싸게 사서 비싸게 팔아라', 'author': '', 'category': '투자'},
+      {'text': '시장을 예측하지 말고 대응하라', 'author': '', 'category': '투자'},
+      {'text': '투자는 지식에서 시작된다', 'author': '', 'category': '투자'},
+
+      {'text': '원금을 잃지 않는 것이 첫 번째 규칙', 'author': '', 'category': '투자'},
+      {'text': '고수익에는 항상 고위험이 따른다', 'author': '', 'category': '투자'},
+      {'text': '재테크 공부에 투자한 시간은 배신하지 않는다', 'author': '', 'category': '투자'},
+      {'text': '빚내서 투자하지 마라', 'author': '', 'category': '투자'},
+      {'text': '투자도 연습이 필요하다', 'author': '', 'category': '투자'},
+      {'text': '배당주는 월급쟁이의 친구', 'author': '', 'category': '투자'},
+      {'text': '물가상승률을 이기는 것이 진짜 수익', 'author': '', 'category': '투자'},
+      {'text': '복리는 세상에서 가장 강력한 힘', 'author': '', 'category': '투자'},
+      {'text': '손절매도 투자 전략이다', 'author': '', 'category': '투자'},
+      {'text': '투자는 확률게임, 리스크를 관리하라', 'author': '', 'category': '투자'},
+
+      // 목표와 계획 (40개)
+      {'text': '목표가 없는 배는 어디로 가든 순풍이다', 'author': '', 'category': '목표'},
+      {'text': '계획 없는 소비는 후회로 돌아온다', 'author': '', 'category': '목표'},
+      {'text': '목표를 적으면 실현 가능성이 10배 높아진다', 'author': '', 'category': '목표'},
+      {'text': '재정 목표가 명확해야 방향이 보인다', 'author': '', 'category': '목표'},
+      {'text': '5년 후를 위해 오늘 계획하라', 'author': '', 'category': '목표'},
+      {'text': '꿈은 목표가 있는 계획이다', 'author': '', 'category': '목표'},
+      {'text': '작은 목표부터 달성하며 나아가라', 'author': '', 'category': '목표'},
+      {'text': '구체적인 목표가 실천을 만든다', 'author': '', 'category': '목표'},
+      {'text': '재정 독립은 하루아침에 이루어지지 않는다', 'author': '', 'category': '목표'},
+      {'text': '매달 목표 지출을 정하고 지켜라', 'author': '', 'category': '목표'},
+
+      {'text': '지출 계획 없이는 저축도 없다', 'author': '', 'category': '목표'},
+      {'text': '가계부는 목표 달성의 지도', 'author': '', 'category': '목표'},
+      {'text': '단기 목표와 장기 목표를 함께 세워라', 'author': '', 'category': '목표'},
+      {'text': '경제적 자유는 목표가 아니라 과정', 'author': '', 'category': '목표'},
+      {'text': '매월 수입과 지출을 점검하라', 'author': '', 'category': '목표'},
+      {'text': '목표 없는 저축은 통장에 갇힌 돈', 'author': '', 'category': '목표'},
+      {'text': '올해의 재정 목표를 적어보세요', 'author': '', 'category': '목표'},
+      {'text': '구체적이고 측정 가능한 목표를 세우세요', 'author': '', 'category': '목표'},
+      {'text': '계획대로 안 되면 계획을 수정하라', 'author': '', 'category': '목표'},
+      {'text': '돈의 쓰임을 정하면 관리가 쉬워진다', 'author': '', 'category': '목표'},
+
+      {'text': '비상금 목표부터 달성하세요', 'author': '', 'category': '목표'},
+      {'text': '월급의 50%는 고정지출, 30%는 변동지출, 20%는 저축', 'author': '', 'category': '목표'},
+      {'text': '목표를 달성할 때마다 자신을 칭찬하라', 'author': '', 'category': '목표'},
+      {'text': '재무 목표는 인생 목표와 연결되어야 한다', 'author': '', 'category': '목표'},
+      {'text': '매년 순자산을 체크하라', 'author': '', 'category': '목표'},
+      {'text': '은퇴 계획은 일찍 시작할수록 좋다', 'author': '', 'category': '목표'},
+      {'text': '내년의 나를 위해 오늘 계획하라', 'author': '', 'category': '목표'},
+      {'text': '재정 목표는 현실적이어야 한다', 'author': '', 'category': '목표'},
+      {'text': '목표 달성을 시각화하면 실현된다', 'author': '', 'category': '목표'},
+      {'text': '매달 예산을 세우고 점검하라', 'author': '', 'category': '목표'},
+
+      {'text': '작은 성취가 모여 큰 목표가 된다', 'author': '', 'category': '목표'},
+      {'text': '재정 계획 없이 부자가 된 사람은 없다', 'author': '', 'category': '목표'},
+      {'text': '목표를 가족과 공유하면 동기부여가 된다', 'author': '', 'category': '목표'},
+      {'text': '올해의 재무 목표를 점검할 시간', 'author': '', 'category': '목표'},
+      {'text': '계획은 언제나 조정 가능하다', 'author': '', 'category': '목표'},
+      {'text': '목표를 쪼개면 실천이 쉬워진다', 'author': '', 'category': '목표'},
+      {'text': '재정 건강도 건강검진처럼 주기적 점검이 필요', 'author': '', 'category': '목표'},
+      {'text': '지출 목표를 정하면 낭비가 줄어든다', 'author': '', 'category': '목표'},
+      {'text': '매주 재정 상태를 확인하는 습관', 'author': '', 'category': '목표'},
+      {'text': '목표는 동기부여의 원천', 'author': '', 'category': '목표'},
+
+      // 습관과 마인드 (40개)
+      {'text': '부자가 되는 것은 습관의 문제다', 'author': '', 'category': '습관'},
+      {'text': '작은 습관이 큰 부를 만든다', 'author': '', 'category': '습관'},
+      {'text': '매일 가계부 쓰는 습관이 재산을 지킨다', 'author': '', 'category': '습관'},
+      {'text': '돈 관리는 의지가 아니라 시스템', 'author': '', 'category': '습관'},
+      {'text': '좋은 습관은 복리로 작용한다', 'author': '', 'category': '습관'},
+      {'text': '지출을 기록하는 순간 통제가 시작된다', 'author': '', 'category': '습관'},
+      {'text': '아침에 일어나자마자 지출을 점검하세요', 'author': '', 'category': '습관'},
+      {'text': '매일 조금씩이 1년이면 큰 차이', 'author': '', 'category': '습관'},
+      {'text': '소비 전 3초만 생각하는 습관', 'author': '', 'category': '습관'},
+      {'text': '부자의 습관을 배우고 따라하라', 'author': '', 'category': '습관'},
+
+      {'text': '돈을 대하는 태도가 인생을 바꾼다', 'author': '', 'category': '습관'},
+      {'text': '감사하는 마음이 풍요를 부른다', 'author': '', 'category': '습관'},
+      {'text': '지금 가진 것에 만족하며 미래를 준비하라', 'author': '', 'category': '습관'},
+      {'text': '비교하지 말고 자신의 속도로 가라', 'author': '', 'category': '습관'},
+      {'text': '돈보다 중요한 것은 건강과 관계', 'author': '', 'category': '습관'},
+      {'text': '행복은 돈으로 살 수 없지만 선택지를 준다', 'author': '', 'category': '습관'},
+      {'text': '부자처럼 생각하고 행동하라', 'author': '', 'category': '습관'},
+      {'text': '적게 쓰는 습관이 많이 버는 것보다 중요', 'author': '', 'category': '습관'},
+      {'text': '돈 걱정 없는 삶을 위해 오늘 노력하라', 'author': '', 'category': '습관'},
+      {'text': '재테크도 꾸준함이 답이다', 'author': '', 'category': '습관'},
+
+      {'text': '하루 10분 재정 점검의 힘', 'author': '', 'category': '습관'},
+      {'text': '작은 사치가 큰 빚이 된다', 'author': '', 'category': '습관'},
+      {'text': '부자는 시간을 소중히 여긴다', 'author': '', 'category': '습관'},
+      {'text': '인내심이 부를 만든다', 'author': '', 'category': '습관'},
+      {'text': '매일 조금씩 발전하는 재정 습관', 'author': '', 'category': '습관'},
+      {'text': '돈 쓰는 습관을 관찰하라', 'author': '', 'category': '습관'},
+      {'text': '충동을 통제하는 능력이 부의 차이', 'author': '', 'category': '습관'},
+      {'text': '부자의 마인드는 배울 수 있다', 'author': '', 'category': '습관'},
+      {'text': '돈에 대한 스트레스는 관리로 줄어든다', 'author': '', 'category': '습관'},
+      {'text': '재정 건강은 습관에서 시작된다', 'author': '', 'category': '습관'},
+
+      {'text': '돈을 존중하면 돈도 당신을 존중한다', 'author': '', 'category': '습관'},
+      {'text': '가계부는 거짓말을 하지 않는다', 'author': '', 'category': '습관'},
+      {'text': '돈 관리는 자기 관리의 일부', 'author': '', 'category': '습관'},
+      {'text': '부자는 욕망을 조절할 줄 안다', 'author': '', 'category': '습관'},
+      {'text': '매일 감사일기와 함께 가계부를', 'author': '', 'category': '습관'},
+      {'text': '작은 변화가 큰 결과를 만든다', 'author': '', 'category': '습관'},
+      {'text': '돈 버는 것보다 지키는 것이 더 어렵다', 'author': '', 'category': '습관'},
+      {'text': '일상의 선택이 재정을 결정한다', 'author': '', 'category': '습관'},
+      {'text': '절약은 짠돌이가 아니라 현명함', 'author': '', 'category': '습관'},
+      {'text': '오늘의 선택이 10년 후를 만든다', 'author': '', 'category': '습관'},
+
+      // 빚과 신용 (20개)
+      {'text': '빚은 미래의 수입을 미리 쓰는 것', 'author': '', 'category': '빚'},
+      {'text': '이자는 복리로 늘어난다', 'author': '', 'category': '빚'},
+      {'text': '빚 청산이 최고의 투자', 'author': '', 'category': '빚'},
+      {'text': '신용카드는 도구지 돈이 아니다', 'author': '', 'category': '빚'},
+      {'text': '할부는 당장은 편하지만 결국 비싸다', 'author': '', 'category': '빚'},
+      {'text': '대출 전에 세 번 생각하라', 'author': '', 'category': '빚'},
+      {'text': '좋은 빚과 나쁜 빚을 구분하라', 'author': '', 'category': '빚'},
+      {'text': '신용점수는 재정 건강의 지표', 'author': '', 'category': '빚'},
+      {'text': '빚 없는 삶이 진정한 자유', 'author': '', 'category': '빚'},
+      {'text': '이자보다 원금부터 갚아라', 'author': '', 'category': '빚'},
+
+      {'text': '빚은 눈덩이처럼 불어난다', 'author': '', 'category': '빚'},
+      {'text': '카드 돌려막기는 파산의 지름길', 'author': '', 'category': '빚'},
+      {'text': '고금리 대출부터 상환하라', 'author': '', 'category': '빚'},
+      {'text': '빚을 내서 투자하지 마라', 'author': '', 'category': '빚'},
+      {'text': '신용불량은 인생불량', 'author': '', 'category': '빚'},
+      {'text': '빚 청산 계획을 세우고 실천하라', 'author': '', 'category': '빚'},
+      {'text': '최소 납입금만 내면 평생 빚쟁이', 'author': '', 'category': '빚'},
+      {'text': '신용은 한 번 잃으면 회복이 어렵다', 'author': '', 'category': '빚'},
+      {'text': '필요 없는 카드는 해지하라', 'author': '', 'category': '빚'},
+      {'text': '빚 없는 통장이 최고의 재산', 'author': '', 'category': '빚'},
+
+      // 경제 지식 (20개)
+      {'text': '인플레이션은 침묵의 도둑', 'author': '', 'category': '지식'},
+      {'text': '금리를 이해하면 경제가 보인다', 'author': '', 'category': '지식'},
+      {'text': '세금도 재정 계획의 일부', 'author': '', 'category': '지식'},
+      {'text': '경제 뉴스를 읽는 습관을 들여라', 'author': '', 'category': '지식'},
+      {'text': '복리 계산법을 이해하라', 'author': '', 'category': '지식'},
+      {'text': '환율 변동도 투자 기회', 'author': '', 'category': '지식'},
+      {'text': '국내 경제와 세계 경제는 연결되어 있다', 'author': '', 'category': '지식'},
+      {'text': '경제 공부는 평생 자산', 'author': '', 'category': '지식'},
+      {'text': '기본적인 금융 용어부터 배우라', 'author': '', 'category': '지식'},
+      {'text': '투자 전에 반드시 공부하라', 'author': '', 'category': '지식'},
+
+      {'text': '재무제표를 읽을 줄 알아야 투자할 수 있다', 'author': '', 'category': '지식'},
+      {'text': '세금 절약도 수익이다', 'author': '', 'category': '지식'},
+      {'text': '연금 시스템을 이해하라', 'author': '', 'category': '지식'},
+      {'text': '보험은 필요한 만큼만', 'author': '', 'category': '지식'},
+      {'text': '금융사기는 공부로 예방한다', 'author': '', 'category': '지식'},
+      {'text': '경제 지표를 읽는 법을 배워라', 'author': '', 'category': '지식'},
+      {'text': '재테크 책 한 권이 수백만원의 가치', 'author': '', 'category': '지식'},
+      {'text': '금융 문맹에서 벗어나라', 'author': '', 'category': '지식'},
+      {'text': '경제 상식이 부를 만든다', 'author': '', 'category': '지식'},
+      {'text': '모르는 상품에 투자하지 마라', 'author': '', 'category': '지식'},
+    ];
   }
 
   // 데이터베이스 테이블 생성
