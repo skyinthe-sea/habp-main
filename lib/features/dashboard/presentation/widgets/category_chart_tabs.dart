@@ -104,48 +104,106 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 2026 트렌디 헤더 섹션
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '카테고리별 내역',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: themeController.textPrimaryColor,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            themeController.primaryColor,
+                            themeController.primaryColor.withOpacity(0.5),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '카테고리별 내역',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: themeController.textPrimaryColor,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  '해당 월',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: themeController.textSecondaryColor,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: themeController.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: themeController.primaryColor.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    '해당 월',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: themeController.primaryColor,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
-          // Tab bar for selecting category type
-          TabBar(
-            controller: _tabController,
-            labelColor: themeController.isDarkMode 
-                ? _getTabColorForDarkMode(_tabController.index)
-                : _getTabColorForLightMode(_tabController.index),
-            unselectedLabelColor: themeController.textSecondaryColor,
-            indicatorColor: themeController.isDarkMode
-                ? _getTabColorForDarkMode(_tabController.index)
-                : _getTabColorForLightMode(_tabController.index),
-            indicatorSize: TabBarIndicatorSize.label,
-            labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            unselectedLabelStyle: const TextStyle(fontSize: 12),
-            tabs: _tabs.map((title) => Tab(text: title)).toList(),
-            onTap: (index) {
-              // Update indicator color when tab changes
-              setState(() {});
-            },
+          // 2026 트렌디 탭 바
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: themeController.isDarkMode
+                  ? Colors.grey.shade800.withOpacity(0.5)
+                  : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Colors.white,
+              unselectedLabelColor: themeController.textSecondaryColor,
+              indicator: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    _getTabColorForLightMode(_tabController.index),
+                    _getTabColorForLightMode(_tabController.index).withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: _getTabColorForLightMode(_tabController.index).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              tabs: _tabs.map((title) => Tab(
+                height: 36,
+                child: Text(title),
+              )).toList(),
+              onTap: (index) {
+                setState(() {});
+              },
+            ),
           ),
 
           // Swipeable chart container
@@ -284,16 +342,31 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     }
 
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(10.0),
       child: Container(
         decoration: BoxDecoration(
+          color: themeController.cardColor,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: themeController.isDarkMode
-                ? Colors.grey.shade700
-                : Colors.grey.shade100, 
-            width: 1,
+            color: baseColor.withOpacity(themeController.isDarkMode ? 0.2 : 0.1),
+            width: 1.5,
           ),
-          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: baseColor.withOpacity(0.08),
+              blurRadius: 15,
+              spreadRadius: 0,
+              offset: const Offset(0, 5),
+            ),
+            BoxShadow(
+              color: themeController.isDarkMode
+                  ? Colors.black.withOpacity(0.2)
+                  : Colors.grey.withOpacity(0.05),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           children: [
