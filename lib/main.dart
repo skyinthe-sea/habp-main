@@ -8,6 +8,7 @@ import 'core/presentation/pages/main_page.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/event_bus_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/database_integrity_service.dart'; // 데이터베이스 무결성 검사 서비스
 import 'core/utils/super_error_silencer.dart'; // 강력한 에러 무시 처리기 추가
 import 'core/controllers/theme_controller.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
@@ -23,6 +24,10 @@ void main() async {
   // 에러 처리 설정 - 가장 강력한 방법으로 에러 무시
   // 개발/릴리즈 환경에 따라 자동으로 적절한 에러 처리 방식 적용
   SuperErrorSilencer().silenceAllErrors();
+
+  // 데이터베이스 무결성 검사 및 복구
+  // 앱 업데이트 시 누락된 테이블/데이터를 자동으로 생성합니다
+  await DatabaseIntegrityService().validateAndRepair();
 
   // Google 모바일 광고 SDK 초기화
   await MobileAds.instance.initialize();
