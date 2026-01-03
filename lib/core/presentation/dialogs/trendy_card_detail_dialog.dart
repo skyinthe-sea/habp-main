@@ -117,7 +117,7 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
     super.dispose();
   }
 
-  // 카드 타입별 설정
+  // 카드 타입별 설정 - 파스텔 어두운 톤
   _CardConfig get _cardConfig {
     switch (widget.cardType) {
       case 'income':
@@ -126,11 +126,11 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
           subtitle: 'Income Analysis',
           icon: Icons.trending_up_rounded,
           gradientColors: [
-            const Color(0xFF00C853),
-            const Color(0xFF69F0AE),
+            const Color(0xFF4A9F7E), // 차분한 세이지 그린
+            const Color(0xFF6BB99A),
           ],
-          accentColor: const Color(0xFF00C853),
-          bgPatternColor: const Color(0xFF00E676),
+          accentColor: const Color(0xFF4A9F7E),
+          bgPatternColor: const Color(0xFF5DAA8A),
         );
       case 'expense':
         return _CardConfig(
@@ -138,11 +138,11 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
           subtitle: 'Expense Analysis',
           icon: Icons.trending_down_rounded,
           gradientColors: [
-            const Color(0xFFFF5252),
-            const Color(0xFFFF8A80),
+            const Color(0xFFCF7B7B), // 차분한 로즈 핑크
+            const Color(0xFFE0A3A3),
           ],
-          accentColor: const Color(0xFFFF5252),
-          bgPatternColor: const Color(0xFFFF6E6E),
+          accentColor: const Color(0xFFCF7B7B),
+          bgPatternColor: const Color(0xFFD88E8E),
         );
       case 'assets':
         return _CardConfig(
@@ -150,11 +150,11 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
           subtitle: 'Investment Analysis',
           icon: Icons.account_balance_rounded,
           gradientColors: [
-            const Color(0xFF2979FF),
-            const Color(0xFF82B1FF),
+            const Color(0xFF5B7DB1), // 차분한 스틸 블루
+            const Color(0xFF8AA4C8),
           ],
-          accentColor: const Color(0xFF2979FF),
-          bgPatternColor: const Color(0xFF448AFF),
+          accentColor: const Color(0xFF5B7DB1),
+          bgPatternColor: const Color(0xFF7090BC),
         );
       case 'balance':
         return _CardConfig(
@@ -162,11 +162,11 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
           subtitle: 'Balance Analysis',
           icon: Icons.account_balance_wallet_rounded,
           gradientColors: [
-            const Color(0xFF7C4DFF),
-            const Color(0xFFB388FF),
+            const Color(0xFF8B7BAE), // 차분한 라벤더
+            const Color(0xFFA99BC4),
           ],
-          accentColor: const Color(0xFF7C4DFF),
-          bgPatternColor: const Color(0xFF9575FF),
+          accentColor: const Color(0xFF8B7BAE),
+          bgPatternColor: const Color(0xFF9A8AB9),
         );
       default:
         return _CardConfig(
@@ -468,19 +468,19 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
                 icon: Icons.calendar_today_rounded,
                 title: '평균 일일 소득',
                 value: '₩${_formatCurrency(monthlyIncome / daysInMonth)}',
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF5A9A82), // 차분한 민트
               ),
               _InsightData(
                 icon: Icons.shield_rounded,
                 title: '소득 안정성',
                 value: incomeChange.abs() < 10 ? '안정적' : '변동 있음',
-                color: const Color(0xFF3B82F6),
+                color: const Color(0xFF6B8FC7), // 차분한 블루
               ),
               _InsightData(
                 icon: Icons.savings_rounded,
                 title: '권장 저축률',
                 value: '30% (₩${_formatCurrency(monthlyIncome * 0.3)})',
-                color: const Color(0xFFF59E0B),
+                color: const Color(0xFFC9A45E), // 차분한 머스타드
               ),
             ],
           ),
@@ -515,19 +515,19 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
                 icon: Icons.calendar_today_rounded,
                 title: '평균 일일 지출',
                 value: '₩${_formatCurrency(monthlyExpense / daysInMonth)}',
-                color: const Color(0xFFEF4444),
+                color: const Color(0xFFC77B7B), // 차분한 로즈
               ),
               _InsightData(
                 icon: Icons.pie_chart_rounded,
                 title: '소득 대비 지출률',
                 value: '${expenseRatio.toStringAsFixed(1)}%',
-                color: const Color(0xFF8B5CF6),
+                color: const Color(0xFF9085B0), // 차분한 라벤더
               ),
               _InsightData(
                 icon: Icons.lightbulb_rounded,
                 title: '절약 상태',
                 value: expenseChange > 0 ? '지출 증가 주의!' : '잘하고 있어요!',
-                color: expenseChange > 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                color: expenseChange > 0 ? const Color(0xFFC9A45E) : const Color(0xFF5A9A82),
               ),
             ],
           ),
@@ -559,19 +559,19 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
                 icon: Icons.trending_up_rounded,
                 title: '투자 비율',
                 value: '${investRatio.toStringAsFixed(1)}%',
-                color: const Color(0xFF2979FF),
+                color: const Color(0xFF6B8FC7), // 차분한 블루
               ),
               _InsightData(
                 icon: Icons.flag_rounded,
                 title: '권장 투자율',
                 value: '소득의 20-30%',
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF5A9A82), // 차분한 민트
               ),
               _InsightData(
                 icon: Icons.assessment_rounded,
                 title: '투자 상태',
                 value: isGoodRatio ? '목표 달성!' : '더 투자해보세요!',
-                color: isGoodRatio ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                color: isGoodRatio ? const Color(0xFF5A9A82) : const Color(0xFFC9A45E),
               ),
             ],
           ),
@@ -607,13 +607,13 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
                 icon: Icons.savings_rounded,
                 title: '저축률',
                 value: '${savingsRate.toStringAsFixed(1)}%',
-                color: const Color(0xFF2979FF),
+                color: const Color(0xFF6B8FC7), // 차분한 블루
               ),
               _InsightData(
                 icon: Icons.account_balance_wallet_rounded,
                 title: '재정 상태',
                 value: isPositive ? '흑자 운영 중' : '적자 주의',
-                color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                color: isPositive ? const Color(0xFF5A9A82) : const Color(0xFFC77B7B),
               ),
               _InsightData(
                 icon: Icons.lightbulb_rounded,
@@ -624,10 +624,10 @@ class _TrendyCardDetailDialogState extends State<TrendyCardDetailDialog>
                         ? '저축을 늘려보세요'
                         : '지출 관리 필요',
                 color: isGoodSavings
-                    ? const Color(0xFF10B981)
+                    ? const Color(0xFF5A9A82)
                     : isPositive
-                        ? const Color(0xFFF59E0B)
-                        : const Color(0xFFEF4444),
+                        ? const Color(0xFFC9A45E)
+                        : const Color(0xFFC77B7B),
               ),
             ],
           ),
