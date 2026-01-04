@@ -1,9 +1,9 @@
 // lib/features/dashboard/presentation/widgets/monthly_summary_card.dart
 import 'dart:math' as dart_math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/controllers/theme_controller.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/presentation/dialogs/trendy_card_detail_dialog.dart';
 import '../presentation/dashboard_controller.dart';
 
@@ -398,176 +398,127 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> with TickerProv
         ? '-₩${_formatAmount(displayAmount.abs())}'
         : '₩${_formatAmount(displayAmount)}';
 
-    // 카드 타입에 따른 색상 설정
-    Color textColor;
+    // 2026 트렌디한 색상 설정 (더 부드럽고 세련된 색상)
+    Color accentColor;
     Color iconBgColor;
-    Color iconColor;
+    Color textColor;
+    List<Color> gradientColors;
 
     if (themeController.isDarkMode) {
       switch (cardType) {
         case 'income':
-          textColor = themeController.incomeColor;
-          iconBgColor = themeController.incomeColor.withOpacity(0.2);
-          iconColor = themeController.incomeColor;
+          accentColor = const Color(0xFF5BC4A8); // 부드러운 민트
+          iconBgColor = accentColor.withOpacity(0.15);
+          textColor = accentColor;
+          gradientColors = [
+            Colors.white.withOpacity(0.06),
+            accentColor.withOpacity(0.03),
+          ];
           break;
         case 'expense':
-          textColor = themeController.expenseColor;
-          iconBgColor = themeController.expenseColor.withOpacity(0.2);
-          iconColor = themeController.expenseColor;
+          accentColor = const Color(0xFFE88B8B); // 부드러운 코랄
+          iconBgColor = accentColor.withOpacity(0.15);
+          textColor = accentColor;
+          gradientColors = [
+            Colors.white.withOpacity(0.06),
+            accentColor.withOpacity(0.03),
+          ];
           break;
         case 'assets':
-          textColor = themeController.financeColor;
-          iconBgColor = themeController.financeColor.withOpacity(0.2);
-          iconColor = themeController.financeColor;
+          accentColor = const Color(0xFF7BA3D8); // 부드러운 블루
+          iconBgColor = accentColor.withOpacity(0.15);
+          textColor = accentColor;
+          gradientColors = [
+            Colors.white.withOpacity(0.06),
+            accentColor.withOpacity(0.03),
+          ];
           break;
         case 'balance':
-          textColor = amount >= 0 ? themeController.incomeColor : themeController.expenseColor;
-          iconBgColor = Colors.grey.shade800;
-          iconColor = Colors.grey.shade400;
+          accentColor = amount >= 0
+              ? const Color(0xFF5BC4A8)
+              : const Color(0xFFE88B8B);
+          iconBgColor = Colors.grey.shade700.withOpacity(0.5);
+          textColor = accentColor;
+          gradientColors = [
+            Colors.white.withOpacity(0.06),
+            Colors.white.withOpacity(0.02),
+          ];
           break;
         default:
-          textColor = Colors.grey.shade400;
+          accentColor = Colors.grey.shade400;
           iconBgColor = Colors.grey.shade800;
-          iconColor = Colors.grey.shade400;
+          textColor = Colors.grey.shade400;
+          gradientColors = [
+            Colors.white.withOpacity(0.06),
+            Colors.white.withOpacity(0.02),
+          ];
       }
     } else {
       switch (cardType) {
         case 'income':
-          textColor = themeController.incomeColor;
-          iconBgColor = themeController.incomeColor.withOpacity(0.1);
-          iconColor = themeController.incomeColor;
+          accentColor = const Color(0xFF2EAA87); // 세련된 그린
+          iconBgColor = accentColor.withOpacity(0.1);
+          textColor = accentColor;
+          gradientColors = [
+            Colors.white,
+            accentColor.withOpacity(0.04),
+          ];
           break;
         case 'expense':
-          textColor = themeController.expenseColor;
-          iconBgColor = themeController.expenseColor.withOpacity(0.1);
-          iconColor = themeController.expenseColor;
+          accentColor = const Color(0xFFE57373); // 부드러운 레드
+          iconBgColor = accentColor.withOpacity(0.1);
+          textColor = accentColor;
+          gradientColors = [
+            Colors.white,
+            accentColor.withOpacity(0.04),
+          ];
           break;
         case 'assets':
-          textColor = themeController.financeColor;
-          iconBgColor = themeController.financeColor.withOpacity(0.1);
-          iconColor = themeController.financeColor;
+          accentColor = const Color(0xFF5B8BD8); // 세련된 블루
+          iconBgColor = accentColor.withOpacity(0.1);
+          textColor = accentColor;
+          gradientColors = [
+            Colors.white,
+            accentColor.withOpacity(0.04),
+          ];
           break;
         case 'balance':
-          textColor = amount >= 0 ? themeController.incomeColor : themeController.expenseColor;
-          iconBgColor = const Color(0xFFF5F5F5);
-          iconColor = Colors.grey;
+          accentColor = amount >= 0
+              ? const Color(0xFF2EAA87)
+              : const Color(0xFFE57373);
+          iconBgColor = Colors.grey.shade100;
+          textColor = accentColor;
+          gradientColors = [
+            Colors.white,
+            Colors.grey.shade50,
+          ];
           break;
         default:
-          textColor = Colors.grey.shade800;
+          accentColor = Colors.grey.shade600;
           iconBgColor = Colors.grey.shade100;
-          iconColor = Colors.grey;
+          textColor = Colors.grey.shade600;
+          gradientColors = [
+            Colors.white,
+            Colors.grey.shade50,
+          ];
       }
     }
 
-    // Wrap with AnimatedBuilder for scale animation (only for income, expense, assets)
-    Widget cardWidget = Container(
-      width: double.infinity,
-      height: 80, // 고정된 높이로 모든 카드 통일
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: themeController.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: themeController.isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // 제목과 아이콘을 한 줄에
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: themeController.textSecondaryColor,
-                  fontSize: 11,
-                ),
-              ),
-              Container(
-                width: 24, // 더 작은 아이콘
-                height: 24,
-                decoration: BoxDecoration(
-                  color: iconBgColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  iconData,
-                  color: iconColor,
-                  size: 14,
-                ),
-              ),
-            ],
-          ),
-
-          // 금액 - 애니메이션 적용
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: [
-                // 숫자만 애니메이션 (카드 전체가 아님)
-                if (scaleAnim != null && cardType != 'balance')
-                  AnimatedBuilder(
-                    animation: scaleAnim,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: scaleAnim!.value,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          formattedAmount,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                else
-                  Text(
-                    formattedAmount,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                if (hasPercentage && percentChange != 0.0)
-                  Container(
-                    margin: const EdgeInsets.only(left: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: isPositiveTrend
-                          ? (themeController.isDarkMode ? AppColors.darkSuccess.withOpacity(0.2) : Colors.green.shade50)
-                          : (themeController.isDarkMode ? AppColors.darkError.withOpacity(0.2) : Colors.red.shade50),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '${percentChange > 0 ? '+' : ''}${percentChange.toStringAsFixed(1)}%',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: isPositiveTrend
-                            ? (themeController.isDarkMode ? AppColors.darkSuccess : Colors.green.shade700)
-                            : (themeController.isDarkMode ? AppColors.darkError : Colors.red.shade700),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    // 2026 트렌디한 카드 위젯 (글라스모피즘 + 미세 그라데이션)
+    Widget cardWidget = _TrendySummaryCardWidget(
+      title: title,
+      formattedAmount: formattedAmount,
+      percentChange: percentChange,
+      hasPercentage: hasPercentage,
+      isPositiveTrend: isPositiveTrend,
+      iconData: iconData,
+      cardType: cardType,
+      accentColor: accentColor,
+      iconBgColor: iconBgColor,
+      textColor: textColor,
+      gradientColors: gradientColors,
+      themeController: themeController,
+      scaleAnim: scaleAnim,
     );
 
     // 파티클 효과를 위해 Stack으로 감싸기
@@ -579,16 +530,16 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> with TickerProv
           cardWidget,
           // 컨페티 효과 - 숫자 주변에서 터지는 조각들 (8~10개)
           ...List.generate(10, (index) {
-            // 컨페티 색상들 (밝고 화려한 색상)
+            // 컨페티 색상들 (더 부드러운 파스텔 색상)
             final confettiColors = [
-              const Color(0xFFFFD700), // 금색
-              const Color(0xFFFF6B9D), // 핑크
-              const Color(0xFF4ECDC4), // 민트
-              const Color(0xFFFFA07A), // 코랄
-              const Color(0xFF98D8C8), // 연두
-              const Color(0xFFB4A7D6), // 보라
-              const Color(0xFFFFE66D), // 노랑
-              const Color(0xFF95E1D3), // 청록
+              const Color(0xFFFFD89B), // 부드러운 금색
+              const Color(0xFFFFB5C5), // 부드러운 핑크
+              const Color(0xFF7ED4C8), // 부드러운 민트
+              const Color(0xFFFFB78C), // 부드러운 코랄
+              const Color(0xFFA8E6CF), // 부드러운 연두
+              const Color(0xFFC5B8E8), // 부드러운 보라
+              const Color(0xFFFFF3A3), // 부드러운 노랑
+              const Color(0xFFAAE3D8), // 부드러운 청록
             ];
 
             // 각도별로 퍼지는 위치 (숫자 중심 기준)
@@ -624,7 +575,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> with TickerProv
 
                 return Positioned(
                   left: 40 + offsetX,
-                  top: 35 + offsetY,
+                  top: 40 + offsetY,
                   child: Transform.rotate(
                     angle: rotation,
                     child: Opacity(
@@ -718,6 +669,262 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> with TickerProv
         controller: widget.controller,
       ),
       barrierDismissible: true,
+    );
+  }
+}
+
+// 2026 트렌디한 서머리 카드 위젯
+class _TrendySummaryCardWidget extends StatefulWidget {
+  final String title;
+  final String formattedAmount;
+  final double percentChange;
+  final bool hasPercentage;
+  final bool isPositiveTrend;
+  final IconData iconData;
+  final String cardType;
+  final Color accentColor;
+  final Color iconBgColor;
+  final Color textColor;
+  final List<Color> gradientColors;
+  final ThemeController themeController;
+  final Animation<double>? scaleAnim;
+
+  const _TrendySummaryCardWidget({
+    required this.title,
+    required this.formattedAmount,
+    required this.percentChange,
+    required this.hasPercentage,
+    required this.isPositiveTrend,
+    required this.iconData,
+    required this.cardType,
+    required this.accentColor,
+    required this.iconBgColor,
+    required this.textColor,
+    required this.gradientColors,
+    required this.themeController,
+    this.scaleAnim,
+  });
+
+  @override
+  State<_TrendySummaryCardWidget> createState() => _TrendySummaryCardWidgetState();
+}
+
+class _TrendySummaryCardWidgetState extends State<_TrendySummaryCardWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pressController;
+  late Animation<double> _pressAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pressController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _pressAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _pressController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pressController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        _pressController.forward();
+      },
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        _pressController.reverse();
+      },
+      onTapCancel: () {
+        setState(() => _isPressed = false);
+        _pressController.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _pressAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _pressAnimation.value,
+            child: _buildCard(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          height: 88,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: widget.gradientColors,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: widget.themeController.isDarkMode
+                  ? Colors.white.withOpacity(_isPressed ? 0.15 : 0.08)
+                  : Colors.grey.shade200.withOpacity(_isPressed ? 0.9 : 0.6),
+              width: 1,
+            ),
+            boxShadow: [
+              // 메인 그림자
+              BoxShadow(
+                color: widget.themeController.isDarkMode
+                    ? Colors.black.withOpacity(0.25)
+                    : widget.accentColor.withOpacity(0.08),
+                blurRadius: _isPressed ? 8 : 16,
+                offset: const Offset(0, 4),
+                spreadRadius: -2,
+              ),
+              // 하이라이트 (상단 밝은 부분)
+              if (!widget.themeController.isDarkMode)
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.8),
+                  blurRadius: 1,
+                  offset: const Offset(0, -1),
+                  spreadRadius: 0,
+                ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 상단: 제목과 아이콘
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    widget.title,
+                    style: TextStyle(
+                      color: widget.themeController.textSecondaryColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  // 트렌디한 아이콘 컨테이너
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: widget.iconBgColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: widget.accentColor.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      widget.iconData,
+                      color: widget.accentColor,
+                      size: 14,
+                    ),
+                  ),
+                ],
+              ),
+
+              // 하단: 금액과 퍼센트
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: _buildAmountText(),
+                  ),
+                  if (widget.hasPercentage && widget.percentChange != 0.0)
+                    _buildPercentageBadge(),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAmountText() {
+    final textWidget = Text(
+      widget.formattedAmount,
+      style: TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        color: widget.textColor,
+        letterSpacing: -0.5,
+      ),
+      overflow: TextOverflow.ellipsis,
+    );
+
+    // 숫자 스케일 애니메이션이 있는 경우
+    if (widget.scaleAnim != null && widget.cardType != 'balance') {
+      return AnimatedBuilder(
+        animation: widget.scaleAnim!,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: widget.scaleAnim!.value,
+            alignment: Alignment.centerLeft,
+            child: textWidget,
+          );
+        },
+      );
+    }
+
+    return textWidget;
+  }
+
+  Widget _buildPercentageBadge() {
+    final isPositive = widget.percentChange > 0;
+    final badgeColor = widget.isPositiveTrend
+        ? const Color(0xFF2EAA87) // 트렌디한 그린
+        : const Color(0xFFE57373); // 트렌디한 레드
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: badgeColor.withOpacity(widget.themeController.isDarkMode ? 0.2 : 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: badgeColor.withOpacity(0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+            size: 10,
+            color: badgeColor,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '${isPositive ? '+' : ''}${widget.percentChange.toStringAsFixed(1)}%',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: badgeColor,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

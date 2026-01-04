@@ -102,32 +102,56 @@ class AdService extends GetxService {
     }
   }
 
-  // 배너 광고 위젯 - 꽉 차게 표시하되 안정적으로 관리
+  // 배너 광고 위젯 - StatefulWidget으로 감싸서 광고 객체 재사용 방지
   Widget getBannerAdWidget() {
-    return Obx(() {
-      if (isBannerAdLoaded.value && bannerAd.value != null) {
-        try {
-          return Container(
-            key: ValueKey<String>('ad_${DateTime.now().millisecondsSinceEpoch}'), // 고유 키 부여
-            width: double.infinity, // 화면 너비 전체
-            height: bannerAd.value!.size.height.toDouble(),
-            constraints: const BoxConstraints(maxHeight: 60), // 높이 제한 추가
-            child: Center(
-              child: AdWidget(ad: bannerAd.value!),
-            ),
-          );
-        } catch (e) {
-          debugPrint('광고 위젯 렌더링 오류: $e');
-          // 오류 발생시 빈 공간 표시
-          return const SizedBox(height: 50, width: double.infinity);
-        }
-      }
-      // 광고가 로드되지 않았을 때 표시할 빈 공간
-      return const SizedBox(height: 50, width: double.infinity);
-    });
+    return _BannerAdContainer(adService: this);
   }
 
   Future<AdService> init() async {
     return this;
+  }
+}
+
+/// 배너 광고를 위한 StatefulWidget 컨테이너
+/// AdWidget이 리빌드될 때 동일한 광고 객체를 재사용하는 문제를 방지
+class _BannerAdContainer extends StatefulWidget {
+  final AdService adService;
+
+  const _BannerAdContainer({required this.adService});
+
+  @override
+  State<_BannerAdContainer> createState() => _BannerAdContainerState();
+}
+
+class _BannerAdContainerState extends State<_BannerAdContainer> {
+  Widget? _cachedAdWidget;
+  BannerAd? _lastAd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final isLoaded = widget.adService.isBannerAdLoaded.value;
+      final currentAd = widget.adService.bannerAd.value;
+
+      if (isLoaded && currentAd != null) {
+        // 광고 객체가 변경되었을 때만 새 AdWidget 생성
+        if (_lastAd != currentAd) {
+          _lastAd = currentAd;
+          _cachedAdWidget = AdWidget(ad: currentAd);
+        }
+
+        return Container(
+          width: double.infinity,
+          height: currentAd.size.height.toDouble(),
+          constraints: const BoxConstraints(maxHeight: 60),
+          child: Center(
+            child: _cachedAdWidget,
+          ),
+        );
+      }
+
+      // 광고가 로드되지 않았을 때 표시할 빈 공간
+      return const SizedBox(height: 50, width: double.infinity);
+    });
   }
 }

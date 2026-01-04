@@ -1,7 +1,7 @@
 // lib/features/dashboard/presentation/pages/dashboard_page.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../data/datasources/transaction_local_data_source.dart';
@@ -184,20 +184,13 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
 
   Widget _buildMonthSelectorBar() {
     final ThemeController themeController = Get.find<ThemeController>();
-    
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: themeController.surfaceColor,
-        boxShadow: [
-          BoxShadow(
-            color: themeController.isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.grey.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: themeController.isDarkMode
+            ? themeController.surfaceColor.withOpacity(0.95)
+            : themeController.surfaceColor,
       ),
       child: _buildMonthSelector(),
     );
@@ -206,129 +199,88 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
 
   Widget _buildMonthSelector() {
     final ThemeController themeController = Get.find<ThemeController>();
-    
+
     return Obx(() {
       final isCurrentMonth = _controller.selectedMonth.value.year == DateTime.now().year &&
           _controller.selectedMonth.value.month == DateTime.now().month;
 
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: themeController.isDarkMode ? [
-              themeController.primaryColor.withOpacity(0.2),
-              themeController.surfaceColor,
-            ] : [
-              Colors.pink.shade50,
-              const Color(0xFFF5F5F5),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: themeController.primaryColor.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // 이전 달로 이동 버튼
-            _buildNavigationButton(
-              icon: Icons.chevron_left,
-              onTap: _controller.goToPreviousMonth,
-            ),
-
-            // 월 선택 및 현재 월 버튼
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 월 선택 드롭다운 버튼
-                InkWell(
-                  onTap: () => _showMonthPickerDialog(context),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: themeController.cardColor,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: themeController.primaryColor.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.calendar_today_rounded,
-                          size: 14,
-                          color: themeController.primaryColor,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _controller.getMonthYearString(),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: themeController.textPrimaryColor,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Icon(
-                          Icons.arrow_drop_down,
-                          size: 18,
-                          color: themeController.textSecondaryColor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // 현재 월로 이동 버튼 (항상 표시되도록 수정)
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: _controller.goToCurrentMonth,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isCurrentMonth 
-                          ? (themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100)
-                          : themeController.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.today,
-                          size: 12,
-                          color: isCurrentMonth 
-                              ? (themeController.isDarkMode ? Colors.grey.shade500 : Colors.grey)
-                              : themeController.primaryColor,
-                        ),
-                      ],
-                    ),
-                  ),
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: themeController.isDarkMode ? [
+                  Colors.white.withOpacity(0.08),
+                  Colors.white.withOpacity(0.04),
+                ] : [
+                  Colors.white.withOpacity(0.9),
+                  Colors.grey.shade50.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: themeController.isDarkMode
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.grey.shade200.withOpacity(0.8),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: themeController.isDarkMode
+                      ? Colors.black.withOpacity(0.3)
+                      : Colors.grey.withOpacity(0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                  spreadRadius: -2,
                 ),
               ],
             ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // 이전 달로 이동 버튼
+                _buildNavigationButton(
+                  icon: Icons.chevron_left_rounded,
+                  onTap: _controller.goToPreviousMonth,
+                ),
 
-            // 다음 달로 이동 버튼
-            _buildNavigationButton(
-              icon: Icons.chevron_right,
-              onTap: isCurrentMonth ? null : _controller.goToNextMonth,
-              isDisabled: isCurrentMonth,
+                // 월 선택 및 현재 월 버튼
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 월 선택 드롭다운 버튼
+                      _TrendyMonthButton(
+                        monthYearString: _controller.getMonthYearString(),
+                        onTap: () => _showMonthPickerDialog(context),
+                        themeController: themeController,
+                      ),
+
+                      // 현재 월로 이동 버튼
+                      const SizedBox(width: 8),
+                      _TrendyTodayButton(
+                        isCurrentMonth: isCurrentMonth,
+                        onTap: _controller.goToCurrentMonth,
+                        themeController: themeController,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 다음 달로 이동 버튼
+                _buildNavigationButton(
+                  icon: Icons.chevron_right_rounded,
+                  onTap: isCurrentMonth ? null : _controller.goToNextMonth,
+                  isDisabled: isCurrentMonth,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     });
@@ -455,31 +407,338 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
     bool isDisabled = false,
   }) {
     final ThemeController themeController = Get.find<ThemeController>();
-    
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(30),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(30),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            color: isDisabled 
-                ? (themeController.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100)
-                : themeController.cardColor,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Icon(
-              icon,
-              color: isDisabled 
-                  ? (themeController.isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400)
-                  : themeController.primaryColor,
-              size: 24,
+
+    return _TrendyNavButton(
+      icon: icon,
+      onTap: onTap,
+      isDisabled: isDisabled,
+      themeController: themeController,
+    );
+  }
+}
+
+// 트렌디한 네비게이션 버튼 위젯
+class _TrendyNavButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool isDisabled;
+  final ThemeController themeController;
+
+  const _TrendyNavButton({
+    required this.icon,
+    required this.onTap,
+    this.isDisabled = false,
+    required this.themeController,
+  });
+
+  @override
+  State<_TrendyNavButton> createState() => _TrendyNavButtonState();
+}
+
+class _TrendyNavButtonState extends State<_TrendyNavButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: widget.isDisabled ? null : (_) {
+        setState(() => _isPressed = true);
+        _controller.forward();
+      },
+      onTapUp: widget.isDisabled ? null : (_) {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+        widget.onTap?.call();
+      },
+      onTapCancel: widget.isDisabled ? null : () {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: widget.isDisabled
+                    ? (widget.themeController.isDarkMode
+                        ? Colors.grey.shade800.withOpacity(0.5)
+                        : Colors.grey.shade100)
+                    : (_isPressed
+                        ? widget.themeController.primaryColor.withOpacity(0.15)
+                        : (widget.themeController.isDarkMode
+                            ? Colors.white.withOpacity(0.06)
+                            : Colors.grey.shade100.withOpacity(0.8))),
+                borderRadius: BorderRadius.circular(14),
+                border: widget.isDisabled ? null : Border.all(
+                  color: widget.themeController.isDarkMode
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.grey.shade200.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                widget.icon,
+                color: widget.isDisabled
+                    ? (widget.themeController.isDarkMode
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade400)
+                    : widget.themeController.primaryColor,
+                size: 22,
+              ),
             ),
-          ),
-        ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// 트렌디한 월 선택 버튼 위젯
+class _TrendyMonthButton extends StatefulWidget {
+  final String monthYearString;
+  final VoidCallback onTap;
+  final ThemeController themeController;
+
+  const _TrendyMonthButton({
+    required this.monthYearString,
+    required this.onTap,
+    required this.themeController,
+  });
+
+  @override
+  State<_TrendyMonthButton> createState() => _TrendyMonthButtonState();
+}
+
+class _TrendyMonthButtonState extends State<_TrendyMonthButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 120),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        _controller.forward();
+      },
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: widget.themeController.isDarkMode ? [
+                    Colors.white.withOpacity(_isPressed ? 0.15 : 0.1),
+                    Colors.white.withOpacity(_isPressed ? 0.08 : 0.05),
+                  ] : [
+                    Colors.white,
+                    Colors.grey.shade50,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: widget.themeController.isDarkMode
+                      ? Colors.white.withOpacity(0.12)
+                      : Colors.grey.shade200,
+                  width: 1,
+                ),
+                boxShadow: _isPressed ? [] : [
+                  BoxShadow(
+                    color: widget.themeController.isDarkMode
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.grey.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: widget.themeController.primaryColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      Icons.calendar_month_rounded,
+                      size: 14,
+                      color: widget.themeController.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    widget.monthYearString,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: widget.themeController.textPrimaryColor,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: widget.themeController.textSecondaryColor,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// 트렌디한 오늘 버튼 위젯
+class _TrendyTodayButton extends StatefulWidget {
+  final bool isCurrentMonth;
+  final VoidCallback onTap;
+  final ThemeController themeController;
+
+  const _TrendyTodayButton({
+    required this.isCurrentMonth,
+    required this.onTap,
+    required this.themeController,
+  });
+
+  @override
+  State<_TrendyTodayButton> createState() => _TrendyTodayButtonState();
+}
+
+class _TrendyTodayButtonState extends State<_TrendyTodayButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 120),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.9).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = !widget.isCurrentMonth;
+
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        _controller.forward();
+      },
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? widget.themeController.primaryColor.withOpacity(_isPressed ? 0.2 : 0.12)
+                    : (widget.themeController.isDarkMode
+                        ? Colors.grey.shade800.withOpacity(0.5)
+                        : Colors.grey.shade200.withOpacity(0.5)),
+                borderRadius: BorderRadius.circular(10),
+                border: isActive ? Border.all(
+                  color: widget.themeController.primaryColor.withOpacity(0.3),
+                  width: 1,
+                ) : null,
+              ),
+              child: Icon(
+                Icons.today_rounded,
+                size: 16,
+                color: isActive
+                    ? widget.themeController.primaryColor
+                    : (widget.themeController.isDarkMode
+                        ? Colors.grey.shade600
+                        : Colors.grey.shade500),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
