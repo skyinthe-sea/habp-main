@@ -14,7 +14,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "ljs.salamander.habp"
     compileSdk = 35  // Android 15 API 35 for 16KB page size support
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "28.0.13004108"  // Required for 16KB page size support
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
