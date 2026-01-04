@@ -450,29 +450,29 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> with TickerProv
       switch (cardType) {
         case 'income':
           accentColor = const Color(0xFF2EAA87); // 세련된 그린
-          iconBgColor = accentColor.withOpacity(0.1);
+          iconBgColor = accentColor.withOpacity(0.03);
           textColor = accentColor;
           gradientColors = [
             Colors.white,
-            accentColor.withOpacity(0.04),
+            accentColor.withOpacity(0.003),
           ];
           break;
         case 'expense':
           accentColor = const Color(0xFFE57373); // 부드러운 레드
-          iconBgColor = accentColor.withOpacity(0.1);
+          iconBgColor = accentColor.withOpacity(0.03);
           textColor = accentColor;
           gradientColors = [
             Colors.white,
-            accentColor.withOpacity(0.04),
+            accentColor.withOpacity(0.003),
           ];
           break;
         case 'assets':
           accentColor = const Color(0xFF5B8BD8); // 세련된 블루
-          iconBgColor = accentColor.withOpacity(0.1);
+          iconBgColor = accentColor.withOpacity(0.03);
           textColor = accentColor;
           gradientColors = [
             Colors.white,
-            accentColor.withOpacity(0.04),
+            accentColor.withOpacity(0.003),
           ];
           break;
         case 'balance':

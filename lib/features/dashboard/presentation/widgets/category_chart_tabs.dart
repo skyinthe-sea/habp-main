@@ -613,245 +613,21 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     );
   }
 
-  // 2026 트렌디한 카테고리 상세 다이얼로그
-  void _showCategoryDetailDialog(BuildContext context, CategoryExpense category, Color color, String type) async {
-    final ThemeController themeController = Get.find<ThemeController>();
+  // 2026 트렌디한 카테고리 상세 다이얼로그 - 최적화 버전
+  void _showCategoryDetailDialog(BuildContext context, CategoryExpense category, Color color, String type) {
     final titleText = type == 'INCOME' ? '소득 상세' :
     type == 'EXPENSE' ? '지출 상세' : '재테크 상세';
 
-    // 로딩 상태로 다이얼로그 먼저 표시
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: themeController.cardColor,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: color.withOpacity(0.3),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.15),
-                  blurRadius: 20,
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 로딩 인디케이터
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(
-                    color: color,
-                    strokeWidth: 3,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '데이터 불러오는 중...',
-                  style: TextStyle(
-                    color: themeController.textSecondaryColor,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (context) => _AnimatedCategoryDetailDialog(
+        category: category,
+        color: color,
+        type: type,
+        titleText: titleText,
+        calculateAverage: () => _calculateCategoryMonthlyAverage(category.categoryId, type),
+      ),
     );
-
-    // 월 평균 데이터 계산
-    final averageData = await _calculateCategoryMonthlyAverage(category.categoryId, type);
-    final double averageAmount = averageData['averageAmount'];
-    final int dataPoints = averageData['dataPoints'];
-    final String period = averageData['period'];
-
-    // 기존 다이얼로그를 닫고 새 다이얼로그 표시
-    if (context.mounted) {
-      Navigator.of(context).pop();
-    }
-
-    // 숫자 포맷팅을 위한 형식
-    final NumberFormat numberFormat = NumberFormat('#,###', 'ko');
-    final formattedAmount = numberFormat.format(category.amount);
-    final formattedAverage = numberFormat.format(averageAmount);
-    final formattedAnnual = numberFormat.format(averageAmount * 12);
-
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: themeController.cardColor,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: color.withOpacity(0.2),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.1),
-                  blurRadius: 24,
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: themeController.isDarkMode
-                      ? Colors.black.withOpacity(0.4)
-                      : Colors.grey.withOpacity(0.15),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 헤더 - 카테고리명과 색상 인디케이터
-                Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [color, color.withOpacity(0.4)],
-                        ),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            category.categoryName,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: color,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '$titleText (${_formatTypeTitle(type)})',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: themeController.textSecondaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // 금액 정보 카드
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(themeController.isDarkMode ? 0.1 : 0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: color.withOpacity(0.15),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildTrendyDetailRow('금액', '₩$formattedAmount', color),
-                      const SizedBox(height: 12),
-                      _buildTrendyDetailRow('비율', '${category.percentage.toStringAsFixed(1)}%', color),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 평균 금액 섹션
-                Row(
-                  children: [
-                    Text(
-                      '평균 금액',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: themeController.textPrimaryColor,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: themeController.isDarkMode
-                            ? Colors.grey.shade800
-                            : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '$period · $dataPoints개',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: themeController.textSecondaryColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildTrendyDetailRow('월 평균', '₩$formattedAverage', themeController.primaryColor),
-                const SizedBox(height: 8),
-                _buildTrendyDetailRow('연 환산', '₩$formattedAnnual', themeController.primaryColor),
-
-                const SizedBox(height: 24),
-
-                // 닫기 버튼
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: color.withOpacity(0.1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      '닫기',
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
   }
 
   Widget _buildTrendyDetailRow(String label, String value, Color accentColor) {
@@ -1033,5 +809,373 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
       default:
         return lightColor;
     }
+  }
+}
+
+/// 숫자 카운트업 애니메이션이 포함된 카테고리 상세 다이얼로그
+class _AnimatedCategoryDetailDialog extends StatefulWidget {
+  final CategoryExpense category;
+  final Color color;
+  final String type;
+  final String titleText;
+  final Future<Map<String, dynamic>> Function() calculateAverage;
+
+  const _AnimatedCategoryDetailDialog({
+    required this.category,
+    required this.color,
+    required this.type,
+    required this.titleText,
+    required this.calculateAverage,
+  });
+
+  @override
+  State<_AnimatedCategoryDetailDialog> createState() => _AnimatedCategoryDetailDialogState();
+}
+
+class _AnimatedCategoryDetailDialogState extends State<_AnimatedCategoryDetailDialog>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _countController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _countAnimation;
+
+  bool _isLoading = true;
+  double _averageAmount = 0;
+  int _dataPoints = 0;
+  String _period = '';
+
+  ThemeController get themeController => Get.find<ThemeController>();
+
+  @override
+  void initState() {
+    super.initState();
+    _initAnimations();
+    _loadData();
+  }
+
+  void _initAnimations() {
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.easeOutBack,
+    );
+
+    _countController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _countAnimation = CurvedAnimation(
+      parent: _countController,
+      curve: Curves.easeOutCubic,
+    );
+
+    _scaleController.forward();
+  }
+
+  Future<void> _loadData() async {
+    final data = await widget.calculateAverage();
+    if (mounted) {
+      setState(() {
+        _averageAmount = data['averageAmount'];
+        _dataPoints = data['dataPoints'];
+        _period = data['period'];
+        _isLoading = false;
+      });
+      _countController.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _countController.dispose();
+    super.dispose();
+  }
+
+  String _formatTypeTitle(String type) {
+    switch (type) {
+      case 'INCOME':
+        return '수입';
+      case 'EXPENSE':
+        return '지출';
+      case 'FINANCE':
+        return '재테크';
+      default:
+        return '';
+    }
+  }
+
+  String _formatCurrency(double amount) {
+    return amount.toInt().toString().replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: themeController.cardColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: widget.color.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withOpacity(0.15),
+                blurRadius: 24,
+                spreadRadius: 0,
+              ),
+              BoxShadow(
+                color: themeController.isDarkMode
+                    ? Colors.black.withOpacity(0.4)
+                    : Colors.grey.withOpacity(0.1),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 헤더
+              _buildHeader(),
+              const SizedBox(height: 20),
+              // 금액 정보 카드
+              _buildAmountCard(),
+              const SizedBox(height: 16),
+              // 평균 금액 섹션
+              _buildAverageSection(),
+              const SizedBox(height: 24),
+              // 닫기 버튼
+              _buildCloseButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 28,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [widget.color, widget.color.withOpacity(0.4)],
+            ),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.category.categoryName,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: widget.color,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${widget.titleText} (${_formatTypeTitle(widget.type)})',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: themeController.textSecondaryColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAmountCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: widget.color.withOpacity(themeController.isDarkMode ? 0.1 : 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: widget.color.withOpacity(0.15),
+          width: 1,
+        ),
+      ),
+      child: AnimatedBuilder(
+        animation: _countAnimation,
+        builder: (context, child) {
+          final animatedAmount = widget.category.amount * _countAnimation.value;
+          final animatedPercent = widget.category.percentage * _countAnimation.value;
+
+          return Column(
+            children: [
+              _buildDetailRow(
+                '금액',
+                '₩${_formatCurrency(animatedAmount)}',
+                widget.color,
+              ),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                '비율',
+                '${animatedPercent.toStringAsFixed(1)}%',
+                widget.color,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAverageSection() {
+    if (_isLoading) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '평균 금액',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: themeController.textPrimaryColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: widget.color,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return AnimatedBuilder(
+      animation: _countAnimation,
+      builder: (context, child) {
+        final animatedAverage = _averageAmount * _countAnimation.value;
+        final animatedAnnual = _averageAmount * 12 * _countAnimation.value;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '평균 금액',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: themeController.textPrimaryColor,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: themeController.isDarkMode
+                        ? Colors.grey.shade800
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$_period · $_dataPoints개',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: themeController.textSecondaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              '월 평균',
+              '₩${_formatCurrency(animatedAverage)}',
+              themeController.primaryColor,
+            ),
+            const SizedBox(height: 8),
+            _buildDetailRow(
+              '연 환산',
+              '₩${_formatCurrency(animatedAnnual)}',
+              themeController.primaryColor,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, Color accentColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: themeController.textSecondaryColor,
+            fontSize: 13,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: themeController.textPrimaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCloseButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          backgroundColor: widget.color.withOpacity(0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          '닫기',
+          style: TextStyle(
+            color: widget.color,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+        ),
+      ),
+    );
   }
 }
