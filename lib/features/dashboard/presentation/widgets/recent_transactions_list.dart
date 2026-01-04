@@ -1,5 +1,6 @@
 // lib/features/dashboard/presentation/widgets/recent_transactions_list.dart
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -49,80 +50,47 @@ class RecentTransactionsList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 헤더 부분
+            // 2026 트렌디 헤더 부분 - 컴팩트하게
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 타이틀 부분
+                  // 타이틀 부분 - 세로선 스타일
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        width: 4,
+                        height: 18,
                         decoration: BoxDecoration(
-                          color: themeController.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.receipt_long_rounded,
-                          color: themeController.primaryColor,
-                          size: 18,
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              themeController.primaryColor,
+                              themeController.primaryColor.withOpacity(0.5),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '최근 거래 내역',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: themeController.textPrimaryColor,
-                            ),
-                          ),
-                          Text(
-                            controller.getMonthYearString(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: themeController.textSecondaryColor,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 10),
+                      Text(
+                        '최근 거래 내역',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: themeController.textPrimaryColor,
+                          letterSpacing: -0.3,
+                        ),
                       ),
                     ],
                   ),
 
-                  // 전체보기 버튼
-                  Material(
-                    color: themeController.primaryColor.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    child: InkWell(
-                      onTap: () => _showAllTransactionsDialog(context),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Row(
-                          children: [
-                            Text(
-                              '전체보기',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: themeController.primaryColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 14,
-                              color: themeController.primaryColor,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // 전체보기 버튼 - 컴팩트 아이콘
+                  _TrendyViewAllButton(
+                    onTap: () => _showAllTransactionsDialog(context),
+                    themeController: themeController,
                   ),
                 ],
               ),
@@ -1259,5 +1227,87 @@ class RecentTransactionsList extends StatelessWidget {
     }
 
     return filtered;
+  }
+}
+
+// 2026 트렌디한 전체보기 버튼 위젯
+class _TrendyViewAllButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final ThemeController themeController;
+
+  const _TrendyViewAllButton({
+    required this.onTap,
+    required this.themeController,
+  });
+
+  @override
+  State<_TrendyViewAllButton> createState() => _TrendyViewAllButtonState();
+}
+
+class _TrendyViewAllButtonState extends State<_TrendyViewAllButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.9).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        _controller.forward();
+      },
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () {
+        setState(() => _isPressed = false);
+        _controller.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: widget.themeController.primaryColor.withOpacity(_isPressed ? 0.15 : 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: widget.themeController.primaryColor.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                Icons.grid_view_rounded, // 전체보기를 나타내는 아이콘
+                size: 18,
+                color: widget.themeController.primaryColor,
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

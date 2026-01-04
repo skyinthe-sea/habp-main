@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/controllers/theme_controller.dart';
 import '../../../../core/database/db_helper.dart';
 import '../../data/entities/category_expense.dart';
@@ -22,9 +21,6 @@ class CategoryChartTabs extends StatefulWidget {
 class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late PageController _pageController;
-
-  final List<String> _tabs = ['소득', '지출', '재테크'];
-  // _tabColors를 제거하고 build 메서드에서 동적으로 생성
 
   // 지출 카테고리 색상을 테마에 따라 동적으로 생성하는 메서드
   List<Color> _getExpenseColors(ThemeController themeController) {
@@ -77,13 +73,13 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     _tabController = TabController(length: 3, vsync: this);
     _pageController = PageController();
 
-    // Sync tab controller with page controller
+    // Sync tab controller with page controller - 빠른 전환
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         _pageController.animateToPage(
           _tabController.index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 150), // 더 빠른 전환
+          curve: Curves.easeOut,
         );
       }
     });
@@ -162,58 +158,17 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
             ),
           ),
 
-          // 2026 트렌디 탭 바
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: themeController.isDarkMode
-                  ? Colors.grey.shade800.withOpacity(0.5)
-                  : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: Colors.white,
-              unselectedLabelColor: themeController.textSecondaryColor,
-              indicator: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    _getTabColorForLightMode(_tabController.index),
-                    _getTabColorForLightMode(_tabController.index).withOpacity(0.8),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: _getTabColorForLightMode(_tabController.index).withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-              unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              tabs: _tabs.map((title) => Tab(
-                height: 36,
-                child: Text(title),
-              )).toList(),
-              onTap: (index) {
-                setState(() {});
-              },
-            ),
-          ),
-
-          // Swipeable chart container
+          // Swipeable chart container - 탭 제거, 스와이프로 전환
           SizedBox(
-            height: 320, // 차트 영역 높이 증가
+            height: 280,
             child: PageView(
               controller: _pageController,
+              physics: const BouncingScrollPhysics(),
               onPageChanged: (index) {
-                _tabController.animateTo(index);
-                // Update indicator color when page changes
+                _tabController.animateTo(
+                  index,
+                  duration: const Duration(milliseconds: 150),
+                );
                 setState(() {});
               },
               children: [
@@ -221,6 +176,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                 _buildMiniChart(
                   data: widget.controller.categoryIncome,
                   title: '소득',
+                  centerTitle: '총소득',
                   isLoading: widget.controller.isCategoryIncomeLoading.value,
                   emptyMessage: '소득 데이터가 없습니다',
                   baseColor: themeController.incomeColor,
@@ -231,6 +187,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                 _buildMiniChart(
                   data: widget.controller.categoryExpenses,
                   title: '지출',
+                  centerTitle: '총지출',
                   isLoading: widget.controller.isCategoryExpenseLoading.value,
                   emptyMessage: '지출 데이터가 없습니다',
                   baseColor: themeController.expenseColor,
@@ -241,6 +198,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                 _buildMiniChart(
                   data: widget.controller.categoryFinance,
                   title: '재테크',
+                  centerTitle: '총투자',
                   isLoading: widget.controller.isCategoryFinanceLoading.value,
                   emptyMessage: '재테크 데이터가 없습니다',
                   baseColor: themeController.financeColor,
@@ -250,28 +208,35 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
             ),
           ),
 
-          // Custom page indicator
+          // 인디케이터 부활
           Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            padding: const EdgeInsets.only(top: 8, bottom: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(3, (index) {
                 final isActive = _tabController.index == index;
-                final activeColor = themeController.isDarkMode 
-                    ? _getTabColorForDarkMode(index)
-                    : _getTabColorForLightMode(index);
+                final activeColor = _getTabColorForLightMode(index);
                 final inactiveColor = themeController.isDarkMode
                     ? Colors.grey.shade600
                     : Colors.grey.shade300;
-                
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  height: 8,
-                  width: isActive ? 24 : 8,
-                  decoration: BoxDecoration(
-                    color: isActive ? activeColor : inactiveColor,
-                    borderRadius: BorderRadius.circular(12),
+
+                return GestureDetector(
+                  onTap: () {
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
+                    );
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    height: 8,
+                    width: isActive ? 24 : 8,
+                    decoration: BoxDecoration(
+                      color: isActive ? activeColor : inactiveColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 );
               }),
@@ -285,6 +250,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
   Widget _buildMiniChart({
     required List<CategoryExpense> data,
     required String title,
+    required String centerTitle,
     required bool isLoading,
     required String emptyMessage,
     required Color baseColor,
@@ -406,15 +372,15 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
                           ),
                         ),
 
-                        // 중앙에 총액 표시
+                        // 중앙에 총액 표시 - centerTitle 사용
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              '총 금액',
+                              centerTitle,
                               style: TextStyle(
                                 fontSize: 10,
-                                fontWeight: FontWeight.normal,
+                                fontWeight: FontWeight.w500,
                                 color: themeController.textSecondaryColor,
                               ),
                             ),
@@ -647,7 +613,7 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     );
   }
 
-  // 카테고리 상세 정보를 보여주는 다이얼로그
+  // 2026 트렌디한 카테고리 상세 다이얼로그
   void _showCategoryDetailDialog(BuildContext context, CategoryExpense category, Color color, String type) async {
     final ThemeController themeController = Get.find<ThemeController>();
     final titleText = type == 'INCOME' ? '소득 상세' :
@@ -658,22 +624,46 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: themeController.cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            category.categoryName,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: SizedBox(
-            height: 100,
-            child: Center(
-              child: CircularProgressIndicator(
-                color: color,
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: themeController.cardColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: color.withOpacity(0.3),
+                width: 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.15),
+                  blurRadius: 20,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 로딩 인디케이터
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(
+                    color: color,
+                    strokeWidth: 3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '데이터 불러오는 중...',
+                  style: TextStyle(
+                    color: themeController.textSecondaryColor,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -700,100 +690,192 @@ class _CategoryChartTabsState extends State<CategoryChartTabs> with SingleTicker
     if (context.mounted) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: themeController.cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            category.categoryName,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$titleText (${_formatTypeTitle(type)})',
-                style: TextStyle(
-                  fontSize: 14, 
-                  fontWeight: FontWeight.w500,
-                  color: themeController.textPrimaryColor,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: themeController.cardColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: color.withOpacity(0.2),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.1),
+                  blurRadius: 24,
+                  spreadRadius: 0,
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              // 금액 정보
-              _buildDetailRow('금액:', '₩$formattedAmount'),
-              _buildDetailRow('비율:', '${category.percentage.toStringAsFixed(1)}%'),
-
-              // 예상 정보 (월간/연간)
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Text(
-                    '평균 금액', 
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: themeController.textPrimaryColor,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '($period, $dataPoints개 데이터)',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: themeController.textSecondaryColor,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              _buildDetailRow('월 평균:', '₩$formattedAverage'),
-              _buildDetailRow('연 환산:', '₩$formattedAnnual'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                '닫기',
-                style: TextStyle(color: themeController.primaryColor),
-              ),
+                BoxShadow(
+                  color: themeController.isDarkMode
+                      ? Colors.black.withOpacity(0.4)
+                      : Colors.grey.withOpacity(0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 헤더 - 카테고리명과 색상 인디케이터
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [color, color.withOpacity(0.4)],
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            category.categoryName,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: color,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$titleText (${_formatTypeTitle(type)})',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: themeController.textSecondaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // 금액 정보 카드
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(themeController.isDarkMode ? 0.1 : 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: color.withOpacity(0.15),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildTrendyDetailRow('금액', '₩$formattedAmount', color),
+                      const SizedBox(height: 12),
+                      _buildTrendyDetailRow('비율', '${category.percentage.toStringAsFixed(1)}%', color),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 평균 금액 섹션
+                Row(
+                  children: [
+                    Text(
+                      '평균 금액',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: themeController.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: themeController.isDarkMode
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$period · $dataPoints개',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: themeController.textSecondaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildTrendyDetailRow('월 평균', '₩$formattedAverage', themeController.primaryColor),
+                const SizedBox(height: 8),
+                _buildTrendyDetailRow('연 환산', '₩$formattedAnnual', themeController.primaryColor),
+
+                const SizedBox(height: 24),
+
+                // 닫기 버튼
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: color.withOpacity(0.1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      '닫기',
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildTrendyDetailRow(String label, String value, Color accentColor) {
     final ThemeController themeController = Get.find<ThemeController>();
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label, 
-            style: TextStyle(
-              color: themeController.textSecondaryColor, 
-              fontSize: 13,
-            ),
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: themeController.textSecondaryColor,
+            fontSize: 13,
           ),
-          Text(
-            value, 
-            style: TextStyle(
-              fontWeight: FontWeight.w500, 
-              fontSize: 13,
-              color: themeController.textPrimaryColor,
-            ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: themeController.textPrimaryColor,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

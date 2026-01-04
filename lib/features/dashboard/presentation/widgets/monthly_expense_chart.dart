@@ -120,18 +120,41 @@ class _MonthlyExpenseChartState extends State<MonthlyExpenseChart> with SingleTi
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더: 제목, 차트 유형 선택, 현재 선택된 월 표시
+          // 헤더: 제목, 차트 유형 선택, 현재 선택된 월 표시 - 2026 트렌디 스타일
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '월별 지출 추이',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                // 세로선 스타일 제목 (카테고리별 내역과 동일)
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            themeController.primaryColor,
+                            themeController.primaryColor.withOpacity(0.5),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '월별 지출 추이',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: themeController.textPrimaryColor,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
                 ),
                 Row(
                   children: [

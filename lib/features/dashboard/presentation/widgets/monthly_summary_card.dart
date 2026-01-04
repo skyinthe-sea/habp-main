@@ -214,68 +214,60 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> with TickerProv
             children: [
               // Income card
               Expanded(
-                child: GestureDetector(
-                  onTap: () => _showCardDetails(context, 'income'),
-                  child: _buildSummaryCard(
-                    title: '소득',
-                    amount: income,
-                    percentChange: widget.controller.incomeChangePercentage.value,
-                    isPositiveTrend: widget.controller.incomeChangePercentage.value > 0,
-                    iconData: Icons.arrow_downward_rounded,
-                    cardType: 'income',
-                  ),
+                child: _buildSummaryCard(
+                  context: context,
+                  title: '소득',
+                  amount: income,
+                  percentChange: widget.controller.incomeChangePercentage.value,
+                  isPositiveTrend: widget.controller.incomeChangePercentage.value > 0,
+                  iconData: Icons.arrow_downward_rounded,
+                  cardType: 'income',
                 ),
               ),
-              const SizedBox(width: 8), // 좁아진 간격
+              const SizedBox(width: 8),
               // Expense card
               Expanded(
-                child: GestureDetector(
-                  onTap: () => _showCardDetails(context, 'expense'),
-                  child: _buildSummaryCard(
-                    title: '지출',
-                    amount: expense,
-                    percentChange: widget.controller.expenseChangePercentage.value,
-                    isPositiveTrend: widget.controller.expenseChangePercentage.value <= 0, // 지출은 감소가 긍정적
-                    iconData: Icons.arrow_upward_rounded,
-                    cardType: 'expense',
-                  ),
+                child: _buildSummaryCard(
+                  context: context,
+                  title: '지출',
+                  amount: expense,
+                  percentChange: widget.controller.expenseChangePercentage.value,
+                  isPositiveTrend: widget.controller.expenseChangePercentage.value <= 0,
+                  iconData: Icons.arrow_upward_rounded,
+                  cardType: 'expense',
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8), // 좁아진 간격
+          const SizedBox(height: 8),
           // Second row: Finance and Balance
           Row(
             children: [
               // Finance card
               Expanded(
-                child: GestureDetector(
-                  onTap: () => _showCardDetails(context, 'assets'),
-                  child: _buildSummaryCard(
-                    title: '재테크',
-                    amount: assets,
-                    percentChange: 0.0, // No comparison data
-                    isPositiveTrend: true,
-                    iconData: Icons.account_balance_outlined,
-                    cardType: 'assets',
-                    hasPercentage: false, // 퍼센티지 표시 안 함
-                  ),
+                child: _buildSummaryCard(
+                  context: context,
+                  title: '재테크',
+                  amount: assets,
+                  percentChange: 0.0,
+                  isPositiveTrend: true,
+                  iconData: Icons.account_balance_outlined,
+                  cardType: 'assets',
+                  hasPercentage: false,
                 ),
               ),
-              const SizedBox(width: 8), // 좁아진 간격
+              const SizedBox(width: 8),
               // Balance card
               Expanded(
-                child: GestureDetector(
-                  onTap: () => _showCardDetails(context, 'balance'),
-                  child: _buildSummaryCard(
-                    title: '잔액',
-                    amount: balance,
-                    percentChange: 0.0, // No comparison data
-                    isPositiveTrend: balance >= 0, // 잔액이 양수면 긍정적
-                    iconData: Icons.account_balance_wallet_outlined,
-                    cardType: 'balance',
-                    hasPercentage: false, // 퍼센티지 표시 안 함
-                  ),
+                child: _buildSummaryCard(
+                  context: context,
+                  title: '잔액',
+                  amount: balance,
+                  percentChange: 0.0,
+                  isPositiveTrend: balance >= 0,
+                  iconData: Icons.account_balance_wallet_outlined,
+                  cardType: 'balance',
+                  hasPercentage: false,
                 ),
               ),
             ],
@@ -357,6 +349,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> with TickerProv
   }
 
   Widget _buildSummaryCard({
+    required BuildContext context,
     required String title,
     required double amount,
     required double percentChange,
@@ -519,6 +512,7 @@ class _MonthlySummaryCardState extends State<MonthlySummaryCard> with TickerProv
       gradientColors: gradientColors,
       themeController: themeController,
       scaleAnim: scaleAnim,
+      onTap: () => _showCardDetails(context, cardType),
     );
 
     // 파티클 효과를 위해 Stack으로 감싸기
@@ -688,6 +682,7 @@ class _TrendySummaryCardWidget extends StatefulWidget {
   final List<Color> gradientColors;
   final ThemeController themeController;
   final Animation<double>? scaleAnim;
+  final VoidCallback? onTap;
 
   const _TrendySummaryCardWidget({
     required this.title,
@@ -703,6 +698,7 @@ class _TrendySummaryCardWidget extends StatefulWidget {
     required this.gradientColors,
     required this.themeController,
     this.scaleAnim,
+    this.onTap,
   });
 
   @override
@@ -743,6 +739,8 @@ class _TrendySummaryCardWidgetState extends State<_TrendySummaryCardWidget>
       onTapUp: (_) {
         setState(() => _isPressed = false);
         _pressController.reverse();
+        // 탭 완료 시 onTap 콜백 호출
+        widget.onTap?.call();
       },
       onTapCancel: () {
         setState(() => _isPressed = false);
