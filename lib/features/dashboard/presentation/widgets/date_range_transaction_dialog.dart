@@ -1,10 +1,11 @@
 // lib/features/dashboard/presentation/widgets/date_range_transaction_dialog.dart
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/controllers/theme_controller.dart';
 import '../../data/entities/transaction_with_category.dart';
 import '../presentation/dashboard_controller.dart';
 
@@ -20,7 +21,8 @@ class DateRangeTransactionDialog extends StatefulWidget {
   State<DateRangeTransactionDialog> createState() => _DateRangeTransactionDialogState();
 }
 
-class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog> {
+class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
+    with TickerProviderStateMixin {
   // 검색 및 필터링 상태
   String searchQuery = '';
   String selectedFilter = '전체';
@@ -29,96 +31,65 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
   DateTime startDate = DateTime.now().subtract(const Duration(days: 7));
   DateTime endDate = DateTime.now();
 
-  // 날짜 선택 표시 상태
-  bool showDatePicker = false;
-  bool isStartDateActive = true; // true: 시작일 선택, false: 종료일 선택
-
   // 데이터 로딩 상태
   bool isLoading = false;
   List<TransactionWithCategory> transactions = [];
 
-  // 캘린더 관련 상태
-  int displayedMonth = DateTime.now().month;
-  int displayedYear = DateTime.now().year;
+  // 애니메이션 컨트롤러
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+    _fadeController.forward();
     _loadInitialTransactions();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
   }
 
   // 초기 데이터 로드
   Future<void> _loadInitialTransactions() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    // 먼저 선택된 날짜로 기본 데이터 로드
+    setState(() => isLoading = true);
     try {
-      transactions = await _loadTransactionsForDateRange(startDate, endDate);
+      transactions = await widget.controller.fetchTransactionsByDateRange(startDate, endDate, 500);
     } catch (e) {
       debugPrint('거래 내역 로드 오류: $e');
     } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      if (mounted) setState(() => isLoading = false);
     }
-  }
-
-  // 날짜 범위에 맞는 거래 내역 로드
-  Future<List<TransactionWithCategory>> _loadTransactionsForDateRange(
-      DateTime start, DateTime end) async {
-    // 지정된 범위의 거래 내역 로드
-    // fetchTransactionsByDateRange 메서드를 사용해 날짜 범위에 맞는 거래 내역 불러오기
-    return await widget.controller.fetchTransactionsByDateRange(start, end, 500); // 최대 500건 제한
   }
 
   // 필터링된 거래 내역 가져오기
   List<TransactionWithCategory> get filteredTransactions {
-    // 검색어와 필터가 없으면 모든 트랜잭션 반환
-    if (searchQuery.isEmpty && selectedFilter == '전체') {
-      return transactions;
-    }
+    if (searchQuery.isEmpty && selectedFilter == '전체') return transactions;
 
-    // 먼저 필터 적용
     List<TransactionWithCategory> filtered = transactions;
 
-    // 카테고리 타입으로 필터링
     if (selectedFilter != '전체') {
-      String categoryType;
-
-      // 필터 이름을 영문 카테고리 타입으로 변환
-      switch (selectedFilter) {
-        case '수입':
-          categoryType = 'INCOME';
-          break;
-        case '지출':
-          categoryType = 'EXPENSE';
-          break;
-        case '재테크':
-          categoryType = 'FINANCE';
-          break;
-        default:
-          categoryType = '';
-      }
-
-      filtered = filtered.where(
-              (transaction) => transaction.categoryType == categoryType
-      ).toList();
+      String categoryType = {'수입': 'INCOME', '지출': 'EXPENSE', '재테크': 'FINANCE'}[selectedFilter] ?? '';
+      filtered = filtered.where((t) => t.categoryType == categoryType).toList();
     }
 
-    // 검색어가 있으면 추가 필터링
     if (searchQuery.isNotEmpty) {
       final query = searchQuery.toLowerCase();
-
-      filtered = filtered.where((transaction) {
-        // 내용, 카테고리명, 금액으로 검색
-        return transaction.description.toLowerCase().contains(query) ||
-            transaction.categoryName.toLowerCase().contains(query) ||
-            transaction.amount.toString().contains(query);
-      }).toList();
+      filtered = filtered.where((t) =>
+        t.description.toLowerCase().contains(query) ||
+        t.categoryName.toLowerCase().contains(query) ||
+        t.amount.toString().contains(query)
+      ).toList();
     }
 
     return filtered;
@@ -126,859 +97,303 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
 
   @override
   Widget build(BuildContext context) {
-    // 화면 크기 가져오기
+    final themeController = Get.find<ThemeController>();
     final screenSize = MediaQuery.of(context).size;
     final safeAreaInsets = MediaQuery.of(context).padding;
-
-    // 다크모드 확인
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
-    final surfaceColor = isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey.shade100;
-    final textColor = isDarkMode ? Colors.white : Colors.black87;
-    final subtextColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
-    final borderColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
-    final primaryColor = isDarkMode ? const Color(0xFF4CAF8E) : AppColors.primary; // 다크모드에서는 녹색
-
-    // 사용 가능한 안전한 높이 계산
     final safeHeight = screenSize.height - safeAreaInsets.top - safeAreaInsets.bottom;
+    final dialogMaxHeight = math.min(safeHeight * 0.85, 700.0);
 
-    // 다이얼로그 최대 높이 (화면의 80% 또는 최대 600px)
-    final dialogMaxHeight = math.min(safeHeight * 0.8, 700.0);
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Container(
-          width: double.maxFinite,
-          constraints: BoxConstraints(
-            maxHeight: dialogMaxHeight,
-          ),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 다이얼로그 헤더
-                _buildHeader(isDarkMode, primaryColor),
-
-                // 날짜 선택 영역
-                _buildDateSelector(isDarkMode, surfaceColor, textColor, subtextColor, borderColor, primaryColor),
-
-                // 캘린더 선택기 (토글)
-                if (showDatePicker) _buildCalendarPicker(isDarkMode, backgroundColor, textColor, borderColor, primaryColor),
-
-                // 검색창
-                _buildSearchBar(isDarkMode, surfaceColor, subtextColor),
-
-                // 필터 칩
-                _buildFilterChips(isDarkMode, surfaceColor, primaryColor),
-
-                // 로딩 중이면 로딩 인디케이터 표시
-                if (isLoading)
-                  Expanded(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: primaryColor,
-                        strokeWidth: 3,
-                      ),
-                    ),
-                  )
-                else
-                // 거래 내역 목록
-                  _buildTransactionList(isDarkMode, surfaceColor, textColor, subtextColor, borderColor, primaryColor),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 헤더 위젯
-  Widget _buildHeader(bool isDarkMode, Color primaryColor) {
-    final dateRange = startDate.year == endDate.year && startDate.month == endDate.month
-        ? '${DateFormat('yyyy년 M월').format(startDate)} (${transactions.length}건)'
-        : '${DateFormat('yyyy.M.d').format(startDate)} ~ ${DateFormat('yyyy.M.d').format(endDate)} (${transactions.length}건)';
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 16, 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDarkMode
-            ? [
-                primaryColor.withOpacity(0.8),
-                primaryColor.withOpacity(0.6),
-              ]
-            : [
-                AppColors.primary.withOpacity(0.8),
-                AppColors.primaryDark,
-              ],
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '거래 내역 조회',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: double.maxFinite,
+              constraints: BoxConstraints(maxHeight: dialogMaxHeight),
+              decoration: BoxDecoration(
+                color: themeController.isDarkMode
+                    ? const Color(0xFF1E1E1E).withOpacity(0.95)
+                    : Colors.white.withOpacity(0.95),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: themeController.isDarkMode
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.grey.shade200,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 24,
+                    spreadRadius: 0,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  dateRange,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(24),
-            child: InkWell(
-              onTap: () => Navigator.of(context).pop(),
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 날짜 선택 위젯
-  Widget _buildDateSelector(bool isDarkMode, Color surfaceColor, Color textColor, Color subtextColor, Color borderColor, Color primaryColor) {
-    final dateFormat = DateFormat('yyyy.MM.dd');
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 날짜 범위 선택 타이틀
-          Row(
-            children: [
-              Icon(Icons.date_range, size: 16, color: primaryColor),
-              const SizedBox(width: 6),
-              Text(
-                '조회 기간',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // 날짜 선택 컨트롤
-          Row(
-            children: [
-              // 시작 날짜 선택
-              Expanded(
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      isStartDateActive = true;
-                      showDatePicker = !showDatePicker;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isStartDateActive && showDatePicker
-                          ? primaryColor.withOpacity(0.1)
-                          : surfaceColor,
-                      border: Border.all(
-                        color: isStartDateActive && showDatePicker
-                            ? primaryColor
-                            : borderColor,
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          dateFormat.format(startDate),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isStartDateActive && showDatePicker
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                            color: isStartDateActive && showDatePicker
-                                ? primaryColor
-                                : textColor,
-                          ),
-                        ),
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16,
-                          color: isStartDateActive && showDatePicker
-                              ? primaryColor
-                              : Colors.grey,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // 날짜 범위 구분 기호
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12),
-                width: 10,
-                height: 1,
-                color: borderColor,
-              ),
-
-              // 종료 날짜 선택
-              Expanded(
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      isStartDateActive = false;
-                      showDatePicker = !showDatePicker;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: !isStartDateActive && showDatePicker
-                          ? primaryColor.withOpacity(0.1)
-                          : surfaceColor,
-                      border: Border.all(
-                        color: !isStartDateActive && showDatePicker
-                            ? primaryColor
-                            : borderColor,
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          dateFormat.format(endDate),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: !isStartDateActive && showDatePicker
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                            color: !isStartDateActive && showDatePicker
-                                ? primaryColor
-                                : textColor,
-                          ),
-                        ),
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16,
-                          color: !isStartDateActive && showDatePicker
-                              ? primaryColor
-                              : Colors.grey,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // 날짜 범위 바로가기 버튼
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // 날짜 바로가기 버튼들
-              Row(
-                children: [
-                  _buildDateRangeButton('오늘', () {
-                    final today = DateTime.now();
-                    setState(() {
-                      startDate = today;
-                      endDate = today;
-                      showDatePicker = false;
-                    });
-                    _refreshTransactions();
-                  }, surfaceColor, textColor),
-                  _buildDateRangeButton('7일', () {
-                    final today = DateTime.now();
-                    setState(() {
-                      startDate = today.subtract(const Duration(days: 6));
-                      endDate = today;
-                      showDatePicker = false;
-                    });
-                    _refreshTransactions();
-                  }, surfaceColor, textColor),
-                  _buildDateRangeButton('30일', () {
-                    final today = DateTime.now();
-                    setState(() {
-                      startDate = today.subtract(const Duration(days: 29));
-                      endDate = today;
-                      showDatePicker = false;
-                    });
-                    _refreshTransactions();
-                  }, surfaceColor, textColor),
-                  _buildDateRangeButton('이번달', () {
-                    final today = DateTime.now();
-                    setState(() {
-                      startDate = DateTime(today.year, today.month, 1);
-                      endDate = today;
-                      showDatePicker = false;
-                    });
-                    _refreshTransactions();
-                  }, surfaceColor, textColor),
                 ],
               ),
-
-              // 검색 버튼
-              ElevatedButton(
-                onPressed: () {
-                  // 날짜 선택 모드 종료
-                  setState(() {
-                    showDatePicker = false;
-                  });
-                  // 트랜잭션 새로고침
-                  _refreshTransactions();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.search, size: 16),
-                    SizedBox(width: 4),
-                    Text('검색', style: TextStyle(fontSize: 12)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 날짜 범위 바로가기 버튼
-  Widget _buildDateRangeButton(String text, VoidCallback onTap, Color surfaceColor, Color textColor) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: textColor,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 캘린더 선택기 위젯
-  Widget _buildCalendarPicker(bool isDarkMode, Color backgroundColor, Color textColor, Color borderColor, Color primaryColor) {
-    // 현재 표시중인 월의 날짜 목록 계산
-    List<DateTime> daysInMonth = _getDaysInMonth(displayedYear, displayedMonth);
-
-    // 현재 날짜
-    final today = DateTime.now();
-
-    // 활성화된 날짜 (시작일 또는 종료일)
-    final activeDate = isStartDateActive ? startDate : endDate;
-
-    return Container(
-      height: 320, // 높이 제한
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min, // 컨텐츠에 맞게 크기 조정
-        children: [
-          // 캘린더 헤더 (월, 년도 선택)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // 이전 월 버튼
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: () {
-                  setState(() {
-                    if (displayedMonth == 1) {
-                      displayedMonth = 12;
-                      displayedYear--;
-                    } else {
-                      displayedMonth--;
-                    }
-                  });
-                },
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-
-              // 현재 표시 중인 월/년도
-              GestureDetector(
-                onTap: () {
-                  // 오늘 날짜의 월로 점프
-                  setState(() {
-                    displayedMonth = DateTime.now().month;
-                    displayedYear = DateTime.now().year;
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Text(
-                    '$displayedYear년 $displayedMonth월',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                ),
-              ),
-
-              // 다음 월 버튼 (현재 월 이후는 비활성화)
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: (displayedYear > today.year ||
-                    (displayedYear == today.year && displayedMonth >= today.month))
-                    ? null
-                    : () {
-                  setState(() {
-                    if (displayedMonth == 12) {
-                      displayedMonth = 1;
-                      displayedYear++;
-                    } else {
-                      displayedMonth++;
-                    }
-                  });
-                },
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                color: (displayedYear > today.year ||
-                    (displayedYear == today.year && displayedMonth >= today.month))
-                    ? Colors.grey.shade300
-                    : null,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 4),
-
-          // 요일 헤더
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Text('일', style: TextStyle(fontSize: 12, color: isDarkMode ? Colors.red.shade300 : Colors.red)),
-              Text('월', style: TextStyle(fontSize: 12, color: textColor)),
-              Text('화', style: TextStyle(fontSize: 12, color: textColor)),
-              Text('수', style: TextStyle(fontSize: 12, color: textColor)),
-              Text('목', style: TextStyle(fontSize: 12, color: textColor)),
-              Text('금', style: TextStyle(fontSize: 12, color: textColor)),
-              Text('토', style: TextStyle(fontSize: 12, color: isDarkMode ? Colors.blue.shade300 : Colors.blue)),
-            ],
-          ),
-
-          const SizedBox(height: 4),
-
-          // 날짜 그리드 - Expanded로 감싸서 남은 공간을 모두 차지하도록 함
-          Expanded(
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const BouncingScrollPhysics(), // 스크롤 허용
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: 1.2, // 비율 조정으로 높이 축소
-                mainAxisSpacing: 1,   // 행 간격 축소
-                crossAxisSpacing: 1,  // 열 간격 축소
-              ),
-              itemCount: daysInMonth.length,
-              itemBuilder: (context, index) {
-                final day = daysInMonth[index];
-                final isToday = day.year == today.year &&
-                    day.month == today.month &&
-                    day.day == today.day;
-
-                // 선택된 날짜 범위 내인지 확인
-                final isInRange = day.isAfter(startDate.subtract(const Duration(days: 1))) &&
-                    day.isBefore(endDate.add(const Duration(days: 1)));
-
-                // 시작일 또는 종료일과 일치하는지 확인
-                final isStartDate = day.year == startDate.year &&
-                    day.month == startDate.month &&
-                    day.day == startDate.day;
-                final isEndDate = day.year == endDate.year &&
-                    day.month == endDate.month &&
-                    day.day == endDate.day;
-
-                // 현재 활성화된 날짜와 일치하는지 확인
-                final isActiveDate = day.year == activeDate.year &&
-                    day.month == activeDate.month &&
-                    day.day == activeDate.day;
-
-                // 미래 날짜인지 확인 (선택 불가)
-                final isFutureDate = day.isAfter(today);
-
-                // 현재 월에 속하지 않는 날짜 (이전/다음 월의 날짜)
-                final isOtherMonth = day.month != displayedMonth;
-
-                // 일요일은 빨간색, 토요일은 파란색으로 표시
-                final textColor = isFutureDate || isOtherMonth
-                    ? Colors.grey.shade300
-                    : day.weekday == 7  // 일요일
-                    ? Colors.red.shade300
-                    : day.weekday == 6  // 토요일
-                    ? Colors.blue.shade300
-                    : Colors.black87;
-
-                return InkWell(
-                  onTap: isFutureDate || isOtherMonth
-                      ? null
-                      : () {
-                    setState(() {
-                      if (isStartDateActive) {
-                        // 시작일 변경 - 종료일보다 이후면 종료일도 함께 변경
-                        startDate = DateTime(day.year, day.month, day.day);
-                        if (startDate.isAfter(endDate)) {
-                          endDate = startDate;
-                        }
-
-                        // 시작일 선택 후 자동으로 종료일 선택으로 전환
-                        isStartDateActive = false;
-                      } else {
-                        // 종료일 변경 - 시작일보다 이전이면 시작일도 함께 변경
-                        endDate = DateTime(day.year, day.month, day.day);
-                        if (endDate.isBefore(startDate)) {
-                          startDate = endDate;
-                        }
-                      }
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.all(1), // 마진 축소
-                    decoration: BoxDecoration(
-                      color: isActiveDate
-                          ? primaryColor
-                          : isStartDate || isEndDate
-                          ? primaryColor.withOpacity(0.7)
-                          : isInRange
-                          ? primaryColor.withOpacity(0.2)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6), // 테두리 반경 축소
-                      border: isToday
-                          ? Border.all(color: primaryColor, width: 1)
-                          : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        day.day.toString(),
-                        style: TextStyle(
-                          fontSize: 11, // 폰트 크기 축소
-                          fontWeight: isToday || isStartDate || isEndDate || isActiveDate
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: isActiveDate || isStartDate || isEndDate
-                              ? Colors.white
-                              : textColor,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHeader(themeController),
+                  _buildDateSelector(themeController),
+                  _buildSearchAndFilter(themeController),
+                  if (isLoading)
+                    Expanded(
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: themeController.primaryColor,
+                          strokeWidth: 2.5,
                         ),
                       ),
-                    ),
-                  ),
-                );
-              },
+                    )
+                  else
+                    _buildTransactionList(themeController),
+                ],
+              ),
             ),
           ),
-
-          // 캘린더 도움말 (범례) - 축소
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 오늘 표시
-                Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: primaryColor, width: 1),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    const Text('오늘', style: TextStyle(fontSize: 9)),
-                  ],
-                ),
-                const SizedBox(width: 10),
-
-                // 선택된 날짜 표시
-                Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    const Text('선택된 날짜', style: TextStyle(fontSize: 9)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 월의 모든 날짜를 가져오는 함수 (이전/다음 월의 날짜 포함)
-  List<DateTime> _getDaysInMonth(int year, int month) {
-    List<DateTime> days = [];
-
-    // 해당 월의 첫 날
-    final firstDayOfMonth = DateTime(year, month, 1);
-
-    // 해당 월의 마지막 날
-    final lastDayOfMonth = DateTime(year, month + 1, 0);
-
-    // 첫 날의 요일 (1: 월요일, 7: 일요일)
-    int firstWeekday = firstDayOfMonth.weekday;
-    if (firstWeekday == 7) firstWeekday = 0;  // 일요일을 0으로 조정
-
-    // 이전 월의 날짜들을 추가 (첫 주의 빈 칸을 채움)
-    for (int i = 0; i < firstWeekday; i++) {
-      days.add(firstDayOfMonth.subtract(Duration(days: firstWeekday - i)));
-    }
-
-    // 현재 월의 모든 날짜 추가
-    for (int i = 1; i <= lastDayOfMonth.day; i++) {
-      days.add(DateTime(year, month, i));
-    }
-
-    // 다음 월의 날짜들 추가 (마지막 주 채우기)
-    final remainingDays = 42 - days.length;  // 6주(42일)로 캘린더 통일
-    for (int i = 1; i <= remainingDays; i++) {
-      days.add(lastDayOfMonth.add(Duration(days: i)));
-    }
-
-    return days;
-  }
-
-  // 검색창 위젯
-  Widget _buildSearchBar(bool isDarkMode, Color surfaceColor, Color subtextColor) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-      child: Container(
-        height: 40,
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: TextField(
-          style: TextStyle(fontSize: 13, color: isDarkMode ? Colors.white : Colors.black87),
-          decoration: InputDecoration(
-            hintText: '거래 내역 검색',
-            hintStyle: TextStyle(
-              color: subtextColor,
-              fontSize: 13,
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: subtextColor,
-              size: 18,
-            ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-          ),
-          onChanged: (value) {
-            setState(() {
-              searchQuery = value;
-            });
-          },
         ),
       ),
     );
   }
 
-  // 필터 칩 위젯
-  Widget _buildFilterChips(bool isDarkMode, Color surfaceColor, Color primaryColor) {
-    return SizedBox(
-      height: 36,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            _buildFilterChip(
-                '전체',
-                isDarkMode,
-                surfaceColor,
-                primaryColor,
-                isSelected: selectedFilter == '전체',
-                onSelected: (selected) {
-                  setState(() {
-                    selectedFilter = '전체';
-                  });
-                }
-            ),
-            _buildFilterChip(
-                '수입',
-                isDarkMode,
-                surfaceColor,
-                primaryColor,
-                isSelected: selectedFilter == '수입',
-                onSelected: (selected) {
-                  setState(() {
-                    selectedFilter = '수입';
-                  });
-                }
-            ),
-            _buildFilterChip(
-                '지출',
-                isDarkMode,
-                surfaceColor,
-                primaryColor,
-                isSelected: selectedFilter == '지출',
-                onSelected: (selected) {
-                  setState(() {
-                    selectedFilter = '지출';
-                  });
-                }
-            ),
-            _buildFilterChip(
-                '재테크',
-                isDarkMode,
-                surfaceColor,
-                primaryColor,
-                isSelected: selectedFilter == '재테크',
-                onSelected: (selected) {
-                  setState(() {
-                    selectedFilter = '재테크';
-                  });
-                }
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 필터 칩 위젯
-  Widget _buildFilterChip(
-      String label,
-      bool isDarkMode,
-      Color surfaceColor,
-      Color primaryColor,
-      {bool isSelected = false,
-        required Function(bool) onSelected}
-      ) {
-    final chipTextColor = isSelected ? primaryColor : (isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700);
+  // 트렌디한 헤더
+  Widget _buildHeader(ThemeController themeController) {
+    final dateRange = '${DateFormat('M.d').format(startDate)} - ${DateFormat('M.d').format(endDate)}';
 
     return Container(
-      margin: const EdgeInsets.only(right: 6),
-      child: FilterChip(
-        label: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: chipTextColor,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        selected: isSelected,
-        onSelected: onSelected,
-        selectedColor: primaryColor.withOpacity(0.2),
-        checkmarkColor: primaryColor,
-        backgroundColor: surfaceColor,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: isSelected ? primaryColor : Colors.transparent,
+      padding: const EdgeInsets.fromLTRB(20, 20, 16, 16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: themeController.isDarkMode
+                ? Colors.white.withOpacity(0.08)
+                : Colors.grey.shade200,
             width: 1,
           ),
         ),
       ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // 세로선 + 제목
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      themeController.primaryColor,
+                      themeController.primaryColor.withOpacity(0.4),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '거래 내역',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: themeController.textPrimaryColor,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        dateRange,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: themeController.textSecondaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: themeController.primaryColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${transactions.length}건',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: themeController.primaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // 닫기 버튼
+          _TrendyCloseButton(
+            onTap: () => Navigator.of(context).pop(),
+            themeController: themeController,
+          ),
+        ],
+      ),
     );
   }
 
-  // 거래 내역 리스트 위젯
-  Widget _buildTransactionList(bool isDarkMode, Color surfaceColor, Color textColor, Color subtextColor, Color borderColor, Color primaryColor) {
+  // 날짜 선택 - 심플하게
+  Widget _buildDateSelector(ThemeController themeController) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
+        children: [
+          // 시작일
+          Expanded(
+            child: _TrendyDateButton(
+              date: startDate,
+              label: '시작',
+              onTap: () => _selectDate(true),
+              themeController: themeController,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              size: 18,
+              color: themeController.textSecondaryColor,
+            ),
+          ),
+          // 종료일
+          Expanded(
+            child: _TrendyDateButton(
+              date: endDate,
+              label: '종료',
+              onTap: () => _selectDate(false),
+              themeController: themeController,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 날짜 선택 다이얼로그
+  Future<void> _selectDate(bool isStart) async {
+    final themeController = Get.find<ThemeController>();
+    final initialDate = isStart ? startDate : endDate;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: themeController.primaryColor,
+              onPrimary: Colors.white,
+              surface: themeController.cardColor,
+              onSurface: themeController.textPrimaryColor,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          startDate = picked;
+          if (startDate.isAfter(endDate)) endDate = startDate;
+        } else {
+          endDate = picked;
+          if (endDate.isBefore(startDate)) startDate = endDate;
+        }
+      });
+      _refreshTransactions();
+    }
+  }
+
+  // 검색 및 필터 - 심플하게
+  Widget _buildSearchAndFilter(ThemeController themeController) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      child: Column(
+        children: [
+          // 검색창
+          Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: themeController.isDarkMode
+                  ? Colors.white.withOpacity(0.06)
+                  : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: themeController.isDarkMode
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.grey.shade200,
+                width: 1,
+              ),
+            ),
+            child: TextField(
+              style: TextStyle(
+                fontSize: 14,
+                color: themeController.textPrimaryColor,
+              ),
+              decoration: InputDecoration(
+                hintText: '검색어 입력',
+                hintStyle: TextStyle(
+                  color: themeController.textSecondaryColor,
+                  fontSize: 14,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: themeController.textSecondaryColor,
+                  size: 20,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              onChanged: (value) => setState(() => searchQuery = value),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // 필터 칩
+          Row(
+            children: ['전체', '수입', '지출', '재테크'].map((filter) {
+              final isSelected = selectedFilter == filter;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _TrendyFilterChip(
+                  label: filter,
+                  isSelected: isSelected,
+                  onTap: () => setState(() => selectedFilter = filter),
+                  themeController: themeController,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 거래 내역 리스트
+  Widget _buildTransactionList(ThemeController themeController) {
     final filtered = filteredTransactions;
 
     if (filtered.isEmpty) {
@@ -989,17 +404,15 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
             children: [
               Icon(
                 Icons.receipt_long_outlined,
-                size: 48,
-                color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+                size: 56,
+                color: themeController.textSecondaryColor.withOpacity(0.3),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(
-                searchQuery.isNotEmpty
-                    ? '검색 결과가 없습니다'
-                    : '해당 기간의 거래 내역이 없습니다',
+                searchQuery.isNotEmpty ? '검색 결과가 없습니다' : '거래 내역이 없습니다',
                 style: TextStyle(
-                  color: subtextColor,
-                  fontSize: 14,
+                  color: themeController.textSecondaryColor,
+                  fontSize: 15,
                 ),
               ),
             ],
@@ -1008,357 +421,461 @@ class _DateRangeTransactionDialogState extends State<DateRangeTransactionDialog>
       );
     }
 
-    // 거래 내역을 날짜별로 그룹화
-    final Map<String, List<TransactionWithCategory>> groupedTransactions = {};
-    final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
-    final DateFormat displayFormat = DateFormat('yyyy년 M월 d일 (E)', 'ko_KR');
-
-    // 날짜별로 그룹화
-    for (var transaction in filtered) {
-      final dateString = dateFormat.format(transaction.transactionDate);
-      if (!groupedTransactions.containsKey(dateString)) {
-        groupedTransactions[dateString] = [];
-      }
-      groupedTransactions[dateString]!.add(transaction);
+    // 날짜별 그룹화
+    final grouped = <String, List<TransactionWithCategory>>{};
+    final dateFormat = DateFormat('yyyy-MM-dd');
+    for (var t in filtered) {
+      final key = dateFormat.format(t.transactionDate);
+      grouped.putIfAbsent(key, () => []).add(t);
     }
-
-    // 날짜 키를 정렬 (최신 날짜가 먼저 오도록)
-    final sortedDates = groupedTransactions.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return Expanded(
       child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 16),
         itemCount: sortedDates.length,
         itemBuilder: (context, index) {
           final dateKey = sortedDates[index];
-          final dayTransactions = groupedTransactions[dateKey]!;
+          final dayTransactions = grouped[dateKey]!;
           final date = dateFormat.parse(dateKey);
-          final displayDate = displayFormat.format(date);
+          final displayDate = DateFormat('M월 d일 (E)', 'ko_KR').format(date);
 
-          // 일별 요약 계산
-          double dayIncome = 0;
-          double dayExpense = 0;
-          double dayFinance = 0;
-          for (var tx in dayTransactions) {
-            if (tx.categoryType == 'INCOME') {
-              dayIncome += tx.amount.abs();
-            } else if (tx.categoryType == 'EXPENSE') {
-              dayExpense += tx.amount.abs();
-            } else if (tx.categoryType == 'FINANCE') {
-              dayFinance += tx.amount.abs();
-            }
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 날짜 헤더
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                color: surfaceColor,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // 날짜
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.calendar_today_rounded,
-                            size: 14,
-                            color: primaryColor,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          displayDate,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // 일별 요약
-                    Row(
-                      children: [
-                        if (dayIncome > 0)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '+${NumberFormat('#,###').format(dayIncome)}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.green.shade700,
-                              ),
-                            ),
-                          ),
-
-                        if (dayExpense > 0)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '-${NumberFormat('#,###').format(dayExpense)}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.red.shade700,
-                              ),
-                            ),
-                          ),
-
-                        if (dayFinance > 0)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '-${NumberFormat('#,###').format(dayFinance)}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blue.shade700,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // 해당 날짜의 모든 거래
-              ...dayTransactions.map((tx) => _buildTransactionItem(tx, isDarkMode, textColor, borderColor)).toList(),
-
-              // 날짜 구분선
-              if (index < sortedDates.length - 1)
-                Divider(height: 1, thickness: 4, color: isDarkMode ? Colors.grey.shade900 : const Color(0xFFF5F5F5)),
-            ],
+          return _TrendyDaySection(
+            displayDate: displayDate,
+            transactions: dayTransactions,
+            themeController: themeController,
+            isLast: index == sortedDates.length - 1,
           );
         },
       ),
     );
   }
 
-  // 거래 항목 위젯
-  Widget _buildTransactionItem(TransactionWithCategory transaction, bool isDarkMode, Color textColor, Color borderColor) {
-    // 시간 표시 포맷팅
-    final timeFormat = DateFormat('a h:mm', 'ko_KR');
-    final time = timeFormat.format(transaction.transactionDate);
+  Future<void> _refreshTransactions() async {
+    setState(() => isLoading = true);
+    try {
+      transactions = await widget.controller.fetchTransactionsByDateRange(startDate, endDate, 500);
+    } catch (e) {
+      debugPrint('거래 내역 새로고침 오류: $e');
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+}
 
-    // 금액 포맷팅
-    final formattedAmount = NumberFormat('#,###').format(transaction.amount.abs());
+// 트렌디한 닫기 버튼
+class _TrendyCloseButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final ThemeController themeController;
 
-    // 카테고리 색상
-    final categoryColor = _getCategoryColor(transaction.categoryType);
+  const _TrendyCloseButton({required this.onTap, required this.themeController});
 
-    // 수입인지 확인
-    final isIncome = transaction.categoryType == 'INCOME';
+  @override
+  State<_TrendyCloseButton> createState() => _TrendyCloseButtonState();
+}
 
-    final subtextColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
+class _TrendyCloseButtonState extends State<_TrendyCloseButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: borderColor),
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: const Duration(milliseconds: 100), vsync: this);
+    _scale = Tween<double>(begin: 1.0, end: 0.9).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: widget.themeController.isDarkMode
+                  ? Colors.white.withOpacity(0.08)
+                  : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.close_rounded,
+              size: 20,
+              color: widget.themeController.textSecondaryColor,
+            ),
+          ),
         ),
       ),
-      child: Row(
-        children: [
-          // 카테고리 아이콘
-          Container(
-            width: 36,
-            height: 36,
+    );
+  }
+}
+
+// 트렌디한 날짜 버튼
+class _TrendyDateButton extends StatefulWidget {
+  final DateTime date;
+  final String label;
+  final VoidCallback onTap;
+  final ThemeController themeController;
+
+  const _TrendyDateButton({
+    required this.date,
+    required this.label,
+    required this.onTap,
+    required this.themeController,
+  });
+
+  @override
+  State<_TrendyDateButton> createState() => _TrendyDateButtonState();
+}
+
+class _TrendyDateButtonState extends State<_TrendyDateButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: const Duration(milliseconds: 80), vsync: this);
+    _scale = Tween<double>(begin: 1.0, end: 0.97).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             decoration: BoxDecoration(
-              color: categoryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: widget.themeController.isDarkMode
+                  ? Colors.white.withOpacity(0.06)
+                  : Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: widget.themeController.isDarkMode
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.grey.shade200,
+                width: 1,
+              ),
             ),
-            child: Center(
-              child: Icon(
-                _getCategoryIcon(transaction.categoryType, transaction.categoryName),
-                color: categoryColor,
-                size: 18,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: widget.themeController.textSecondaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('yyyy.MM.dd').format(widget.date),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: widget.themeController.textPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 18,
+                  color: widget.themeController.primaryColor,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// 트렌디한 필터 칩
+class _TrendyFilterChip extends StatefulWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ThemeController themeController;
+
+  const _TrendyFilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.themeController,
+  });
+
+  @override
+  State<_TrendyFilterChip> createState() => _TrendyFilterChipState();
+}
+
+class _TrendyFilterChipState extends State<_TrendyFilterChip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: const Duration(milliseconds: 80), vsync: this);
+    _scale = Tween<double>(begin: 1.0, end: 0.95).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? widget.themeController.primaryColor.withOpacity(0.15)
+                  : (widget.themeController.isDarkMode
+                      ? Colors.white.withOpacity(0.06)
+                      : Colors.grey.shade100),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: widget.isSelected
+                    ? widget.themeController.primaryColor.withOpacity(0.5)
+                    : Colors.transparent,
+                width: 1,
+              ),
+            ),
+            child: Text(
+              widget.label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: widget.isSelected
+                    ? widget.themeController.primaryColor
+                    : widget.themeController.textSecondaryColor,
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
 
-          const SizedBox(width: 12),
+// 일별 섹션
+class _TrendyDaySection extends StatelessWidget {
+  final String displayDate;
+  final List<TransactionWithCategory> transactions;
+  final ThemeController themeController;
+  final bool isLast;
 
-          // 거래 정보
+  const _TrendyDaySection({
+    required this.displayDate,
+    required this.transactions,
+    required this.themeController,
+    required this.isLast,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 일별 합계 계산
+    double income = 0, expense = 0, finance = 0;
+    for (var t in transactions) {
+      if (t.categoryType == 'INCOME') income += t.amount.abs();
+      else if (t.categoryType == 'EXPENSE') expense += t.amount.abs();
+      else if (t.categoryType == 'FINANCE') finance += t.amount.abs();
+    }
+
+    return Column(
+      children: [
+        // 날짜 헤더
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          color: themeController.isDarkMode
+              ? Colors.white.withOpacity(0.03)
+              : Colors.grey.shade50,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                displayDate,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: themeController.textPrimaryColor,
+                ),
+              ),
+              Row(
+                children: [
+                  if (income > 0) _buildSummaryBadge('+${_formatAmount(income)}', const Color(0xFF2EAA87)),
+                  if (expense > 0) _buildSummaryBadge('-${_formatAmount(expense)}', const Color(0xFFE57373)),
+                  if (finance > 0) _buildSummaryBadge('-${_formatAmount(finance)}', const Color(0xFF5B8BD8)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        // 거래 항목들
+        ...transactions.map((t) => _TrendyTransactionItem(
+          transaction: t,
+          themeController: themeController,
+        )),
+        if (!isLast)
+          Divider(
+            height: 1,
+            color: themeController.isDarkMode
+                ? Colors.white.withOpacity(0.05)
+                : Colors.grey.shade200,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryBadge(String text, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  String _formatAmount(double amount) {
+    if (amount >= 10000) {
+      return '${(amount / 10000).toStringAsFixed(amount % 10000 == 0 ? 0 : 1)}만';
+    }
+    return NumberFormat('#,###').format(amount);
+  }
+}
+
+// 거래 항목
+class _TrendyTransactionItem extends StatelessWidget {
+  final TransactionWithCategory transaction;
+  final ThemeController themeController;
+
+  const _TrendyTransactionItem({
+    required this.transaction,
+    required this.themeController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isIncome = transaction.categoryType == 'INCOME';
+    final isFinance = transaction.categoryType == 'FINANCE';
+    final color = isIncome
+        ? const Color(0xFF2EAA87)
+        : isFinance
+            ? const Color(0xFF5B8BD8)
+            : const Color(0xFFE57373);
+    final formattedAmount = NumberFormat('#,###').format(transaction.amount.abs());
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: [
+          // 카테고리 색상 인디케이터
+          Container(
+            width: 3,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // 내용
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // 거래 내용
-                    Expanded(
-                      child: Text(
-                        transaction.description,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: textColor,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-
-                    // 금액
-                    Text(
-                      (isIncome ? '+' : (transaction.categoryType == 'FINANCE' ? '-' : '-')) + formattedAmount + '원',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isIncome ? Colors.green.shade600 :
-                        transaction.categoryType == 'FINANCE' ? Colors.blue.shade600 :
-                        Colors.red.shade600,
-                      ),
-                    ),
-                  ],
+                Text(
+                  transaction.description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: themeController.textPrimaryColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-
                 const SizedBox(height: 3),
-
-                // 시간과 카테고리
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // 시간
-                    Text(
-                      time,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: subtextColor,
-                      ),
-                    ),
-
-                    // 카테고리
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: categoryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        transaction.categoryName,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: categoryColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  transaction.categoryName,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: themeController.textSecondaryColor,
+                  ),
                 ),
               ],
+            ),
+          ),
+          // 금액
+          Text(
+            '${isIncome ? '+' : '-'}$formattedAmount원',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
         ],
       ),
     );
-  }
-
-  // 카테고리 타입에 맞는 아이콘 반환
-  IconData _getCategoryIcon(String categoryType, String categoryName) {
-    switch (categoryType) {
-      case 'INCOME':
-        if (categoryName.contains('급여') || categoryName.contains('월급')) {
-          return Icons.work_outline;
-        } else if (categoryName.contains('용돈')) {
-          return Icons.card_giftcard;
-        } else if (categoryName.contains('이자')) {
-          return Icons.account_balance;
-        }
-        return Icons.arrow_downward_rounded;
-
-      case 'EXPENSE':
-        if (categoryName.contains('식비') || categoryName.contains('음식')) {
-          return Icons.restaurant;
-        } else if (categoryName.contains('교통')) {
-          return Icons.directions_bus;
-        } else if (categoryName.contains('통신')) {
-          return Icons.phone_android;
-        } else if (categoryName.contains('월세') || categoryName.contains('주거')) {
-          return Icons.home;
-        } else if (categoryName.contains('쇼핑')) {
-          return Icons.shopping_bag;
-        } else if (categoryName.contains('의료')) {
-          return Icons.healing;
-        }
-        return Icons.arrow_upward_rounded;
-
-      case 'FINANCE':
-        if (categoryName.contains('저축')) {
-          return Icons.savings;
-        } else if (categoryName.contains('투자')) {
-          return Icons.trending_up;
-        } else if (categoryName.contains('대출')) {
-          return Icons.money;
-        }
-        return Icons.account_balance_wallet;
-
-      default:
-        return Icons.receipt_long;
-    }
-  }
-
-  // 카테고리 유형에 맞는 색상 반환
-  Color _getCategoryColor(String categoryType) {
-    switch (categoryType) {
-      case 'INCOME':
-        return Colors.green[600]!;
-      case 'EXPENSE':
-        return Colors.red[600]!;
-      case 'FINANCE':
-        return Colors.blue[600]!;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  // 트랜잭션 새로고침
-  Future<void> _refreshTransactions() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final newTransactions = await _loadTransactionsForDateRange(startDate, endDate);
-      setState(() {
-        transactions = newTransactions;
-      });
-    } catch (e) {
-      debugPrint('거래 내역 새로고침 오류: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
   }
 }
